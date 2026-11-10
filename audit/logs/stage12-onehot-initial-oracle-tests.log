@@ -1,0 +1,17 @@
+   Compiling om-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-field)
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+   Compiling om-mosaic v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-mosaic)
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 7.45s
+     Running unittests src/lib.rs (target/release/deps/om_memcheck-f948c5b6c3e35441)
+
+running 5 tests
+test onehot_kernels::tests::cubic_cofactor_matches_dense_wire_for_arbitrary_fields_and_edge_challenges ... ok
+test onehot::optimized_tests::alias_onehot_matches_unmerged_oracle_for_valid_and_invalid_bits ... ok
+test onehot::optimized_tests::alias_virtualization_preserves_terms_points_outputs_and_transcript ... ok
+test onehot_kernels::tests::parallel_cubic_cofactor_matches_dense_wire ... ok
+test onehot_kernels::tests::structurally_zero_initial_endpoints_preserve_full_reference_messages ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.03s
+

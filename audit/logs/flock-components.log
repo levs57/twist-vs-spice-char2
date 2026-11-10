@@ -1,0 +1,394 @@
+$ cargo test --locked --release -p flock-field -p flock-multilinear
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+warning: `flock-field` (lib test) generated 1 warning (1 duplicate)
+    Finished `release` profile [optimized] target(s) in 0.02s
+     Running unittests src/lib.rs (target/release/deps/flock_field-b097ec423558ff86)
+
+running 29 tests
+test gf2_128::tests::add_identities ... ok
+test f128_slice::tests::selected_fold_matches_portable_with_offset_and_tail ... ok
+test gf2_128::tests::all_x86_variants_agree ... ok
+test gf2_128::tests::associativity_random ... ok
+test gf2_128::tests::deferred_reduction_matches_direct ... ok
+test gf2_128::tests::deferred_xor_commutes_with_reduction ... ok
+test gf2_128::tests::ghash_reduction_smoking_gun ... ok
+test gf2_128::tests::high_bit_inputs_reduce_correctly ... ok
+test gf2_128::tests::inverse_roundtrip ... ok
+test gf2_128::tests::mul_commutativity ... ok
+test gf2_128::tests::mul_by_x_matches_mul_by_gen ... ok
+test gf2_128::tests::mul_identities ... ok
+test gf2_128::tests::square_matches_self_mul ... ok
+test gf2_256::tests::coordinates_roundtrip ... ok
+test gf2_256::tests::quadratic_relation_and_karatsuba_match_reference ... ok
+test gf2_256::tests::field_identities_and_frobenius_order ... ok
+test gf2_256::tests::x_inverse_is_the_quadratic_nonresidue ... ok
+test gf2_8::tests::add_is_xor ... ok
+test gf2_8::tests::associativity_random ... ok
+test gf2_8::tests::fips_197_test_vectors ... ok
+test gf2_8::tests::inv_roundtrip ... ok
+test gf2_8::tests::mul_identities ... ok
+test gf2_8::tests::mul_known_values ... ok
+test gf2_8::tests::mul_commutativity_exhaustive ... ok
+test phi8::tests::zero_and_one_map_correctly ... ok
+test gf2_8::tests::software_matches_neon ... ok
+test gf2_8::tests::scalar_reduce_full_u16_domain ... ok
+test gf2_8::tests::fermat_little_theorem ... ok
+test phi8::tests::homomorphism_full ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/flock_multilinear-eec6cbd4ea2b8408)
+
+running 5 tests
+test tests::equality_evaluation_matches_a_table_entry ... ok
+test tests::equality_table_builder_rejects_a_short_iterator - should panic ... ok
+test tests::equality_tables_follow_index_order ... ok
+test tests::evaluation_supports_both_index_orders ... ok
+test tests::scaled_table_applies_seed_during_the_build ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests flock_field
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests flock_multilinear
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+EXIT 0; wall_seconds=0.110
+$ cargo test --locked --release -p flock-core --lib product_gkr::tests::
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.05s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 12 tests
+test product_gkr::tests::f128_ntt_prefix_extension_roundtrip ... ok
+test product_gkr::tests::tag_matches_basis_expansion ... ok
+test product_gkr::tests::batched_grinding_roundtrip_and_rejects_bad_nonce_shape ... ok
+test product_gkr::tests::batched_rejects_broken_copy_constraint ... ok
+test product_gkr::tests::verify_rejects_shape_errors ... ok
+test product_gkr::tests::batched_copy_constraint_single_witness ... ok
+test product_gkr::tests::batched_verify_trusts_s_sigma_unless_sigma_is_known ... ok
+test product_gkr::tests::live_mask_closed_forms_and_masked_roundtrip ... ok
+test product_gkr::tests::grouped_matches_dense_masked ... ok
+test product_gkr::tests::batched_rejects_transcript_tampering ... ok
+test product_gkr::tests::batched_claim_matches_direct_mle ... ok
+test product_gkr::tests::batched_honest_roundtrip_shared_point ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 444 filtered out; finished in 0.00s
+
+EXIT 0; wall_seconds=0.071
+$ cargo test --locked --release -p flock-core --lib pcs::ring_switch::tests::
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.02s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 32 tests
+test pcs::ring_switch::tests::build_eq_sparse_pins_one_coords ... ok
+test pcs::ring_switch::tests::build_eq_sparse_matches_dense ... ok
+test pcs::ring_switch::tests::build_eq_split_reconstructs_full ... ok
+test pcs::ring_switch::tests::fold_1b_rows_sparse_matches_naive ... ok
+test pcs::ring_switch::tests::claim_check_recovers_zhat_skip ... ok
+test pcs::ring_switch::tests::method_of_four_russians_fold_16wide_2way_matches_scalar ... ok
+test pcs::ring_switch::tests::s_hat_v_from_z_vec_degenerate_tail ... ok
+test pcs::ring_switch::tests::s_hat_v_is_linear_in_witness ... ok
+test pcs::ring_switch::tests::subset_sums_4_correctness ... ok
+test pcs::ring_switch::tests::weights_have_correct_length ... ok
+test pcs::ring_switch::tests::transpose_is_involution ... ok
+test pcs::ring_switch::tests::method_of_four_russians_fold_matches_scalar_bit_scan ... ok
+test pcs::ring_switch::tests::fold_b128_elems_sparse_matches_dense ... ok
+test pcs::ring_switch::tests::method_of_four_russians_fold_8wide_matches_scalar ... ok
+test pcs::ring_switch::tests::dp24_identity_holds ... ok
+test pcs::ring_switch::tests::fold_b128_elems_matches_naive ... ok
+test pcs::ring_switch::tests::verify_rejects_mutated_proof ... ok
+test pcs::ring_switch::tests::prove_verify_roundtrip_with_grinding ... ok
+test pcs::ring_switch::tests::fold_b128_elems_split_matches_dense ... ok
+test pcs::ring_switch::tests::eval_rs_eq_f256_matches_dense_at_extension_points ... ok
+test pcs::ring_switch::tests::fold_1b_rows_split_2way_matches_per_claim ... ok
+test pcs::ring_switch::tests::prove_batched_matches_sequential ... ok
+test pcs::ring_switch::tests::s_hat_v_from_z_vec_matches_fold_1b_rows_ab ... ok
+test pcs::ring_switch::tests::prove_verify_roundtrip ... ok
+test pcs::ring_switch::tests::eval_rs_eq_finish_binary_q_matches_general ... ok
+test pcs::ring_switch::tests::prove_batched_with_sparse_claim_matches_sequential ... ok
+test pcs::ring_switch::tests::fold_1b_padded_matches_dense ... ok
+test pcs::ring_switch::tests::prove_batched_with_precomputed_matches_unprecomputed ... ok
+test pcs::ring_switch::tests::eval_rs_eq_matches_dense ... ok
+test pcs::ring_switch::tests::fold_1b_rows_split_matches_16wide ... ok
+test pcs::ring_switch::tests::linearized_coefficients_reconstruct_fold ... ok
+test pcs::ring_switch::tests::linearized_coefficients_are_moore_row_mles ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 424 filtered out; finished in 0.04s
+
+EXIT 0; wall_seconds=0.085
+$ cargo test --locked --release -p flock-core --lib zerocheck::multilinear::tests::
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.03s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 21 tests
+test zerocheck::multilinear::tests::balanced_interval_tasks_partitions_the_live_set ... ok
+test zerocheck::multilinear::tests::fold_in_place_pair_matches_formula ... ok
+test zerocheck::multilinear::tests::fold_is_xor_linear ... ok
+test zerocheck::multilinear::tests::deterministic ... ok
+test zerocheck::multilinear::tests::lagrange_at_node_is_indicator ... ok
+test zerocheck::multilinear::tests::fold_at_node_recovers_witness_slice ... ok
+test zerocheck::multilinear::tests::live_layout_ranks_match_brute_force ... ok
+test zerocheck::multilinear::tests::live_layout_is_dense_only_for_full_cover ... ok
+test zerocheck::multilinear::tests::fold_table_one_row_matches_direct_lagrange ... ok
+test zerocheck::multilinear::tests::round_pair_message_has_degree_two ... ok
+test zerocheck::multilinear::tests::lagrange_weights_sum_to_one ... ok
+test zerocheck::multilinear::tests::zero_witness_gives_zero_round_message ... ok
+test zerocheck::multilinear::tests::round_pair_symmetric_in_ab ... ok
+test zerocheck::multilinear::tests::phi8_node_sets_have_linearized_vanishing_polynomials ... ok
+test zerocheck::multilinear::tests::subspace_denominators_are_uniform_across_nodes_and_cosets ... ok
+test zerocheck::multilinear::tests::fused_round_matches_unfused ... ok
+test zerocheck::multilinear::tests::parallel_matches_serial ... ok
+test zerocheck::multilinear::tests::optimized_matches_naive ... ok
+test zerocheck::multilinear::tests::c_eval_from_round1_c_matches_direct_fold ... ok
+test zerocheck::multilinear::tests::uni_skip_fold_round_pair_padded_matches_dense ... ok
+test zerocheck::multilinear::tests::closed_form_lagrange_matches_the_textbook_product ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.10s
+
+EXIT 0; wall_seconds=0.144
+$ cargo test --locked --release -p flock-core --lib zerocheck::univariate_skip_optimized::tests::
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.05s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 11 tests
+test zerocheck::univariate_skip_optimized::tests::friendly_challenges_f2_independent ... ok
+test zerocheck::univariate_skip_optimized::tests::convert_table_structure ... ok
+test zerocheck::univariate_skip_optimized::tests::small_and_medium_challenges_sanity ... ok
+test zerocheck::univariate_skip_optimized::tests::x86_gfni_sse_inner_matches_scalar_inner ... ok
+test zerocheck::univariate_skip_optimized::tests::output_shape ... ok
+test zerocheck::univariate_skip_optimized::tests::deterministic ... ok
+test zerocheck::univariate_skip_optimized::tests::parallel_matches_serial ... ok
+test zerocheck::univariate_skip_optimized::tests::fusion_matches_existing_and_scalar_oracle ... ok
+test zerocheck::univariate_skip_optimized::tests::padded_matches_dense_with_zero_padding ... ok
+test zerocheck::univariate_skip_optimized::tests::matches_naive_with_c_s_factor ... ok
+test zerocheck::univariate_skip_optimized::tests::matches_naive_with_structured_b_shortcuts ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 445 filtered out; finished in 0.01s
+
+EXIT 0; wall_seconds=0.082
+$ cargo test --locked --release -p flock-core --lib lincheck::tests::
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.03s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 19 tests
+test element_r1cs::lincheck::tests::kappa_one_roundtrips ... ok
+test element_r1cs::lincheck::tests::partial_fold_is_the_witness_at_r_row ... ok
+test element_r1cs::lincheck::tests::prove_verify_roundtrip_mixed_gate ... ok
+test element_r1cs::lincheck::tests::verify_rejects_mutations ... ok
+test element_r1cs::lincheck::tests::prove_verify_roundtrip_honest ... ok
+test element_r1cs::lincheck::tests::row_collapse_matches_brute_force ... ok
+test lincheck::tests::per_challenge_grinding_roundtrip_and_rejects_bad_nonce ... ok
+test element_r1cs::lincheck::tests::round_messages_match_brute_force_on_random_instances ... ok
+test lincheck::tests::partial_fold_dispatch_handles_small_k ... ok
+test lincheck::tests::eq_table_matches_direct_formula ... ok
+test lincheck::tests::sparse_row_fold_matches_dense ... ok
+test lincheck::tests::verify_rejects_shape_errors ... ok
+test lincheck::tests::verify_rejects_mutations ... ok
+test lincheck::tests::partial_fold_matches_direct ... ok
+test lincheck::tests::partial_fold_fast_matches_serial ... ok
+test lincheck::tests::partial_fold_x86_tiled_matches_serial ... ok
+test lincheck::tests::prove_verify_roundtrip_honest ... ok
+test lincheck::tests::partial_fold_padded_matches_dense ... ok
+test lincheck::tests::partial_fold_is_mle_at_outer_point ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 437 filtered out; finished in 0.01s
+
+EXIT 0; wall_seconds=0.069
+$ cargo test --locked --release -p flock-core --lib pcs::ligerito::tests::lookahead_folds_match_plain_folds
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.04s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 1 test
+test pcs::ligerito::tests::lookahead_folds_match_plain_folds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 455 filtered out; finished in 0.00s
+
+EXIT 0; wall_seconds=0.068
+$ cargo test --locked --release -p flock-core --lib pcs::ligerito::tests::recursive_prover_with_basis_roundtrip_single_claim
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.03s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 1 test
+test pcs::ligerito::tests::recursive_prover_with_basis_roundtrip_single_claim ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 455 filtered out; finished in 0.05s
+
+EXIT 0; wall_seconds=0.103
+$ cargo test --locked --release -p flock-core --lib pcs::ligerito::tests::ligerito_fast_profile_m22_roundtrip
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.02s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 1 test
+test pcs::ligerito::tests::ligerito_fast_profile_m22_roundtrip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 455 filtered out; finished in 0.02s
+
+EXIT 0; wall_seconds=0.056
+$ cargo test --locked --release -p flock-core --lib ntt::
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.02s
+     Running unittests src/lib.rs (target/release/deps/flock_core-52c6d7356b8a26cb)
+
+running 23 tests
+test ntt::additive_ntt_f128::tests::deepest_layer_twiddle_count ... ok
+test ntt::additive_ntt_f128::tests::forward_is_linear ... ok
+test ntt::additive_ntt_f128::tests::forward_inverse_roundtrip ... ok
+test ntt::additive_ntt_f128::tests::inverse_forward_roundtrip ... ok
+test ntt::additive_ntt_f128::tests::ntt_of_zero_is_zero ... ok
+test ntt::additive_ntt_f128::tests::twiddle_at_layer_0_uses_full_basis_minus_one ... ok
+test ntt::additive_ntt_f128::tests::ranked_from_message_matches_on_integer_lanes ... ok
+test ntt::inv_table::tests::matches_naive_k3 ... ok
+test ntt::inv_table::tests::apply_triple_matches_three_singles ... ok
+test ntt::inv_table::tests::apply_x86_matches_apply_scalar ... ok
+test ntt::tests::forward_inverse_roundtrip ... ok
+test ntt::inv_table::tests::matches_naive_k4 ... ok
+test ntt::additive_ntt_f128::tests::interleaved_matches_per_lane ... ok
+test ntt::inv_table::tests::matches_naive_k6_protocol_size ... ok
+test ntt::tests::forward_is_linear ... ok
+test ntt::tests::inverse_forward_roundtrip ... ok
+test ntt::tests::nonzero_beta_roundtrip ... ok
+test ntt::inv_table::tests::table_storage_is_cache_line_aligned ... ok
+test ntt::tests::twiddles_size ... ok
+test ntt::additive_ntt_f128::tests::interleaved_live_skip_byte_identical ... ok
+test ntt::additive_ntt_f128::tests::interleaved_integer_lanes_match_padded ... ok
+test ntt::additive_ntt_f128::tests::from_message_matches_replicate_then_from_layer ... ok
+test ntt::additive_ntt_f128::tests::interleaved_parallel_matches_scalar ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 433 filtered out; finished in 3.16s
+
+EXIT 0; wall_seconds=3.196

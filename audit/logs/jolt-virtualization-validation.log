@@ -1,0 +1,11 @@
+{
+  "jolt_revision": "e21affaeaf0d2c0a4630b958a883a4ac877acbfd",
+  "selected_source_files": 80,
+  "selected_source_bytes": 1297440,
+  "pinned_source_line_citations": 22,
+  "local_documentation_links": 23,
+  "probe_fixtures": 144,
+  "exact_probe_assertions": 94471,
+  "production_patch_unchanged": "bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3",
+  "scope": "Source investigation and standalone GF128 algebra probe only; no Jolt build or performance comparison."
+}

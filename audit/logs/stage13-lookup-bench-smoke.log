@@ -1,0 +1,12 @@
+   Compiling lookup-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/lookup-bench)
+    Finished `release` profile [optimized] target(s) in 6.56s
+     Running `target/release/lookup-bench --methods logup,shout --patterns random,local --table-bits 8 --log-lookups 4 --chunk-bits 4,2 --threads 1 --warmup 1 --repeat 1 --output /tmp/stage13-lookup-bench-smoke.json --csv /tmp/stage13-lookup-bench-smoke.csv`
+pattern=random method=logup-star chunk=- virtualization=- prove=3.635ms verify=10.527ms commit=0.136ms open=3.192ms remaining=0.308ms main_bits=16384 aux_bits=32768
+pattern=random method=shout chunk=4 virtualization=flat prove=2.147ms verify=2.064ms commit=0.065ms open=1.451ms remaining=0.631ms main_bits=16384 aux_bits=0
+pattern=random method=shout chunk=2 virtualization=flat prove=1.548ms verify=1.900ms commit=0.032ms open=1.133ms remaining=0.383ms main_bits=16384 aux_bits=0
+pattern=local method=logup-star chunk=- virtualization=- prove=2.433ms verify=3.491ms commit=0.081ms open=1.781ms remaining=0.571ms main_bits=16384 aux_bits=32768
+pattern=local method=shout chunk=4 virtualization=flat prove=1.438ms verify=1.823ms commit=0.039ms open=1.030ms remaining=0.369ms main_bits=16384 aux_bits=0
+pattern=local method=shout chunk=2 virtualization=flat prove=1.626ms verify=1.919ms commit=0.033ms open=1.187ms remaining=0.406ms main_bits=16384 aux_bits=0
+JSON: /tmp/stage13-lookup-bench-smoke.json
+CSV: /tmp/stage13-lookup-bench-smoke.csv
+All 6 cases verified (1 measured proofs/case plus 1 warmups).

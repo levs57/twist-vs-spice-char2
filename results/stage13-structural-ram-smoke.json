@@ -1,0 +1,331 @@
+{
+  "schema": "memarg-stage-1.2/v6",
+  "implementation": "gf128-jolt-flat-structural-sharing-v1",
+  "vendor_patch_sha256": "0a983c510a5e937867c352db23202eef28e99f2f64185be902fdb4bfef162883",
+  "upstream_revision": "febfc0e66f5809e034dd1afac78202bd4882de27",
+  "field": "GF(2^128), X^128+X^7+X^2+X+1",
+  "options": {
+    "payload": "random",
+    "log_cycles": 6,
+    "address_bits": 8,
+    "chunk_bits": [
+      2
+    ],
+    "virtualization": "both",
+    "memory_model": "shared",
+    "reads": 1,
+    "layout": "natural",
+    "threads": 2,
+    "repeat": 1,
+    "warmup": 0,
+    "seed": 1,
+    "profile": "provable-120",
+    "log_rate": 2,
+    "guest_keys": 64,
+    "guest_queries": 16,
+    "guest_program": "binary-search",
+    "guest_size": 64,
+    "guest_operations": 256,
+    "guest_rows": "all",
+    "guest_fill": "repeat",
+    "output": "results/stage13-structural-ram-smoke.json",
+    "csv": null
+  },
+  "environment": {
+    "architecture": "x86_64",
+    "compiled_avx2": "true",
+    "compiled_avx512f": "false",
+    "compiled_pclmulqdq": "true",
+    "compiled_sha": "true",
+    "compiled_vpclmulqdq": "true",
+    "cpu_model": "13th Gen Intel(R) Core(TM) i9-13980HX",
+    "os": "linux",
+    "rustc_on_path": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "cases": [
+    {
+      "payload": "random",
+      "guest_program": null,
+      "guest_rows": null,
+      "layout": "natural",
+      "chunk_bits": 2,
+      "address_components": 4,
+      "virtualization": "flat",
+      "virtualization_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 12,
+        "round_message_field_elements": 42,
+        "node_evaluation_field_elements": 15,
+        "field_payload_bytes": 912
+      },
+      "payload_generation_ms": 0.005826,
+      "source_payload_metadata": {
+        "address_bits": 8,
+        "cycles": 64,
+        "full_pattern_repetitions": 1,
+        "guest": null,
+        "kind": "uniform-random",
+        "memory_model": "shared-address",
+        "padding_cycles": 0,
+        "pattern_cycles": 64,
+        "read_ports": 1,
+        "real_cycles": 64,
+        "replayed_cycles": 0,
+        "seed": 1,
+        "source_cycles": 64,
+        "tail_pattern_cycles": 0,
+        "trace_mode": "random"
+      },
+      "address_relabeling": "Identity; source compact_to_original mapping applies directly.",
+      "work_normalization": {
+        "memory_access_cycles": 64,
+        "dummy_access_cycles": 0,
+        "memory_access_fraction": 1.0,
+        "ms_to_ms_per_million_memory_accesses": 15625.0
+      },
+      "proof_summary": {
+        "cycles": 64,
+        "memory_cells": 256,
+        "address_components": 4,
+        "chunk_bits": 2,
+        "committed_bits": 16384,
+        "packed_field_elements": 128,
+        "mosaic_claims": 33,
+        "commitment_components": [
+          {
+            "name": "ram/ra0/1",
+            "log_size": 8
+          },
+          {
+            "name": "ram/ra0/2",
+            "log_size": 8
+          },
+          {
+            "name": "ram/ra0/3",
+            "log_size": 8
+          },
+          {
+            "name": "ram/ra0/4",
+            "log_size": 8
+          },
+          {
+            "name": "ram/inc",
+            "log_size": 12
+          },
+          {
+            "name": "input/rv0",
+            "log_size": 12
+          }
+        ],
+        "commitment_footprint": {
+          "address_encoding_bits": 1024,
+          "read_write_value_bits": 4096,
+          "increment_bits": 4096,
+          "raw_binary_address_bits": 0,
+          "other_bits": 0,
+          "populated_bits": 9216,
+          "padding_bits": 7168,
+          "populated_bits_per_cycle": 144,
+          "padded_bits_per_cycle": 256
+        }
+      },
+      "samples": [
+        {
+          "prover_ms": 3.390201,
+          "virtualization_ms": 0.411032,
+          "commitment_ms": 0.071911,
+          "everything_else_ms": 3.3182899999999997,
+          "commitment_fraction": 0.02121142669711914,
+          "verifier_ms": 3.404808,
+          "unattributed_ms": 0.10017299999999985,
+          "stages_ms": {
+            "mosaic.batch": 1.136438,
+            "pcs.commit": 0.071911,
+            "pcs.ligerito_open": 0.739679,
+            "pcs.open": 0.000564,
+            "pcs.ringswitch": 0.193338,
+            "ram.claims": 0.01937,
+            "ram.pack": 0.007741,
+            "ram.statement": 0.035165,
+            "ram.twist": 0.000585,
+            "ram.witness": 0.013709,
+            "twist.final": 0.12553999999999998,
+            "twist.onehot": 0.141313,
+            "twist.other": 0.111515,
+            "twist.rw.address": 0.08834,
+            "twist.rw.cycles": 0.105712,
+            "twist.rw.setup": 0.018691000000000003,
+            "twist.val": 0.069385,
+            "twist.virtualization": 0.139617,
+            "virt.claim_reduction": 0.188366,
+            "virt.flat.claims": 0.000299,
+            "virt.flat.product": 0.08275
+          }
+        }
+      ]
+    },
+    {
+      "payload": "random",
+      "guest_program": null,
+      "guest_rows": null,
+      "layout": "natural",
+      "chunk_bits": 2,
+      "address_components": 4,
+      "virtualization": "gkr-tree",
+      "virtualization_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 12,
+        "round_message_field_elements": 36,
+        "node_evaluation_field_elements": 18,
+        "field_payload_bytes": 864
+      },
+      "payload_generation_ms": 0.005826,
+      "source_payload_metadata": {
+        "address_bits": 8,
+        "cycles": 64,
+        "full_pattern_repetitions": 1,
+        "guest": null,
+        "kind": "uniform-random",
+        "memory_model": "shared-address",
+        "padding_cycles": 0,
+        "pattern_cycles": 64,
+        "read_ports": 1,
+        "real_cycles": 64,
+        "replayed_cycles": 0,
+        "seed": 1,
+        "source_cycles": 64,
+        "tail_pattern_cycles": 0,
+        "trace_mode": "random"
+      },
+      "address_relabeling": "Identity; source compact_to_original mapping applies directly.",
+      "work_normalization": {
+        "memory_access_cycles": 64,
+        "dummy_access_cycles": 0,
+        "memory_access_fraction": 1.0,
+        "ms_to_ms_per_million_memory_accesses": 15625.0
+      },
+      "proof_summary": {
+        "cycles": 64,
+        "memory_cells": 256,
+        "address_components": 4,
+        "chunk_bits": 2,
+        "committed_bits": 16384,
+        "packed_field_elements": 128,
+        "mosaic_claims": 33,
+        "commitment_components": [
+          {
+            "name": "ram/ra0/1",
+            "log_size": 8
+          },
+          {
+            "name": "ram/ra0/2",
+            "log_size": 8
+          },
+          {
+            "name": "ram/ra0/3",
+            "log_size": 8
+          },
+          {
+            "name": "ram/ra0/4",
+            "log_size": 8
+          },
+          {
+            "name": "ram/inc",
+            "log_size": 12
+          },
+          {
+            "name": "input/rv0",
+            "log_size": 12
+          }
+        ],
+        "commitment_footprint": {
+          "address_encoding_bits": 1024,
+          "read_write_value_bits": 4096,
+          "increment_bits": 4096,
+          "raw_binary_address_bits": 0,
+          "other_bits": 0,
+          "populated_bits": 9216,
+          "padding_bits": 7168,
+          "populated_bits_per_cycle": 144,
+          "padded_bits_per_cycle": 256
+        }
+      },
+      "samples": [
+        {
+          "prover_ms": 2.895632,
+          "virtualization_ms": 0.32932300000000003,
+          "commitment_ms": 0.05726,
+          "everything_else_ms": 2.838372,
+          "commitment_fraction": 0.019774612243544758,
+          "verifier_ms": 2.3740639999999997,
+          "unattributed_ms": 0.0723790000000002,
+          "stages_ms": {
+            "mosaic.batch": 0.811813,
+            "pcs.commit": 0.05726,
+            "pcs.ligerito_open": 0.701999,
+            "pcs.open": 0.00042500000000000003,
+            "pcs.ringswitch": 0.162796,
+            "ram.claims": 0.010797,
+            "ram.pack": 0.002517,
+            "ram.statement": 0.031402,
+            "ram.twist": 0.000314,
+            "ram.witness": 0.002447,
+            "twist.final": 0.13237200000000002,
+            "twist.onehot": 0.16866599999999998,
+            "twist.other": 0.133472,
+            "twist.rw.address": 0.090208,
+            "twist.rw.cycles": 0.098382,
+            "twist.rw.setup": 0.011874000000000001,
+            "twist.val": 0.077186,
+            "twist.virtualization": 0.14245100000000002,
+            "virt.tree.build": 0.00295,
+            "virt.tree.layers": 0.183922
+          }
+        }
+      ]
+    }
+  ],
+  "dummy_comparisons": [],
+  "virtualization_comparisons": [
+    {
+      "payload": "random",
+      "guest_program": null,
+      "guest_rows": null,
+      "layout": "natural",
+      "chunk_bits": 2,
+      "address_components": 4,
+      "prover": {
+        "flat_ms": 3.390201,
+        "gkr_tree_ms": 2.895632,
+        "speedup": 1.1707982920481608,
+        "saving_fraction": 0.1458819108365551
+      },
+      "virtualization": {
+        "flat_ms": 0.411032,
+        "gkr_tree_ms": 0.32932300000000003,
+        "speedup": 1.2481120359039604,
+        "saving_fraction": 0.19878987524085712
+      },
+      "verifier": {
+        "flat_ms": 3.404808,
+        "gkr_tree_ms": 2.3740639999999997,
+        "speedup": 1.4341685818073988,
+        "saving_fraction": 0.30273190147579554
+      },
+      "flat_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 12,
+        "round_message_field_elements": 42,
+        "node_evaluation_field_elements": 15,
+        "field_payload_bytes": 912
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 12,
+        "round_message_field_elements": 36,
+        "node_evaluation_field_elements": 18,
+        "field_payload_bytes": 864
+      }
+    }
+  ]
+}

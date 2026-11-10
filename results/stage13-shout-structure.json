@@ -1,0 +1,2123 @@
+{
+  "cases": [
+    {
+      "median": {
+        "main_commit_ms": 48.266238,
+        "main_open_ms": 128.266683,
+        "onehot_ms": 32.359469000000004,
+        "prove_ms": 244.85595700000002,
+        "read_ms": 4.590395,
+        "verify_ms": 13.441081,
+        "virtualization_ms": 20.063134
+      },
+      "name": "pointer-compact",
+      "query_values_sha256": "adb5bcfdf2f23dbeb7272637c84a818ebae45cf4b2f10f4f6136d1e33e2acacb",
+      "samples": [
+        {
+          "case_position": 0,
+          "exclusive_stage_ms": {
+            "lookup.claims": 2.3563289999999997,
+            "lookup.main.commit": 48.266559,
+            "lookup.main.open": 0.014450000000000001,
+            "lookup.mosaic": 23.018869000000002,
+            "lookup.pack": 4.865908,
+            "lookup.statement": 0.32250300000000004,
+            "lookup.witness": 0.9862029999999999,
+            "pcs.ligerito_open": 77.275846,
+            "pcs.ringswitch": 31.77773,
+            "shout.onehot": 32.359469000000004,
+            "shout.read": 4.0085679999999995,
+            "shout.virtualization": 18.252513
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 0,
+          "main_commit_ms": 48.266238,
+          "main_open_ms": 132.085031,
+          "onehot_ms": 32.359469000000004,
+          "prove_ms": 245.65295600000002,
+          "read_ms": 4.0085679999999995,
+          "trace_sha256": "4a315f8ff486320d1c9cba5f37c8948df60a15d9fd83346d4391e9621f127f55",
+          "verified": true,
+          "verify_ms": 11.409391,
+          "virtualization_ms": 18.252513
+        },
+        {
+          "case_position": 3,
+          "exclusive_stage_ms": {
+            "lookup.claims": 2.462967,
+            "lookup.main.commit": 41.255923,
+            "lookup.main.open": 0.013975999999999999,
+            "lookup.mosaic": 26.293022999999998,
+            "lookup.pack": 4.792552000000001,
+            "lookup.statement": 0.360178,
+            "lookup.witness": 0.8980490000000001,
+            "pcs.ligerito_open": 56.374274,
+            "pcs.ringswitch": 24.082569000000003,
+            "shout.onehot": 26.230386000000003,
+            "shout.read": 4.590395,
+            "shout.virtualization": 24.353718999999998
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 1,
+          "main_commit_ms": 41.25573,
+          "main_open_ms": 106.761694,
+          "onehot_ms": 26.230386000000003,
+          "prove_ms": 214.02872100000002,
+          "read_ms": 4.590395,
+          "trace_sha256": "4a315f8ff486320d1c9cba5f37c8948df60a15d9fd83346d4391e9621f127f55",
+          "verified": true,
+          "verify_ms": 13.441081,
+          "virtualization_ms": 24.353718999999998
+        },
+        {
+          "case_position": 2,
+          "exclusive_stage_ms": {
+            "lookup.claims": 2.407917,
+            "lookup.main.commit": 46.619656,
+            "lookup.main.open": 0.017723999999999997,
+            "lookup.mosaic": 28.103299000000003,
+            "lookup.pack": 5.358998000000001,
+            "lookup.statement": 0.391378,
+            "lookup.witness": 0.804939,
+            "pcs.ligerito_open": 66.023334,
+            "pcs.ringswitch": 34.124539000000006,
+            "shout.onehot": 31.295495,
+            "shout.read": 4.712606,
+            "shout.virtualization": 17.193351
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 2,
+          "main_commit_ms": 46.619333999999995,
+          "main_open_ms": 128.266683,
+          "onehot_ms": 31.295495,
+          "prove_ms": 239.209772,
+          "read_ms": 4.712606,
+          "trace_sha256": "4a315f8ff486320d1c9cba5f37c8948df60a15d9fd83346d4391e9621f127f55",
+          "verified": true,
+          "verify_ms": 14.580934000000001,
+          "virtualization_ms": 17.193351
+        },
+        {
+          "case_position": 1,
+          "exclusive_stage_ms": {
+            "lookup.claims": 2.8958880000000002,
+            "lookup.main.commit": 51.470729999999996,
+            "lookup.main.open": 0.01832,
+            "lookup.mosaic": 26.682097,
+            "lookup.pack": 5.009437999999999,
+            "lookup.statement": 0.335629,
+            "lookup.witness": 0.839322,
+            "pcs.ligerito_open": 61.29862,
+            "pcs.ringswitch": 34.458354,
+            "shout.onehot": 34.594398,
+            "shout.read": 4.881912000000001,
+            "shout.virtualization": 20.063134
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 3,
+          "main_commit_ms": 51.470556,
+          "main_open_ms": 122.45547699999999,
+          "onehot_ms": 34.594398,
+          "prove_ms": 244.85595700000002,
+          "read_ms": 4.881912000000001,
+          "trace_sha256": "4a315f8ff486320d1c9cba5f37c8948df60a15d9fd83346d4391e9621f127f55",
+          "verified": true,
+          "verify_ms": 12.935617,
+          "virtualization_ms": 20.063134
+        },
+        {
+          "case_position": 0,
+          "exclusive_stage_ms": {
+            "lookup.claims": 2.8681069999999997,
+            "lookup.main.commit": 51.843847,
+            "lookup.main.open": 0.017547,
+            "lookup.mosaic": 24.169316,
+            "lookup.pack": 5.040341000000001,
+            "lookup.statement": 0.366481,
+            "lookup.witness": 0.796026,
+            "pcs.ligerito_open": 73.46654199999999,
+            "pcs.ringswitch": 36.857427,
+            "shout.onehot": 35.398038,
+            "shout.read": 4.409884,
+            "shout.virtualization": 20.461065
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 4,
+          "main_commit_ms": 51.843557,
+          "main_open_ms": 134.508283,
+          "onehot_ms": 35.398038,
+          "prove_ms": 257.847999,
+          "read_ms": 4.409884,
+          "trace_sha256": "4a315f8ff486320d1c9cba5f37c8948df60a15d9fd83346d4391e9621f127f55",
+          "verified": true,
+          "verify_ms": 14.689466999999999,
+          "virtualization_ms": 20.461065
+        }
+      ],
+      "structure": {
+        "address_stream_sha256": "b7cd3a4fc549333fd5fa153d1896900e2b573256b3b1df331b748d76e4c9ba75",
+        "chunks": [
+          {
+            "adjacent_equal_fraction": 0.8763159526023413,
+            "chunk": 0,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 523288,
+            "dyadic_pair_equal_fraction": 0.9980926513671875,
+            "unique_digits": 16
+          },
+          {
+            "adjacent_equal_fraction": 0.9140404835133396,
+            "chunk": 1,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 524288,
+            "dyadic_pair_equal_fraction": 1.0,
+            "unique_digits": 5
+          },
+          {
+            "adjacent_equal_fraction": 1.0,
+            "chunk": 2,
+            "constant_digit": 0,
+            "digits": [
+              0
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 524288,
+            "dyadic_pair_equal_fraction": 1.0,
+            "unique_digits": 1
+          },
+          {
+            "adjacent_equal_fraction": 1.0,
+            "chunk": 3,
+            "constant_digit": 0,
+            "digits": [
+              0
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 524288,
+            "dyadic_pair_equal_fraction": 1.0,
+            "unique_digits": 1
+          }
+        ],
+        "distinct_addresses": 70,
+        "exact_equal_chunk_stream_groups": [
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        "lookups": 1048576,
+        "max_address": 70,
+        "min_address": 1,
+        "onehot_field_columns": 6,
+        "unique_onehot_components": 3
+      },
+      "trace_sha256": "4a315f8ff486320d1c9cba5f37c8948df60a15d9fd83346d4391e9621f127f55"
+    },
+    {
+      "median": {
+        "main_commit_ms": 52.621871,
+        "main_open_ms": 114.436704,
+        "onehot_ms": 39.610343,
+        "prove_ms": 234.722031,
+        "read_ms": 4.353455,
+        "verify_ms": 14.980931,
+        "virtualization_ms": 22.244046
+      },
+      "name": "pointer-relabeled",
+      "query_values_sha256": "adb5bcfdf2f23dbeb7272637c84a818ebae45cf4b2f10f4f6136d1e33e2acacb",
+      "samples": [
+        {
+          "case_position": 1,
+          "exclusive_stage_ms": {
+            "lookup.claims": 3.6425609999999997,
+            "lookup.main.commit": 52.622175,
+            "lookup.main.open": 0.023428,
+            "lookup.mosaic": 39.195056,
+            "lookup.pack": 4.686364,
+            "lookup.statement": 0.341769,
+            "lookup.witness": 0.935272,
+            "pcs.ligerito_open": 70.29299999999999,
+            "pcs.ringswitch": 49.634942,
+            "shout.onehot": 40.544815,
+            "shout.read": 4.894451,
+            "shout.virtualization": 24.281688
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 0,
+          "main_commit_ms": 52.621871,
+          "main_open_ms": 159.14230500000002,
+          "onehot_ms": 40.544815,
+          "prove_ms": 293.409728,
+          "read_ms": 4.894451,
+          "trace_sha256": "f670aa33f01fb99f199a4fee02fe3d814af7972684060bfff47027050d6d5496",
+          "verified": true,
+          "verify_ms": 15.152256,
+          "virtualization_ms": 24.281688
+        },
+        {
+          "case_position": 0,
+          "exclusive_stage_ms": {
+            "lookup.claims": 2.918224,
+            "lookup.main.commit": 58.112255000000005,
+            "lookup.main.open": 0.014891,
+            "lookup.mosaic": 25.058874,
+            "lookup.pack": 5.034883000000001,
+            "lookup.statement": 0.317533,
+            "lookup.witness": 0.811295,
+            "pcs.ligerito_open": 49.135534,
+            "pcs.ringswitch": 23.184628999999997,
+            "shout.onehot": 32.25546,
+            "shout.read": 4.353455,
+            "shout.virtualization": 23.769821999999998
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 1,
+          "main_commit_ms": 58.112122,
+          "main_open_ms": 97.391854,
+          "onehot_ms": 32.25546,
+          "prove_ms": 227.01065300000002,
+          "read_ms": 4.353455,
+          "trace_sha256": "f670aa33f01fb99f199a4fee02fe3d814af7972684060bfff47027050d6d5496",
+          "verified": true,
+          "verify_ms": 14.980931,
+          "virtualization_ms": 23.769821999999998
+        },
+        {
+          "case_position": 3,
+          "exclusive_stage_ms": {
+            "lookup.claims": 3.3775020000000002,
+            "lookup.main.commit": 43.616597,
+            "lookup.main.open": 0.01891,
+            "lookup.mosaic": 24.211638,
+            "lookup.pack": 4.795421,
+            "lookup.statement": 0.370399,
+            "lookup.witness": 0.888124,
+            "pcs.ligerito_open": 58.873656000000004,
+            "pcs.ringswitch": 30.699680999999998,
+            "shout.onehot": 39.610343,
+            "shout.read": 4.782726,
+            "shout.virtualization": 21.226234
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 2,
+          "main_commit_ms": 43.616452,
+          "main_open_ms": 113.801923,
+          "onehot_ms": 39.610343,
+          "prove_ms": 234.722031,
+          "read_ms": 4.782726,
+          "trace_sha256": "f670aa33f01fb99f199a4fee02fe3d814af7972684060bfff47027050d6d5496",
+          "verified": true,
+          "verify_ms": 14.722207,
+          "virtualization_ms": 21.226234
+        },
+        {
+          "case_position": 2,
+          "exclusive_stage_ms": {
+            "lookup.claims": 2.553087,
+            "lookup.main.commit": 41.625175,
+            "lookup.main.open": 0.017092,
+            "lookup.mosaic": 22.506741,
+            "lookup.pack": 4.856097999999999,
+            "lookup.statement": 0.319712,
+            "lookup.witness": 0.7778820000000001,
+            "pcs.ligerito_open": 61.91943,
+            "pcs.ringswitch": 29.99537,
+            "shout.onehot": 38.598675,
+            "shout.read": 4.095587,
+            "shout.virtualization": 22.244046
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 3,
+          "main_commit_ms": 41.624988,
+          "main_open_ms": 114.436704,
+          "onehot_ms": 38.598675,
+          "prove_ms": 231.614197,
+          "read_ms": 4.095587,
+          "trace_sha256": "f670aa33f01fb99f199a4fee02fe3d814af7972684060bfff47027050d6d5496",
+          "verified": true,
+          "verify_ms": 15.150889000000001,
+          "virtualization_ms": 22.244046
+        },
+        {
+          "case_position": 1,
+          "exclusive_stage_ms": {
+            "lookup.claims": 3.511096,
+            "lookup.main.commit": 56.407395,
+            "lookup.main.open": 0.018271,
+            "lookup.mosaic": 30.621434,
+            "lookup.pack": 5.396717,
+            "lookup.statement": 0.351497,
+            "lookup.witness": 0.8147850000000001,
+            "pcs.ligerito_open": 70.975318,
+            "pcs.ringswitch": 39.033502999999996,
+            "shout.onehot": 41.883946,
+            "shout.read": 4.350620999999999,
+            "shout.virtualization": 20.548011000000002
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 4,
+          "main_commit_ms": 56.407142,
+          "main_open_ms": 140.646043,
+          "onehot_ms": 41.883946,
+          "prove_ms": 276.13833,
+          "read_ms": 4.350620999999999,
+          "trace_sha256": "f670aa33f01fb99f199a4fee02fe3d814af7972684060bfff47027050d6d5496",
+          "verified": true,
+          "verify_ms": 13.966925999999999,
+          "virtualization_ms": 20.548011000000002
+        }
+      ],
+      "structure": {
+        "address_stream_sha256": "9f9183a748e0f84ec6cf284d5a596a282ee9f555887f974db17fdcff2a7727fe",
+        "chunks": [
+          {
+            "adjacent_equal_fraction": 0.880136375557304,
+            "chunk": 0,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 523288,
+            "dyadic_pair_equal_fraction": 0.9980926513671875,
+            "unique_digits": 16
+          },
+          {
+            "adjacent_equal_fraction": 0.8820465870347853,
+            "chunk": 1,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 523288,
+            "dyadic_pair_equal_fraction": 0.9980926513671875,
+            "unique_digits": 16
+          },
+          {
+            "adjacent_equal_fraction": 0.8815687957466085,
+            "chunk": 2,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 523288,
+            "dyadic_pair_equal_fraction": 0.9980926513671875,
+            "unique_digits": 16
+          },
+          {
+            "adjacent_equal_fraction": 0.8820465870347853,
+            "chunk": 3,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 523288,
+            "dyadic_pair_equal_fraction": 0.9980926513671875,
+            "unique_digits": 16
+          }
+        ],
+        "distinct_addresses": 70,
+        "exact_equal_chunk_stream_groups": [
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            3
+          ]
+        ],
+        "lookups": 1048576,
+        "max_address": 64339,
+        "min_address": 1424,
+        "onehot_field_columns": 8,
+        "unique_onehot_components": 4
+      },
+      "trace_sha256": "f670aa33f01fb99f199a4fee02fe3d814af7972684060bfff47027050d6d5496"
+    },
+    {
+      "median": {
+        "main_commit_ms": 49.487911000000004,
+        "main_open_ms": 125.896811,
+        "onehot_ms": 36.825196,
+        "prove_ms": 260.874706,
+        "read_ms": 5.133254,
+        "verify_ms": 15.043413000000001,
+        "virtualization_ms": 34.115925
+      },
+      "name": "random-full-domain",
+      "query_values_sha256": "46fe2923555a9fc44f0f960522b72c445e9e0517453038ac5a55931b8de1456f",
+      "samples": [
+        {
+          "case_position": 2,
+          "exclusive_stage_ms": {
+            "lookup.claims": 5.068413,
+            "lookup.main.commit": 54.964575,
+            "lookup.main.open": 0.016582000000000003,
+            "lookup.mosaic": 30.896393,
+            "lookup.pack": 5.099406,
+            "lookup.statement": 0.35010199999999997,
+            "lookup.witness": 1.009114,
+            "pcs.ligerito_open": 63.576598,
+            "pcs.ringswitch": 38.350751,
+            "shout.onehot": 37.812400000000004,
+            "shout.read": 4.644586,
+            "shout.virtualization": 34.115925
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 0,
+          "main_commit_ms": 54.964385,
+          "main_open_ms": 132.838208,
+          "onehot_ms": 37.812400000000004,
+          "prove_ms": 278.114915,
+          "read_ms": 4.644586,
+          "trace_sha256": "885f286c7c66369aa2c1b2d99e870e20accbaff4f67ce943b917a38ba1c68d5b",
+          "verified": true,
+          "verify_ms": 15.043413000000001,
+          "virtualization_ms": 34.115925
+        },
+        {
+          "case_position": 1,
+          "exclusive_stage_ms": {
+            "lookup.claims": 4.023217,
+            "lookup.main.commit": 41.457911,
+            "lookup.main.open": 0.014615,
+            "lookup.mosaic": 23.443454,
+            "lookup.pack": 5.113391,
+            "lookup.statement": 0.407941,
+            "lookup.witness": 1.006557,
+            "pcs.ligerito_open": 56.449729,
+            "pcs.ringswitch": 29.63685,
+            "shout.onehot": 29.153031,
+            "shout.read": 4.096687,
+            "shout.virtualization": 25.840376000000003
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 1,
+          "main_commit_ms": 41.457658,
+          "main_open_ms": 109.541877,
+          "onehot_ms": 29.153031,
+          "prove_ms": 222.79513,
+          "read_ms": 4.096687,
+          "trace_sha256": "885f286c7c66369aa2c1b2d99e870e20accbaff4f67ce943b917a38ba1c68d5b",
+          "verified": true,
+          "verify_ms": 15.096316999999999,
+          "virtualization_ms": 25.840376000000003
+        },
+        {
+          "case_position": 0,
+          "exclusive_stage_ms": {
+            "lookup.claims": 4.223526,
+            "lookup.main.commit": 46.580113,
+            "lookup.main.open": 0.014848,
+            "lookup.mosaic": 26.058674,
+            "lookup.pack": 5.231603,
+            "lookup.statement": 0.35856899999999997,
+            "lookup.witness": 0.983125,
+            "pcs.ligerito_open": 64.05279399999999,
+            "pcs.ringswitch": 35.772137,
+            "shout.onehot": 33.965541,
+            "shout.read": 5.133254,
+            "shout.virtualization": 35.300422
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 2,
+          "main_commit_ms": 46.579952,
+          "main_open_ms": 125.896811,
+          "onehot_ms": 33.965541,
+          "prove_ms": 259.874989,
+          "read_ms": 5.133254,
+          "trace_sha256": "885f286c7c66369aa2c1b2d99e870e20accbaff4f67ce943b917a38ba1c68d5b",
+          "verified": true,
+          "verify_ms": 13.778098,
+          "virtualization_ms": 35.300422
+        },
+        {
+          "case_position": 3,
+          "exclusive_stage_ms": {
+            "lookup.claims": 3.8671059999999997,
+            "lookup.main.commit": 49.488085,
+            "lookup.main.open": 0.016572,
+            "lookup.mosaic": 28.824549,
+            "lookup.pack": 4.567345,
+            "lookup.statement": 0.35405000000000003,
+            "lookup.witness": 1.04128,
+            "pcs.ligerito_open": 61.760006,
+            "pcs.ringswitch": 34.954,
+            "shout.onehot": 36.825196,
+            "shout.read": 6.100986,
+            "shout.virtualization": 31.046641
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 3,
+          "main_commit_ms": 49.487911000000004,
+          "main_open_ms": 125.552513,
+          "onehot_ms": 36.825196,
+          "prove_ms": 260.874706,
+          "read_ms": 6.100986,
+          "trace_sha256": "885f286c7c66369aa2c1b2d99e870e20accbaff4f67ce943b917a38ba1c68d5b",
+          "verified": true,
+          "verify_ms": 14.681549,
+          "virtualization_ms": 31.046641
+        },
+        {
+          "case_position": 2,
+          "exclusive_stage_ms": {
+            "lookup.claims": 5.911482,
+            "lookup.main.commit": 56.580967,
+            "lookup.main.open": 0.017265000000000003,
+            "lookup.mosaic": 31.583513,
+            "lookup.pack": 4.720089000000001,
+            "lookup.statement": 0.400347,
+            "lookup.witness": 1.139621,
+            "pcs.ligerito_open": 72.079738,
+            "pcs.ringswitch": 37.812028,
+            "shout.onehot": 41.613598,
+            "shout.read": 5.1458759999999995,
+            "shout.virtualization": 37.237046
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 4,
+          "main_commit_ms": 56.580777999999995,
+          "main_open_ms": 141.490184,
+          "onehot_ms": 41.613598,
+          "prove_ms": 296.621734,
+          "read_ms": 5.1458759999999995,
+          "trace_sha256": "885f286c7c66369aa2c1b2d99e870e20accbaff4f67ce943b917a38ba1c68d5b",
+          "verified": true,
+          "verify_ms": 15.654366999999999,
+          "virtualization_ms": 37.237046
+        }
+      ],
+      "structure": {
+        "address_stream_sha256": "82d0b5227b146eb35116069dffad6ea4f373699c92fbc8cd23cd33356c32d11a",
+        "chunks": [
+          {
+            "adjacent_equal_fraction": 0.062258779772548456,
+            "chunk": 0,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 32775,
+            "dyadic_pair_equal_fraction": 0.06251335144042969,
+            "unique_digits": 16
+          },
+          {
+            "adjacent_equal_fraction": 0.06303983978256204,
+            "chunk": 1,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 33097,
+            "dyadic_pair_equal_fraction": 0.06312751770019531,
+            "unique_digits": 16
+          },
+          {
+            "adjacent_equal_fraction": 0.06247907874973178,
+            "chunk": 2,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 32553,
+            "dyadic_pair_equal_fraction": 0.06208992004394531,
+            "unique_digits": 16
+          },
+          {
+            "adjacent_equal_fraction": 0.06228452900364781,
+            "chunk": 3,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 32790,
+            "dyadic_pair_equal_fraction": 0.06254196166992188,
+            "unique_digits": 16
+          }
+        ],
+        "distinct_addresses": 65536,
+        "exact_equal_chunk_stream_groups": [
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            3
+          ]
+        ],
+        "lookups": 1048576,
+        "max_address": 65535,
+        "min_address": 0,
+        "onehot_field_columns": 8,
+        "unique_onehot_components": 4
+      },
+      "trace_sha256": "885f286c7c66369aa2c1b2d99e870e20accbaff4f67ce943b917a38ba1c68d5b"
+    },
+    {
+      "median": {
+        "main_commit_ms": 45.33023,
+        "main_open_ms": 124.043026,
+        "onehot_ms": 32.554252,
+        "prove_ms": 227.837758,
+        "read_ms": 3.9796839999999998,
+        "verify_ms": 13.696342,
+        "virtualization_ms": 21.01879
+      },
+      "name": "random-same-working-set",
+      "query_values_sha256": "65a534acba4196a70b54872dd3310c3eaeb259bedeceece45307e64a181a3982",
+      "samples": [
+        {
+          "case_position": 3,
+          "exclusive_stage_ms": {
+            "lookup.claims": 3.372263,
+            "lookup.main.commit": 47.191976,
+            "lookup.main.open": 0.014391,
+            "lookup.mosaic": 30.810269,
+            "lookup.pack": 4.7690090000000005,
+            "lookup.statement": 0.367982,
+            "lookup.witness": 0.784171,
+            "pcs.ligerito_open": 63.68587000000001,
+            "pcs.ringswitch": 38.351244,
+            "shout.onehot": 40.006829,
+            "shout.read": 4.188102,
+            "shout.virtualization": 23.598536
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 0,
+          "main_commit_ms": 47.191822,
+          "main_open_ms": 132.859668,
+          "onehot_ms": 40.006829,
+          "prove_ms": 259.19338200000004,
+          "read_ms": 4.188102,
+          "trace_sha256": "823eaa5f5d054772677a2d986d3f4a2ace76cbc8184ca412c9c6892f07269dcf",
+          "verified": true,
+          "verify_ms": 13.324747,
+          "virtualization_ms": 23.598536
+        },
+        {
+          "case_position": 2,
+          "exclusive_stage_ms": {
+            "lookup.claims": 3.357265,
+            "lookup.main.commit": 39.756419,
+            "lookup.main.open": 0.014487,
+            "lookup.mosaic": 21.95688,
+            "lookup.pack": 5.264805,
+            "lookup.statement": 0.364228,
+            "lookup.witness": 0.800452,
+            "pcs.ligerito_open": 51.313757,
+            "pcs.ringswitch": 24.653413999999998,
+            "shout.onehot": 28.203802,
+            "shout.read": 3.8385670000000003,
+            "shout.virtualization": 21.01879
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 1,
+          "main_commit_ms": 39.756225,
+          "main_open_ms": 97.936478,
+          "onehot_ms": 28.203802,
+          "prove_ms": 202.75284,
+          "read_ms": 3.8385670000000003,
+          "trace_sha256": "823eaa5f5d054772677a2d986d3f4a2ace76cbc8184ca412c9c6892f07269dcf",
+          "verified": true,
+          "verify_ms": 13.539107,
+          "virtualization_ms": 21.01879
+        },
+        {
+          "case_position": 1,
+          "exclusive_stage_ms": {
+            "lookup.claims": 3.043009,
+            "lookup.main.commit": 42.273419,
+            "lookup.main.open": 0.015786,
+            "lookup.mosaic": 24.841207,
+            "lookup.pack": 5.121632,
+            "lookup.statement": 0.373382,
+            "lookup.witness": 0.9460179999999999,
+            "pcs.ligerito_open": 59.755725000000005,
+            "pcs.ringswitch": 34.125658,
+            "shout.onehot": 32.554252,
+            "shout.read": 3.9796839999999998,
+            "shout.virtualization": 18.116525000000003
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 2,
+          "main_commit_ms": 42.273182999999996,
+          "main_open_ms": 118.736368,
+          "onehot_ms": 32.554252,
+          "prove_ms": 227.399661,
+          "read_ms": 3.9796839999999998,
+          "trace_sha256": "823eaa5f5d054772677a2d986d3f4a2ace76cbc8184ca412c9c6892f07269dcf",
+          "verified": true,
+          "verify_ms": 15.674997,
+          "virtualization_ms": 18.116525000000003
+        },
+        {
+          "case_position": 0,
+          "exclusive_stage_ms": {
+            "lookup.claims": 3.293543,
+            "lookup.main.commit": 45.330392999999994,
+            "lookup.main.open": 0.019715,
+            "lookup.mosaic": 23.160468,
+            "lookup.pack": 5.0233170000000005,
+            "lookup.statement": 0.372079,
+            "lookup.witness": 0.803465,
+            "pcs.ligerito_open": 66.264765,
+            "pcs.ringswitch": 34.599667000000004,
+            "shout.onehot": 27.7549,
+            "shout.read": 3.9422989999999998,
+            "shout.virtualization": 15.272058999999999
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 3,
+          "main_commit_ms": 45.33023,
+          "main_open_ms": 124.043026,
+          "onehot_ms": 27.7549,
+          "prove_ms": 227.837758,
+          "read_ms": 3.9422989999999998,
+          "trace_sha256": "823eaa5f5d054772677a2d986d3f4a2ace76cbc8184ca412c9c6892f07269dcf",
+          "verified": true,
+          "verify_ms": 13.696342,
+          "virtualization_ms": 15.272058999999999
+        },
+        {
+          "case_position": 3,
+          "exclusive_stage_ms": {
+            "lookup.claims": 4.03582,
+            "lookup.main.commit": 53.957685,
+            "lookup.main.open": 0.019821,
+            "lookup.mosaic": 28.744639,
+            "lookup.pack": 4.989831000000001,
+            "lookup.statement": 0.373896,
+            "lookup.witness": 0.805631,
+            "pcs.ligerito_open": 71.653919,
+            "pcs.ringswitch": 38.125363,
+            "shout.onehot": 37.803107000000004,
+            "shout.read": 4.688775,
+            "shout.virtualization": 28.980499
+          },
+          "input_proof_stats": {
+            "argument_bits": 67108864,
+            "core_bits": 83886080,
+            "input_address_claims": 16,
+            "main_claims": 29,
+            "main_committed_bits": 268435456,
+            "onehot_message_fields": 80,
+            "onehot_original_output_components": 4,
+            "onehot_rounds": 20,
+            "ra_evals": 1,
+            "read_message_fields": 32,
+            "read_rounds": 16,
+            "virtualization_branch": "flat-single-point",
+            "virtualization_leaf_evals": 4,
+            "virtualization_message_fields": 100,
+            "virtualization_rounds": 20
+          },
+          "iteration": 4,
+          "main_commit_ms": 53.957346,
+          "main_open_ms": 138.540615,
+          "onehot_ms": 37.803107000000004,
+          "prove_ms": 276.348502,
+          "read_ms": 4.688775,
+          "trace_sha256": "823eaa5f5d054772677a2d986d3f4a2ace76cbc8184ca412c9c6892f07269dcf",
+          "verified": true,
+          "verify_ms": 14.506547,
+          "virtualization_ms": 28.980499
+        }
+      ],
+      "structure": {
+        "address_stream_sha256": "4daec771caaa3b6121e61ce932a45fdf36c4c82c9b71b6ab2757ad38fbd08045",
+        "chunks": [
+          {
+            "adjacent_equal_fraction": 0.06305223756049877,
+            "chunk": 0,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 32952,
+            "dyadic_pair_equal_fraction": 0.0628509521484375,
+            "unique_digits": 16
+          },
+          {
+            "adjacent_equal_fraction": 0.21292706768709915,
+            "chunk": 1,
+            "constant_digit": null,
+            "digits": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 112020,
+            "dyadic_pair_equal_fraction": 0.21366119384765625,
+            "unique_digits": 5
+          },
+          {
+            "adjacent_equal_fraction": 1.0,
+            "chunk": 2,
+            "constant_digit": 0,
+            "digits": [
+              0
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 524288,
+            "dyadic_pair_equal_fraction": 1.0,
+            "unique_digits": 1
+          },
+          {
+            "adjacent_equal_fraction": 1.0,
+            "chunk": 3,
+            "constant_digit": 0,
+            "digits": [
+              0
+            ],
+            "dyadic_pair_count": 524288,
+            "dyadic_pair_equal_count": 524288,
+            "dyadic_pair_equal_fraction": 1.0,
+            "unique_digits": 1
+          }
+        ],
+        "distinct_addresses": 70,
+        "exact_equal_chunk_stream_groups": [
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        "lookups": 1048576,
+        "max_address": 70,
+        "min_address": 1,
+        "onehot_field_columns": 6,
+        "unique_onehot_components": 3
+      },
+      "trace_sha256": "823eaa5f5d054772677a2d986d3f4a2ace76cbc8184ca412c9c6892f07269dcf"
+    }
+  ],
+  "config": {
+    "address_bits": 16,
+    "chunk_bits": 4,
+    "d": 4,
+    "log_lookups": 20,
+    "log_rate": 2,
+    "lookups": 1048576,
+    "method": "shout",
+    "profile": "provable-120",
+    "repeat": 5,
+    "seed": 1,
+    "threads": 8,
+    "virtualization": "flat-single-point",
+    "warmup": 1
+  },
+  "environment": {
+    "compiled_arch": "x86_64",
+    "compiled_avx2": true,
+    "compiled_pclmulqdq": true,
+    "compiled_sha": true,
+    "compiled_vpclmulqdq": true,
+    "executable_sha256": "689367efa63fc9ea8bb47cbbdb7bc518359084160e73588ed87cdfb3d9d22bf3"
+  },
+  "measured_case_order": [
+    {
+      "case": "pointer-compact",
+      "iteration": 0,
+      "position": 0
+    },
+    {
+      "case": "pointer-relabeled",
+      "iteration": 0,
+      "position": 1
+    },
+    {
+      "case": "random-full-domain",
+      "iteration": 0,
+      "position": 2
+    },
+    {
+      "case": "random-same-working-set",
+      "iteration": 0,
+      "position": 3
+    },
+    {
+      "case": "pointer-relabeled",
+      "iteration": 1,
+      "position": 0
+    },
+    {
+      "case": "random-full-domain",
+      "iteration": 1,
+      "position": 1
+    },
+    {
+      "case": "random-same-working-set",
+      "iteration": 1,
+      "position": 2
+    },
+    {
+      "case": "pointer-compact",
+      "iteration": 1,
+      "position": 3
+    },
+    {
+      "case": "random-full-domain",
+      "iteration": 2,
+      "position": 0
+    },
+    {
+      "case": "random-same-working-set",
+      "iteration": 2,
+      "position": 1
+    },
+    {
+      "case": "pointer-compact",
+      "iteration": 2,
+      "position": 2
+    },
+    {
+      "case": "pointer-relabeled",
+      "iteration": 2,
+      "position": 3
+    },
+    {
+      "case": "random-same-working-set",
+      "iteration": 3,
+      "position": 0
+    },
+    {
+      "case": "pointer-compact",
+      "iteration": 3,
+      "position": 1
+    },
+    {
+      "case": "pointer-relabeled",
+      "iteration": 3,
+      "position": 2
+    },
+    {
+      "case": "random-full-domain",
+      "iteration": 3,
+      "position": 3
+    },
+    {
+      "case": "pointer-compact",
+      "iteration": 4,
+      "position": 0
+    },
+    {
+      "case": "pointer-relabeled",
+      "iteration": 4,
+      "position": 1
+    },
+    {
+      "case": "random-full-domain",
+      "iteration": 4,
+      "position": 2
+    },
+    {
+      "case": "random-same-working-set",
+      "iteration": 4,
+      "position": 3
+    }
+  ],
+  "notes": [
+    "Payload generation, permutation, structural statistics and JSON work are outside prover timing.",
+    "Every warmup/measured proof is independently verified. Prove duration excludes verification and returned-proof destruction.",
+    "Rotating variant order limits fixed-order bias; five samples are descriptive, not confidence intervals.",
+    "The relabel changes bit/chunk structure and numeric geometry simultaneously; it does not isolate pure cache effects.",
+    "Input proof statistics count IOP fields only where named, not an encoded whole-proof byte length."
+  ],
+  "provenance": {
+    "production_source_sha256": "92b17bba03e779b17b7de1ae1748a54a696f961ce9b241d11ce0b8f7bd37a55a",
+    "production_source_sha256_after": "92b17bba03e779b17b7de1ae1748a54a696f961ce9b241d11ce0b8f7bd37a55a",
+    "production_sources_unchanged": true,
+    "production_files_sha256": {
+      "Cargo.lock": "4c2472353fbf88e162ffcaefe78a978f1022c7ed0999a3de5b271a7fb263a1c6",
+      "Cargo.toml": "daba3cbbfa657b7f2b56a2487417793a85f2976c5aa66ea3e47dea64d730c32c",
+      "crates/lookup-argument/Cargo.toml": "c01ac85733aedf27ce8e2b3701703a38eb30e8f6061a3a19f1350ba83a150593",
+      "crates/lookup-argument/src/lib.rs": "0032590b0fa3eeb17e85c499322a671ebdecf4abbe463ef8245c8cef1f9ae814",
+      "crates/lookup-argument/src/logup.rs": "67e27530c28ce903683993ab2cd5d2acd6fa58b2aeee7e1197cb75540114e061",
+      "crates/lookup-argument/src/shout.rs": "1c2a5d5df30c11a21c96354fd3b657a7de48d138ffdf81aaa8321df717b97711",
+      "crates/lookup-argument/tests/indexed_lookup.rs": "1ed7e8e12ad6ecd158e1bb7e2aa85bce502373c788fadbcd31ebb2409ce591e7",
+      "crates/ram-payload/Cargo.toml": "c3308ab9ecd7702cfc15949f39a4e93d43c93f29ed2fab5c7d011c93c8a909ff",
+      "crates/ram-payload/src/lib.rs": "def11d1f2ec32432f076c4cfac6095585316495e38b6fa817ce0768016ebb2dd",
+      "crates/ram-payload/tests/payloads.rs": "718c1d9e24a12c8611f241d20d4d17f2db97eaa86b1903ad32763151871fdc66",
+      "payloads/open-magnetar/binary-search.elf": "113774573f78a6a37af6bde3c78210400dc38116671a5d855d6db79df4f86a29",
+      "payloads/open-magnetar/erc20-mixed-block.elf": "1d764ab403a6a41e327d078a2115ca6757f159d49efa4a2b69e4f75a682be3fe",
+      "payloads/open-magnetar/pointer-chase.elf": "0641051ed507ef5e860fc2483112be591a0b0948d8e70ed9bfb2c418e4e2708f",
+      "vendor/bitz-logup/Cargo.toml": "4a7109c364f2dd9f6d55c8dcbbe1e329f795f3bee1dbfcc358e54534b3fec3ea",
+      "vendor/bitz-logup/LICENSE": "408b9b4599bf389f97538c1f066bbc74912522d02350ae44528e09f8ccf3c3fc",
+      "vendor/bitz-logup/src/fraction.rs": "f4adce0573b2bcc87c526528814f652682d69000354d140ebd79e5ab7c41995c",
+      "vendor/bitz-logup/src/inner_product.rs": "de14e8307efd93b655887cfbf71befa5c6308d5219828e8c8116749382106e89",
+      "vendor/bitz-logup/src/lib.rs": "a07e7a705e1b1d28cc8046057aa13d55621178c083705bc4d7f79b5fe8825c85",
+      "vendor/bitz-logup/src/product.rs": "5c0f4a54e925fa631a3af8666a16e8e087f3dee6a9ceabc70cdd0b0a83f0ae51",
+      "vendor/bitz-logup/src/tests.rs": "7ea433284521ca863481bfdafdf1b69fcc694d784bc5339b97c29c720e264867",
+      "vendor/open-magnetar/Cargo.toml": "9eb1e7576dcb6d049a77316694f67763546250b36c69336da97c7a031d6f3d38",
+      "vendor/open-magnetar/LICENSE-APACHE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "vendor/open-magnetar/LICENSE-FLOCK-MIT": "ed21a0d573a473913534aa8462b410c4c03d899900096bf3bdeb8fea650a01b5",
+      "vendor/open-magnetar/LICENSE-JOLT-MIT": "452532d531b7503f55729a3b1fe136de15814f14ae5ac18a0e33c6476b70997b",
+      "vendor/open-magnetar/LICENSE-MIT": "c7726423122f844a48acca817af8fa6538a3d51bd82c6a71a1ab6802d2b7bc20",
+      "vendor/open-magnetar/crates/om-elf/Cargo.toml": "32820e4a1e9aaa27d3ee6c72679407e49c47cf71868d94bb822957f9bddbd326",
+      "vendor/open-magnetar/crates/om-elf/src/abi.rs": "b399e2105b7267563d972f5623ab713c9db8e7e507c8e693b10d5fb5710fd2d0",
+      "vendor/open-magnetar/crates/om-elf/src/elf.rs": "5e54ce57b9d4c3ca36530754e47e3235b92c6fb5d16e01c7465bdc1a1b7fc50c",
+      "vendor/open-magnetar/crates/om-elf/src/lib.rs": "4375ab508dad76e562642308f9111dfbc05c12f08a53e6ed44ed5eefc4c3b523",
+      "vendor/open-magnetar/crates/om-elf/tests/abi.rs": "034daf3f6e18c2b742e2a94f4db1ab15f276e08375cf89620d05c0b52699e551",
+      "vendor/open-magnetar/crates/om-elf/tests/elf.rs": "39ec5ca9ba148a22ab74fb5124e1d7ba60dfca83e80fef2a1395c25170919df2",
+      "vendor/open-magnetar/crates/om-field/Cargo.toml": "a6ac79410e37f6405884a2e167ce123f5b6e66ddfba533d98f65e6c6dec4cd20",
+      "vendor/open-magnetar/crates/om-field/src/lib.rs": "5caadb799ad0bd7bd89ef1ca73a4a7bc3c27fccd97791c9b620057acf63240f4",
+      "vendor/open-magnetar/crates/om-field/tests/field.rs": "7b7cc8e1cc0e3c6aa1647d26e2e4d977eeddc1e72223c8a097d4205c4629c7b9",
+      "vendor/open-magnetar/crates/om-isa/Cargo.toml": "c752350573a620069808ea5aadc62a645dc648ef32ddc05967b2bbfd75c29814",
+      "vendor/open-magnetar/crates/om-isa/src/bytecode.rs": "955e90c6a188af7a28514b0deedee355407d3056f80c161ad3b62b6e5c4c1634",
+      "vendor/open-magnetar/crates/om-isa/src/lib.rs": "b7ad215197df048efb8cdc84768eae6d48eb577bef2b042946046aaf05362b3d",
+      "vendor/open-magnetar/crates/om-isa/src/riscv.rs": "747a27df13ce366ccdf01c8528db147ff52c42ae7d7ef3dd714f3bfadfb8fcd5",
+      "vendor/open-magnetar/crates/om-isa/tests/common/mod.rs": "896ed28d2ef5013f1be0783e08e27f9a17b38d9db060ce319e89b370f2e5d8f7",
+      "vendor/open-magnetar/crates/om-isa/tests/isa.rs": "6ec7fc0b2c2d00348496923322de8a39403255adeee43006a1b8aac7a2d7ef5f",
+      "vendor/open-magnetar/crates/om-memcheck/Cargo.toml": "4890bccf1b0ff45c95a097374f11aeff42e25ad12bfad55b1fc2c10e08ca8d7a",
+      "vendor/open-magnetar/crates/om-memcheck/src/eq_factor.rs": "bd5dceb5561217270094c63406c7b2351eec276a0aaa2cf5ebd72549d32cf01b",
+      "vendor/open-magnetar/crates/om-memcheck/src/gkr_kernels.rs": "13f02fe3924d82b2df1041f25d1fc92aabb7e77bf137e32f8929f57d75df2e3c",
+      "vendor/open-magnetar/crates/om-memcheck/src/lazy.rs": "5c9831fea1c02f2fee9d8668d897254bda4f786d61987d4ff56e798151348497",
+      "vendor/open-magnetar/crates/om-memcheck/src/lib.rs": "d083f65ad67e6ca8101ff9c6c30adc976b0ac72a46f95f01f4bcc41c2311e30a",
+      "vendor/open-magnetar/crates/om-memcheck/src/onehot.rs": "2a7a67d6209d67fa910db24f27f3724428dc8bd6582d79746a78d1c0e1b0bbe7",
+      "vendor/open-magnetar/crates/om-memcheck/src/onehot_kernels.rs": "c97b100a7b818deee8e7035a2af6276c7f05e50e65e5b9348cb53765e54996b9",
+      "vendor/open-magnetar/crates/om-memcheck/src/shout.rs": "0df00508882bd182a8aa5bfaa9519c1a9376141cc085223e026b74f86c59f414",
+      "vendor/open-magnetar/crates/om-memcheck/src/sumcheck_kernels.rs": "cece6c60798b3c34e511f906f82f779086a6499a7411fe58b9826d90b938fea5",
+      "vendor/open-magnetar/crates/om-memcheck/src/twist.rs": "a2667f6dc0ffaccfabdbf705b556eefd33366d0c968942c63930ee69d02acdf5",
+      "vendor/open-magnetar/crates/om-memcheck/src/virt_claim_reduction.rs": "0b8e8a629cdae377e21e92f3bb7a8ef68b0a8c6bddd6afa2c1204c66a09be871",
+      "vendor/open-magnetar/crates/om-memcheck/src/virt_flat.rs": "7b864a06896dddd6413ad3b3f00bfcbc9c8c1b195f128235e8f35b7abaa44465",
+      "vendor/open-magnetar/crates/om-memcheck/src/virt_product.rs": "6f200436886d3eb4ec99be488427767e19a9bcbc53ca4c100cc231eb019832df",
+      "vendor/open-magnetar/crates/om-memcheck/src/virt_selectors.rs": "6fbf4e299615ed1a742826e545c9478d99df415220ad207b01d26beaa958976b",
+      "vendor/open-magnetar/crates/om-memcheck/src/virt_single.rs": "f2ace8ac77d6d80c96f86da6f4645d61901ea4e052b18089a454b9913115128f",
+      "vendor/open-magnetar/crates/om-memcheck/src/virt_tree.rs": "f63ea7e04d069df0b9429ad48db8322a375858a82da8687d678a385eded60ce7",
+      "vendor/open-magnetar/crates/om-memcheck/tests/common/mod.rs": "d8ff5cd00cb217f43bbf1e49ed515fa11f65c5328398a027f13406e142fd8b75",
+      "vendor/open-magnetar/crates/om-memcheck/tests/onehot.rs": "0f1db98ee4f3a77b38888da4f5eab51d510fbf614f0e7f4a3a914aabe77da625",
+      "vendor/open-magnetar/crates/om-memcheck/tests/shout.rs": "6e2173e85c18f15482b8fe3bfd4770be6a78681be8ae8e1653a566048448ba14",
+      "vendor/open-magnetar/crates/om-memcheck/tests/twist.rs": "3e99d9046d018db8ffd7910e6203e78ad695fbe5662292837a9a4f10350962dc",
+      "vendor/open-magnetar/crates/om-memcheck/tests/vectors.rs": "1b577d1072b73cc1fec31ed1c94a56d4d2eda1ff735686eaa4436a486880e80e",
+      "vendor/open-magnetar/crates/om-mosaic/Cargo.toml": "6ec4450dc4eddfa480d002f2bd98332065710b76d747632877e9722d59a72168",
+      "vendor/open-magnetar/crates/om-mosaic/src/lib.rs": "4a07c0cfc7c43f3c1f8ca226a28477bc4239ad09f8a2e3f4fdd55ba888225676",
+      "vendor/open-magnetar/crates/om-mosaic/src/mosaic.rs": "6bc9c41a2fb82c78102b9b633919c75431e2ef0e9fb680b7098ac86531680477",
+      "vendor/open-magnetar/crates/om-mosaic/tests/mosaic.rs": "c6e8b0e20d22ecfbf4eeb1e6f18bb3a551bfefb6459aa6586615253d943d86a3",
+      "vendor/open-magnetar/crates/om-mosaic/tests/vectors.rs": "61932986e208c68b58c1b00d9a32552f59b17af20a445cbbb576a4936d4a5869",
+      "vendor/open-magnetar/crates/om-pcs/Cargo.toml": "5ef41d8eec46298058bd247a349d573d4c04f5ad02c405af7484ecdf5e69bc0e",
+      "vendor/open-magnetar/crates/om-pcs/src/lib.rs": "36c1c28fe8dedb292771b6414a70a96fe67e06fec9d690d655cf2953cb7829ad",
+      "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs": "e35f275686551470de555f4acb7ad65d8636290cfe5c058bbc3e9d3af1ea85bf",
+      "vendor/open-magnetar/crates/om-pcs/src/merkle.rs": "9f21c5880a0c9520d035950b2e7ed07a0bdcaa67a7fef6fd4d268f19c72f6662",
+      "vendor/open-magnetar/crates/om-pcs/src/ntt.rs": "1a04646a1a8ed8c9623c60fa13c6946411c8adef7b910646f7b0bb6418a77be9",
+      "vendor/open-magnetar/crates/om-pcs/src/pcs.rs": "8cfc7e0e6f50bff22093b149f81497c719f27fef4a341b5b9803f208824a9209",
+      "vendor/open-magnetar/crates/om-pcs/src/ring_switch.rs": "7a0ceca62d8d79a57bf6c8dfae95c3de6788f90fdc4a5891734448c5122189a2",
+      "vendor/open-magnetar/crates/om-pcs/tests/commit_encoding.rs": "4e8d708a22b97bdaf60fe2e164f50780a2658dbee033edb9b09fbfa52f267f77",
+      "vendor/open-magnetar/crates/om-pcs/tests/common/mod.rs": "50aea1be8d17baed7b6f95530a307f586f3ca1a6a26af4fc696911a79579360f",
+      "vendor/open-magnetar/crates/om-pcs/tests/ligerito.rs": "d249b6b23c53d2c9780a3b588ed6c7ec531857bac73ccc8fb898111dcaed9e0f",
+      "vendor/open-magnetar/crates/om-pcs/tests/merkle.rs": "de81392e8600f422410f895d2a9af4dd508e8bb4addb4cd06ae02babb8acd7f8",
+      "vendor/open-magnetar/crates/om-pcs/tests/ntt.rs": "b32181682060dcc868a15268902fe9089258b6be4b40fd4719c7aed469ebf4bc",
+      "vendor/open-magnetar/crates/om-pcs/tests/ring_switch.rs": "10fc027e93f9ef9d1c29e04203bfa5e4ef5a71ee1bc693381804df02c807a4a6",
+      "vendor/open-magnetar/crates/om-pcs/tests/vectors.rs": "d2fb13154e8a546b3316cdde9fe09f57444d1d6a802b457e4167a3df0eaa89bb",
+      "vendor/open-magnetar/crates/om-sumcheck/Cargo.toml": "adff3f7112eb4dfbe3530683540044af1df85a873819aca92450c5f05ee9ee20",
+      "vendor/open-magnetar/crates/om-sumcheck/src/lib.rs": "7f658bcc7831882fb0e028d7b8b8a07e2829caa9b1042d7ba6c16c2f2ab02c5e",
+      "vendor/open-magnetar/crates/om-sumcheck/src/mle.rs": "26e3dbd3b398d6cb737899d997d2eee68cdb1e2fc2a2873e44ac1577b67de05f",
+      "vendor/open-magnetar/crates/om-sumcheck/src/products.rs": "0ceb2a7b28baed40fb4c876f6fde75bf92d1595ffc47a44a4c1758f19d426298",
+      "vendor/open-magnetar/crates/om-sumcheck/src/sumcheck.rs": "50804674bed4b12db8f63e34aa995150fae4e1f5be24d7434a634511e252bdb4",
+      "vendor/open-magnetar/crates/om-sumcheck/tests/fused.rs": "49d17063e8b254edbccf125bb3bedc8733722ee618c990571974e733cb0553ec",
+      "vendor/open-magnetar/crates/om-sumcheck/tests/mle.rs": "211ef4257a32ced8c4e2c97ffbb81d594d1f6a155175aa4c6246c6b3dbeaff9a",
+      "vendor/open-magnetar/crates/om-sumcheck/tests/products.rs": "82fa16f2ac41acfdbe80af316f27ede1ab8542a4b80cf68b07e033d2a8275bc4",
+      "vendor/open-magnetar/crates/om-sumcheck/tests/sumcheck.rs": "8ba5e28557d6b1ddfd61e4ad7113a81bf8e8eb73cce39fcdd8ea479986e888db",
+      "vendor/open-magnetar/crates/om-sumcheck/tests/vectors.rs": "61374dfb6e743a0ed6d32c20ba61f912c4561363b80f5e1abfc4d8d4a7a3bece",
+      "vendor/open-magnetar/crates/om-transcript/Cargo.toml": "e4472a209420a12dd0becf7348557e2d6b06ddb7a30cecf5a9b88e9803ac695c",
+      "vendor/open-magnetar/crates/om-transcript/src/hashing.rs": "40f32fdb4b01a56def19adce4eeb3c6cf5c1cba0384b5ab97de2b6c7992d8da4",
+      "vendor/open-magnetar/crates/om-transcript/src/keccak.rs": "e8d76367282dcc9db4c7cc1f27ca06d019b893b81cfececd39dfcea01edca40c",
+      "vendor/open-magnetar/crates/om-transcript/src/lib.rs": "1e09ca3943e2d92c02ed30a35e742f670f3b5040e99e91d19c9d17f5ad442444",
+      "vendor/open-magnetar/crates/om-transcript/src/profiling.rs": "76a1f8915a2ce2b7e2959afe36c82108c308f6b13c4c1f4b0128afc8d7e11585",
+      "vendor/open-magnetar/crates/om-transcript/src/sha256.rs": "45f95805d38ca47d16750285fb3e5d676fed9fd6cd607ac88b0406cb32570bf1",
+      "vendor/open-magnetar/crates/om-transcript/src/sha512.rs": "34ecee5a4d566fb265728cd723d2c862a69b19f86b079b3038cc61fcac6b1c10",
+      "vendor/open-magnetar/crates/om-transcript/src/transcript.rs": "5b4906c7c3f07499b9b86acb054803fcb7e920bf799cefaf03ebf0ffeb344d01",
+      "vendor/open-magnetar/crates/om-transcript/tests/hashing.rs": "b938b8cecb363b17dc1d14d3a8654bd0a56e406e246a0ec89983afa4663f36a8",
+      "vendor/open-magnetar/crates/om-transcript/tests/transcript.rs": "793f1c14d1cbc77347dcb52e524ae50c50f318ff4afba5c3c94a814f4b663d6d"
+    },
+    "probe_source_sha256": "fdf4a58a41024c9ba94aad82f604005d2e71756ac05f5a263ec0c2fb095a0529",
+    "runner_sha256": "28ae17bb8120b0289bfee038245658260c0040f26c9ee4706fab40382ef64ec9",
+    "rustflags": "-C target-cpu=native",
+    "release_profile": {
+      "lto": "thin",
+      "codegen_units": 1
+    },
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "temporary_cargo_lock": "# This file is automatically @generated by Cargo.\n# It is not intended for manual editing.\nversion = 4\n\n[[package]]\nname = \"bitz-logup\"\nversion = \"0.1.0\"\ndependencies = [\n \"om-field\",\n \"om-transcript\",\n \"rayon\",\n]\n\n[[package]]\nname = \"crossbeam-deque\"\nversion = \"0.8.8\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"622f3fc73690be383c7214310406f28a90e6edeadc3cea882f9d71e495b9711a\"\ndependencies = [\n \"crossbeam-epoch\",\n \"crossbeam-utils\",\n]\n\n[[package]]\nname = \"crossbeam-epoch\"\nversion = \"0.9.21\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"dc74980687109a3b14c72fd458107bf0baa1da1a1a805e178d15501ba9b86d9d\"\ndependencies = [\n \"crossbeam-utils\",\n]\n\n[[package]]\nname = \"crossbeam-utils\"\nversion = \"0.8.23\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"a31eee39dddec8330830986fcd7625edb5a24ec90ea038215273bbc3adb08ac6\"\n\n[[package]]\nname = \"either\"\nversion = \"1.19.0\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be\"\n\n[[package]]\nname = \"itoa\"\nversion = \"1.0.18\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682\"\n\n[[package]]\nname = \"lookup-argument\"\nversion = \"0.1.0\"\ndependencies = [\n \"bitz-logup\",\n \"om-field\",\n \"om-memcheck\",\n \"om-mosaic\",\n \"om-pcs\",\n \"om-sumcheck\",\n \"om-transcript\",\n \"rayon\",\n]\n\n[[package]]\nname = \"memchr\"\nversion = \"2.8.3\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98\"\n\n[[package]]\nname = \"om-elf\"\nversion = \"0.1.0\"\ndependencies = [\n \"om-field\",\n \"om-sumcheck\",\n \"om-transcript\",\n]\n\n[[package]]\nname = \"om-field\"\nversion = \"0.1.0\"\n\n[[package]]\nname = \"om-isa\"\nversion = \"0.1.0\"\n\n[[package]]\nname = \"om-memcheck\"\nversion = \"0.1.0\"\ndependencies = [\n \"om-field\",\n \"om-mosaic\",\n \"om-sumcheck\",\n \"om-transcript\",\n \"rayon\",\n]\n\n[[package]]\nname = \"om-mosaic\"\nversion = \"0.1.0\"\ndependencies = [\n \"om-field\",\n \"om-sumcheck\",\n \"om-transcript\",\n \"rayon\",\n]\n\n[[package]]\nname = \"om-pcs\"\nversion = \"0.1.0\"\ndependencies = [\n \"om-field\",\n \"om-sumcheck\",\n \"om-transcript\",\n \"rayon\",\n]\n\n[[package]]\nname = \"om-sumcheck\"\nversion = \"0.1.0\"\ndependencies = [\n \"om-field\",\n \"om-transcript\",\n \"rayon\",\n]\n\n[[package]]\nname = \"om-transcript\"\nversion = \"0.1.0\"\ndependencies = [\n \"om-field\",\n]\n\n[[package]]\nname = \"proc-macro2\"\nversion = \"1.0.107\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9\"\ndependencies = [\n \"unicode-ident\",\n]\n\n[[package]]\nname = \"quote\"\nversion = \"1.0.47\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001\"\ndependencies = [\n \"proc-macro2\",\n]\n\n[[package]]\nname = \"ram-payload\"\nversion = \"0.1.0\"\ndependencies = [\n \"om-elf\",\n \"om-isa\",\n \"serde\",\n]\n\n[[package]]\nname = \"rayon\"\nversion = \"1.12.0\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"fb39b166781f92d482534ef4b4b1b2568f42613b53e5b6c160e24cfbfa30926d\"\ndependencies = [\n \"either\",\n \"rayon-core\",\n]\n\n[[package]]\nname = \"rayon-core\"\nversion = \"1.13.0\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91\"\ndependencies = [\n \"crossbeam-deque\",\n \"crossbeam-utils\",\n]\n\n[[package]]\nname = \"serde\"\nversion = \"1.0.229\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba\"\ndependencies = [\n \"serde_core\",\n \"serde_derive\",\n]\n\n[[package]]\nname = \"serde_core\"\nversion = \"1.0.229\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48\"\ndependencies = [\n \"serde_derive\",\n]\n\n[[package]]\nname = \"serde_derive\"\nversion = \"1.0.229\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348\"\ndependencies = [\n \"proc-macro2\",\n \"quote\",\n \"syn\",\n]\n\n[[package]]\nname = \"serde_json\"\nversion = \"1.0.154\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"e7e9cc8b1b85264074fbcc02a88680c4096b1e47df8f739dceb03bf482f04bd6\"\ndependencies = [\n \"itoa\",\n \"memchr\",\n \"serde\",\n \"serde_core\",\n \"zmij\",\n]\n\n[[package]]\nname = \"shout-structure-probe\"\nversion = \"0.0.0\"\ndependencies = [\n \"lookup-argument\",\n \"om-memcheck\",\n \"om-sumcheck\",\n \"om-transcript\",\n \"ram-payload\",\n \"rayon\",\n \"serde_json\",\n]\n\n[[package]]\nname = \"syn\"\nversion = \"3.0.10\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"4ae9ccbea3a7b0b09443036490c8f34a8b1b760fd345e5c0dae0aac718faea79\"\ndependencies = [\n \"proc-macro2\",\n \"quote\",\n \"unicode-ident\",\n]\n\n[[package]]\nname = \"unicode-ident\"\nversion = \"1.0.27\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563\"\n\n[[package]]\nname = \"zmij\"\nversion = \"1.0.23\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\nchecksum = \"29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b\"\n",
+    "temporary_cargo_lock_sha256": "2a7974919331ac645a7ae4014ae48e9ed4e737379ec0ef4a96f9ab114d3d5b54",
+    "temporary_cargo_manifest": "[package]\nname=\"shout-structure-probe\"\nversion=\"0.0.0\"\nedition=\"2024\"\n[dependencies]\nlookup-argument={path=\"/home/user/Programming/memarg-exploration/crates/lookup-argument\"}\nram-payload={path=\"/home/user/Programming/memarg-exploration/crates/ram-payload\"}\nom-transcript={path=\"/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript\",features=[\"profiling\"]}\nom-memcheck={path=\"/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck\"}\nom-sumcheck={path=\"/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck\"}\nrayon=\"1\"\nserde_json=\"1\"\n[profile.release]\nlto=\"thin\"\ncodegen-units=1\n"
+  },
+  "relabel": {
+    "algorithm": "full-domain Fisher-Yates with rejection-sampled SplitMix64 indices",
+    "domain_size": 65536,
+    "original_and_relabeled_distinct_addresses": 70,
+    "permutation_sha256": "6716f3f27154ccf0d01efc13a5022877efaa6d864e0f964e3957183b3a305889",
+    "preserves": "Every query value and the entire address equality/reuse-distance pattern; numeric geometry changes",
+    "query_value_assertions": 1048576,
+    "seed": 8243113858490002480,
+    "working_set_mapping": [
+      [
+        1,
+        52131
+      ],
+      [
+        2,
+        45466
+      ],
+      [
+        3,
+        40907
+      ],
+      [
+        4,
+        39550
+      ],
+      [
+        5,
+        64339
+      ],
+      [
+        6,
+        43130
+      ],
+      [
+        7,
+        19626
+      ],
+      [
+        8,
+        33068
+      ],
+      [
+        9,
+        38812
+      ],
+      [
+        10,
+        62760
+      ],
+      [
+        11,
+        56565
+      ],
+      [
+        12,
+        29656
+      ],
+      [
+        13,
+        30320
+      ],
+      [
+        14,
+        36004
+      ],
+      [
+        15,
+        61928
+      ],
+      [
+        16,
+        61647
+      ],
+      [
+        17,
+        54761
+      ],
+      [
+        18,
+        50518
+      ],
+      [
+        19,
+        1866
+      ],
+      [
+        20,
+        6536
+      ],
+      [
+        21,
+        62946
+      ],
+      [
+        22,
+        18744
+      ],
+      [
+        23,
+        52122
+      ],
+      [
+        24,
+        10472
+      ],
+      [
+        25,
+        25978
+      ],
+      [
+        26,
+        30730
+      ],
+      [
+        27,
+        59569
+      ],
+      [
+        28,
+        32911
+      ],
+      [
+        29,
+        47437
+      ],
+      [
+        30,
+        36272
+      ],
+      [
+        31,
+        4676
+      ],
+      [
+        32,
+        46791
+      ],
+      [
+        33,
+        11563
+      ],
+      [
+        34,
+        2798
+      ],
+      [
+        35,
+        4789
+      ],
+      [
+        36,
+        5388
+      ],
+      [
+        37,
+        39236
+      ],
+      [
+        38,
+        7886
+      ],
+      [
+        39,
+        14129
+      ],
+      [
+        40,
+        55571
+      ],
+      [
+        41,
+        34532
+      ],
+      [
+        42,
+        58446
+      ],
+      [
+        43,
+        60757
+      ],
+      [
+        44,
+        25159
+      ],
+      [
+        45,
+        62382
+      ],
+      [
+        46,
+        50791
+      ],
+      [
+        47,
+        49102
+      ],
+      [
+        48,
+        14579
+      ],
+      [
+        49,
+        35417
+      ],
+      [
+        50,
+        8548
+      ],
+      [
+        51,
+        63731
+      ],
+      [
+        52,
+        34281
+      ],
+      [
+        53,
+        11570
+      ],
+      [
+        54,
+        48618
+      ],
+      [
+        55,
+        56225
+      ],
+      [
+        56,
+        41810
+      ],
+      [
+        57,
+        8834
+      ],
+      [
+        58,
+        5013
+      ],
+      [
+        59,
+        1424
+      ],
+      [
+        60,
+        45973
+      ],
+      [
+        61,
+        24440
+      ],
+      [
+        62,
+        29853
+      ],
+      [
+        63,
+        15061
+      ],
+      [
+        64,
+        33753
+      ],
+      [
+        65,
+        60381
+      ],
+      [
+        66,
+        30625
+      ],
+      [
+        67,
+        48538
+      ],
+      [
+        68,
+        4541
+      ],
+      [
+        69,
+        19614
+      ],
+      [
+        70,
+        52433
+      ]
+    ]
+  },
+  "research_only": true,
+  "schema": "shout-structure-ablation/v1",
+  "source_metadata": {
+    "address_bits": 16,
+    "cycles": 1048576,
+    "full_pattern_repetitions": 500,
+    "guest": {
+      "compact_to_original": [
+        0,
+        57344,
+        57345,
+        57346,
+        57347,
+        57348,
+        57349,
+        57350,
+        57351,
+        57352,
+        57353,
+        57354,
+        57355,
+        57356,
+        57357,
+        57358,
+        57359,
+        57360,
+        57361,
+        57362,
+        57363,
+        57364,
+        57365,
+        57366,
+        57367,
+        57368,
+        57369,
+        57370,
+        57371,
+        57372,
+        57373,
+        57374,
+        57375,
+        57376,
+        57377,
+        57378,
+        57379,
+        57380,
+        57381,
+        57382,
+        57383,
+        57384,
+        57385,
+        57386,
+        57387,
+        57388,
+        57389,
+        57390,
+        57391,
+        57392,
+        57393,
+        57394,
+        57395,
+        57396,
+        57397,
+        57398,
+        57399,
+        57400,
+        57401,
+        57402,
+        57403,
+        57404,
+        57405,
+        57406,
+        57407,
+        57408,
+        57409,
+        57410,
+        61440,
+        61441,
+        61442
+      ],
+      "distinct_accessed_words": 70,
+      "dummy_access_cycles": 0,
+      "dummy_zero_read_cycles": 0,
+      "elf_sha256": "0641051ed507ef5e860fc2483112be591a0b0948d8e70ed9bfb2c418e4e2708f",
+      "expected_output_words": [
+        0,
+        0
+      ],
+      "input_words": [
+        64,
+        23,
+        5,
+        36,
+        50,
+        20,
+        42,
+        61,
+        1,
+        0,
+        49,
+        62,
+        16,
+        4,
+        6,
+        19,
+        30,
+        28,
+        58,
+        56,
+        31,
+        46,
+        3,
+        10,
+        32,
+        27,
+        48,
+        17,
+        33,
+        24,
+        34,
+        13,
+        41,
+        21,
+        35,
+        52,
+        8,
+        25,
+        12,
+        26,
+        29,
+        18,
+        63,
+        2,
+        53,
+        38,
+        60,
+        40,
+        39,
+        22,
+        15,
+        7,
+        43,
+        55,
+        59,
+        37,
+        45,
+        44,
+        47,
+        51,
+        9,
+        11,
+        14,
+        54,
+        57,
+        256
+      ],
+      "keys": 64,
+      "max_cycles": 1048576,
+      "memory_access_cycles": 1048576,
+      "operations": 256,
+      "original_address_bits": 16,
+      "output_words": [
+        0,
+        0
+      ],
+      "program": "open-magnetar/guest/examples/pointer-chase.c",
+      "queries": 16,
+      "retired_instructions": 7300,
+      "rows": "memory",
+      "size": 64,
+      "source_memory_access_cycles": 2094,
+      "unchanged_write_cycles": 1047576,
+      "upstream_commit": "febfc0e66f5809e034dd1afac78202bd4882de27",
+      "zero_read_cycles": 24027
+    },
+    "kind": "pointer-chase-guest",
+    "memory_model": "shared-address",
+    "padding_cycles": 0,
+    "pattern_cycles": 2094,
+    "read_ports": 1,
+    "real_cycles": 1048576,
+    "replayed_cycles": 1046482,
+    "seed": 1,
+    "source_cycles": 7300,
+    "tail_pattern_cycles": 1576,
+    "trace_mode": "repeat-ram-pattern"
+  },
+  "verified_proofs": 24
+}

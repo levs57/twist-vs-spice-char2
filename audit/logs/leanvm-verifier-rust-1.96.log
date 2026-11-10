@@ -1,0 +1,20 @@
+    Blocking waiting for file lock on build directory
+   Compiling verifier v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/verifier)
+    Finished `release` profile [optimized] target(s) in 17.44s
+     Running unittests src/lib.rs (target/release/deps/verifier-9cb290e0c3ea62da)
+
+running 5 tests
+test hash::tests::matches_reference_vectors ... ok
+test field::tests::extension_field_matches_reference ... ok
+test keccak::tests::the_embedding_projects_products_to_and ... ok
+test field::tests::base_field_matches_reference ... ok
+test bytecode::tests::evaluate_matches_the_fold ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+   Doc-tests verifier
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

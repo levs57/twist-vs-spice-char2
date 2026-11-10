@@ -1,0 +1,68 @@
+{
+  "tag": "threshold11-cpu-clear",
+  "workers": 8,
+  "warmup": 1,
+  "samples": 5,
+  "binary_sha256": {
+    "ported": "a44996ad7aab9bc3a717105f86c0a27cc86c311bd0da8c8b22102cb58c683aac",
+    "upstream": "a6aa8bfe28fb3ae10947a4f65b40a2cd1ce2e717ab562a09cc8768ff41170366"
+  },
+  "cases": [
+    {
+      "backend": "ported",
+      "n": 18,
+      "padding": false,
+      "median_total_ms_per_tree": 1.854985,
+      "median_prove_ms_per_tree": 1.5183545
+    },
+    {
+      "backend": "upstream",
+      "n": 18,
+      "padding": false,
+      "median_total_ms_per_tree": 1.567005,
+      "median_prove_ms_per_tree": 1.3673163333333334
+    },
+    {
+      "backend": "upstream",
+      "n": 20,
+      "padding": false,
+      "median_total_ms_per_tree": 7.537138,
+      "median_prove_ms_per_tree": 6.236061333333333
+    },
+    {
+      "backend": "ported",
+      "n": 20,
+      "padding": false,
+      "median_total_ms_per_tree": 6.51586,
+      "median_prove_ms_per_tree": 5.3215425
+    },
+    {
+      "backend": "ported",
+      "n": 18,
+      "padding": true,
+      "median_total_ms_per_tree": 1.711574,
+      "median_prove_ms_per_tree": 1.3117835
+    },
+    {
+      "backend": "upstream",
+      "n": 18,
+      "padding": true,
+      "median_total_ms_per_tree": 1.046916,
+      "median_prove_ms_per_tree": 0.8445296666666667
+    },
+    {
+      "backend": "upstream",
+      "n": 20,
+      "padding": true,
+      "median_total_ms_per_tree": 3.648494,
+      "median_prove_ms_per_tree": 2.686287666666667
+    },
+    {
+      "backend": "ported",
+      "n": 20,
+      "padding": true,
+      "median_total_ms_per_tree": 5.19437,
+      "median_prove_ms_per_tree": 3.6326775
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+[package]
+name = "lean-grandproduct-upstream-benchmark"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+primitives = { path = "../../../sources/leanVM/crates/primitives" }
+parallel = { path = "../../../sources/leanVM/crates/parallel" }
+fiat_shamir = { path = "../../../sources/leanVM/crates/fiat_shamir" }
+
+[workspace]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

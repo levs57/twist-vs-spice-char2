@@ -1,0 +1,3 @@
+PASS /home/user/Programming/memarg-exploration/results/stage13-comparison-primary.json: 16 cases, 80 raw samples, 96 declared verified proofs including warmups
+PASS /home/user/Programming/memarg-exploration/results/stage13-comparison-reversed.json: 16 cases, 80 raw samples, 96 declared verified proofs including warmups
+PASS paired execution orders: identical fixed options, source identities, inputs and areas; order_changed=True

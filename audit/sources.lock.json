@@ -1,0 +1,26 @@
+{
+  "audit_date": "2026-11-09",
+  "repositories": [
+    {
+      "name": "open-magnetar",
+      "url": "https://github.com/Lulzx/open-magnetar.git",
+      "revision": "febfc0e66f5809e034dd1afac78202bd4882de27",
+      "commit_date": "2026-10-16T23:20:15+05:30",
+      "license": "MIT OR Apache-2.0"
+    },
+    {
+      "name": "flock",
+      "url": "https://github.com/succinctlabs/flock.git",
+      "revision": "daa0cf426563b01f9e744f6265ebae37c97afcb7",
+      "commit_date": "2026-11-05T19:04:16-05:00",
+      "license": "MIT OR Apache-2.0"
+    },
+    {
+      "name": "leanVM",
+      "url": "https://github.com/leanEthereum/leanVM.git",
+      "revision": "e5d75f858e91161921c0afe3d9f56300e9a3a03c",
+      "commit_date": "2026-11-09T15:35:32+01:00",
+      "license": "MIT OR Apache-2.0"
+    }
+  ]
+}

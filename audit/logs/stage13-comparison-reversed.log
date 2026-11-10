@@ -1,0 +1,19 @@
+pattern=guest/pointer-chase/memory method=logup-star chunk=- virtualization=- prove=51.142ms verify=18.154ms commit=6.382ms open=24.154ms remaining=20.398ms main_bits=33554432 aux_bits=8388608
+pattern=guest/pointer-chase/memory method=shout chunk=1 virtualization=flat prove=78.169ms verify=11.424ms commit=4.583ms open=26.079ms remaining=46.678ms main_bits=33554432 aux_bits=0
+pattern=guest/pointer-chase/memory method=shout chunk=2 virtualization=flat prove=64.365ms verify=12.143ms commit=4.734ms open=26.749ms remaining=31.244ms main_bits=33554432 aux_bits=0
+pattern=guest/pointer-chase/memory method=shout chunk=4 virtualization=flat prove=51.081ms verify=12.295ms commit=6.053ms open=26.684ms remaining=18.479ms main_bits=67108864 aux_bits=0
+pattern=guest/erc20-mixed-block/memory method=logup-star chunk=- virtualization=- prove=51.488ms verify=19.981ms commit=6.119ms open=26.294ms remaining=18.992ms main_bits=33554432 aux_bits=8388608
+pattern=guest/erc20-mixed-block/memory method=shout chunk=1 virtualization=flat prove=85.780ms verify=12.012ms commit=4.825ms open=25.914ms remaining=53.862ms main_bits=33554432 aux_bits=0
+pattern=guest/erc20-mixed-block/memory method=shout chunk=2 virtualization=flat prove=64.771ms verify=11.680ms commit=4.524ms open=25.070ms remaining=33.290ms main_bits=33554432 aux_bits=0
+pattern=guest/erc20-mixed-block/memory method=shout chunk=4 virtualization=flat prove=57.576ms verify=11.560ms commit=6.520ms open=27.590ms remaining=23.746ms main_bits=67108864 aux_bits=0
+pattern=local method=logup-star chunk=- virtualization=- prove=59.454ms verify=18.860ms commit=5.923ms open=30.202ms remaining=23.418ms main_bits=33554432 aux_bits=8388608
+pattern=local method=shout chunk=1 virtualization=flat prove=103.469ms verify=12.180ms commit=4.407ms open=25.432ms remaining=76.012ms main_bits=33554432 aux_bits=0
+pattern=local method=shout chunk=2 virtualization=flat prove=70.291ms verify=12.130ms commit=5.377ms open=23.183ms remaining=41.408ms main_bits=33554432 aux_bits=0
+pattern=local method=shout chunk=4 virtualization=flat prove=60.757ms verify=12.408ms commit=6.480ms open=28.469ms remaining=24.624ms main_bits=67108864 aux_bits=0
+pattern=random method=logup-star chunk=- virtualization=- prove=69.077ms verify=20.326ms commit=6.511ms open=31.056ms remaining=31.659ms main_bits=33554432 aux_bits=8388608
+pattern=random method=shout chunk=1 virtualization=flat prove=122.499ms verify=12.874ms commit=4.918ms open=26.295ms remaining=91.026ms main_bits=33554432 aux_bits=0
+pattern=random method=shout chunk=2 virtualization=flat prove=89.159ms verify=12.191ms commit=5.007ms open=25.414ms remaining=58.284ms main_bits=33554432 aux_bits=0
+pattern=random method=shout chunk=4 virtualization=flat prove=68.082ms verify=12.968ms commit=6.689ms open=27.614ms remaining=32.549ms main_bits=67108864 aux_bits=0
+JSON: results/stage13-comparison-reversed.json
+CSV: results/stage13-comparison-reversed.csv
+All 16 cases verified (5 measured proofs/case plus 1 warmups).

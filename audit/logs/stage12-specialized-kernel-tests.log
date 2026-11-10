@@ -1,0 +1,30 @@
+   Compiling crossbeam-utils v0.8.23
+   Compiling om-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-field)
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling either v1.19.0
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+   Compiling serde_json v1.0.154
+   Compiling crossbeam-epoch v0.9.21
+   Compiling memchr v2.8.3
+   Compiling crossbeam-deque v0.8.8
+   Compiling itoa v1.0.18
+   Compiling rayon-core v1.13.0
+   Compiling rayon v1.12.0
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+   Compiling om-mosaic v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-mosaic)
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 5.43s
+     Running unittests src/lib.rs (target/release/deps/om_memcheck-f948c5b6c3e35441)
+
+running 7 tests
+test twist::optimized_tests::affine_phi_matches_bitwise_definition ... ok
+test onehot::optimized_tests::alias_onehot_matches_unmerged_oracle_for_valid_and_invalid_bits ... ok
+test sumcheck_kernels::tests::specialized_rows_match_dense_proof_and_transcript ... ok
+test onehot::optimized_tests::alias_virtualization_preserves_terms_points_outputs_and_transcript ... ok
+test twist::optimized_tests::sparse_rw_messages_and_transcript_match_dense_reference ... ok
+test twist::optimized_tests::active_change_history_matches_dense_values_at_every_binding ... ok
+test sumcheck_kernels::tests::parallel_specialized_fusion_matches_dense ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+

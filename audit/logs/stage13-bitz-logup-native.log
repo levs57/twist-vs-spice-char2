@@ -1,0 +1,15 @@
+RUSTFLAGS="-C target-cpu=native" CARGO_TARGET_DIR=/home/user/Programming/memarg-exploration/target cargo test --manifest-path vendor/bitz-logup/Cargo.toml --release --offline -j 4 --lib
+   Compiling bitz-logup v0.1.0 (/home/user/Programming/memarg-exploration/vendor/bitz-logup)
+    Finished `release` profile [optimized] target(s) in 1.06s
+     Running unittests src/lib.rs (target/release/deps/bitz_logup-787f7596b5fee151)
+
+running 6 tests
+test tests::product_relation_handles_zero_equality_prefix ... ok
+test tests::weighted_repeats_have_characteristic_two_safe_pushforward ... ok
+test tests::invalid_inputs_roots_and_proof_shapes_reject ... ok
+test tests::inner_product_exact_dense_round_oracle_and_authentication ... ok
+test tests::product_relation_matches_dense_oracle_and_low_first_mles ... ok
+test tests::rational_matches_dense_oracle_padding_and_different_dimensions ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+

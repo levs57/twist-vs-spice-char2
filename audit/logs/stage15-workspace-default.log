@@ -1,0 +1,304 @@
+    Blocking waiting for file lock on build directory
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+   Compiling ram-payload v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-payload)
+warning: function `butterfly_interleaved_block_par_rows` is never used
+    --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128.rs:1274:4
+     |
+1274 | fn butterfly_interleaved_block_par_rows(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `butterfly_interleaved_fused_3layer_par_rows` is never used
+    --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128.rs:1312:4
+     |
+1312 | fn butterfly_interleaved_fused_3layer_par_rows(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_interleaved_fused_2layer_serial` is never used
+    --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128.rs:1422:4
+     |
+1422 | fn butterfly_interleaved_fused_2layer_serial(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_interleaved_fused_2layer_par_rows` is never used
+    --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128.rs:1468:4
+     |
+1468 | fn butterfly_interleaved_fused_2layer_par_rows(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_interleaved_block` is never used
+    --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128.rs:1663:4
+     |
+1663 | fn butterfly_interleaved_block(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_interleaved_fused_4layer_par_rows` is never used
+    --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128.rs:1713:4
+     |
+1713 | fn butterfly_interleaved_fused_4layer_par_rows(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_row_pair` is never used
+  --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128/kernels.rs:45:15
+   |
+45 | pub(super) fn butterfly_row_pair(top: &mut [F128], bot: &mut [F128], twiddle: F128) {
+   |               ^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_3layer` is never used
+   --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128/kernels.rs:104:15
+    |
+104 | pub(super) fn butterfly_fused_3layer(
+    |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_4layer_row` is never used
+   --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128/kernels.rs:119:22
+    |
+119 | pub(super) unsafe fn butterfly_fused_4layer_row(
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_row_pair` is never used
+ --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs:4:15
+  |
+4 | pub(super) fn butterfly_row_pair(top: &mut [F128], bot: &mut [F128], twiddle: F128) {
+  |               ^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_3layer` is never used
+  --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs:56:15
+   |
+56 | pub(super) fn butterfly_fused_3layer(
+   |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_4layer` is never used
+   --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs:102:15
+    |
+102 | pub(super) fn butterfly_fused_4layer(values: &mut [F128; 16], twiddles: &[F128; 15]) {
+    |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_4layer_row` is never used
+   --> vendor/flock-boolean/crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs:136:22
+    |
+136 | pub(super) unsafe fn butterfly_fused_4layer_row(
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `flock-core` (lib) generated 13 warnings
+   Compiling ram-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-argument)
+   Compiling spice-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/spice-argument)
+   Compiling lookup-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/lookup-argument)
+   Compiling ram-compare v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-compare)
+   Compiling ram-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-bench)
+   Compiling lookup-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/lookup-bench)
+    Finished `release` profile [optimized] target(s) in 1m 48s
+     Running unittests src/lib.rs (target/release/deps/lookup_argument-d4bad2ed63d2b677)
+
+running 3 tests
+test tests::encoded_word_mle_is_an_opening_of_the_actual_committed_bits ... ok
+test tests::word_opening_conversion_matches_every_polynomial_basis_coefficient ... ok
+test tests::address_columns_preserve_bit_order_at_word_boundaries_and_on_workers ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/indexed_lookup.rs (target/release/deps/indexed_lookup-7a57441be349c2d1)
+
+running 7 tests
+test invalid_trace_values_and_non_power_of_two_lengths_are_rejected ... ok
+test malformed_branches_shapes_and_zero_denominators_reject ... ok
+test all_public_parameters_and_input_claims_are_bound ... ok
+test all_rational_messages_and_auxiliary_openings_are_authenticated ... ok
+test main_and_auxiliary_pcs_openings_are_required_with_roots_and_iop_unchanged ... ok
+test shout_virtualization_choices_preserve_lookup_semantics ... ok
+test both_methods_prove_indexed_reads_with_full_width_duplicate_and_zero_values ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running unittests src/main.rs (target/release/deps/lookup_bench-515999411d431c9f)
+
+running 6 tests
+test tests::logup_argument_excludes_nested_commit_and_open_spans ... ok
+test tests::phase_medians_are_derived_from_each_complete_sample ... ok
+test tests::logup_is_not_duplicated_by_shout_sweeps ... ok
+test tests::requested_method_and_chunk_order_are_preserved ... ok
+test tests::phase_totals_include_flat_and_tree_children_once ... ok
+test tests::security_bound_and_csv_escape ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/ram_argument-97a1893d33ea1e23)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/committed_ram.rs (target/release/deps/committed_ram-c1dfa87e965217b0)
+
+running 12 tests
+test invalid_configuration_and_trace_shapes_return_errors ... ok
+test inconsistent_supplied_reads_are_rejected_before_proving ... ok
+test shared_address_mode_rejects_independent_streams_and_multiple_ports ... ok
+test commitment_and_challenge_replay_are_rejected ... ok
+test public_memory_and_config_are_bound ... ok
+test single_component_and_full_word_path_work ... ok
+test every_kind_of_twist_input_claim_is_authenticated ... ok
+test malformed_shapes_return_errors ... ok
+test complete_proof_verifies_without_witness ... ok
+test shared_address_mode_binds_aliases_values_and_internal_address_claims ... ok
+test mosaic_ringswitch_and_ligerito_tampering_is_rejected ... ok
+test shared_address_commits_rv_inc_and_one_address_encoding ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/virtualization_flat.rs (target/release/deps/virtualization_flat-7d90fbe0af2c64e0)
+
+running 5 tests
+test malformed_flat_shapes_and_missing_proofs_reject_without_panics ... ok
+test new_legacy_and_tree_domains_and_branches_are_distinct ... ok
+test every_reduction_product_and_leaf_message_is_authenticated ... ok
+test aggregate_flat_proves_all_real_guests_and_row_filters ... ok
+test aggregate_flat_proofs_cover_chunk_counts_cycles_and_ports ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/virtualization_tree.rs (target/release/deps/virtualization_tree-10f7e79f26497551)
+
+running 7 tests
+test tree_binds_internal_parent_mles_away_from_the_boolean_cube ... ok
+test tree_requires_power_of_two_component_count_while_flat_retains_other_counts ... ok
+test malformed_and_reordered_tree_nodes_return_errors ... ok
+test mode_and_proof_branch_are_bound_including_the_direct_shortcut ... ok
+test tree_proves_traces_from_each_original_guest_and_memory_filter ... ok
+test every_tree_layer_and_child_value_is_authenticated ... ok
+test complete_tree_proofs_cover_depths_small_cycle_counts_and_independent_ports ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running unittests src/main.rs (target/release/deps/ram_bench-a1e1c33e948ab51e)
+
+running 4 tests
+test tests::dummy_comparisons_use_exact_work_counts_and_match_programs ... ok
+test tests::mode_and_dummy_comparisons_keep_the_other_dimension_fixed ... ok
+test tests::no_useful_rows_have_no_normalized_cost_or_comparison ... ok
+test tests::virtualization_total_includes_exclusive_claim_and_product_children ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/release/deps/ram_compare-290049a9659ffc85)
+
+running 9 tests
+test tests::guest_order_and_csv_quoting ... ok
+test tests::ripple_baseline_has_one_canonical_case_and_an_explicit_ordering_id ... ok
+test tests::nested_pcs_spans_form_disjoint_inclusive_accounting ... ok
+test tests::total_ordering_is_medianed_per_sample_including_children ... ok
+test tests::typed_method_requires_explicit_operation_format ... ok
+test tests::operation_hash_keeps_unchanged_write_distinct_from_read ... ok
+test tests::method_order_preserved_spice_not_repeated_by_chunks ... ok
+test tests::full_one_row_flock_and_ripple_cases_share_trace_and_commitment_area ... ok
+test tests::typed_and_baseline_cases_use_the_same_operation_rows_and_final_memory ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running unittests src/lib.rs (target/release/deps/ram_payload-2cae2f8e6dbd6dac)
+
+running 4 tests
+test operations::tests::partial_source_store_stops_before_its_write_and_halt_reads_preserve_word_zero ... ok
+test operations::tests::unchanged_full_store_keeps_its_write_kind ... ok
+test operations::tests::narrow_stores_preserve_other_lanes_and_read_current_memory_on_repetition ... ok
+test tests::replay_preserves_reads_and_unwritten_byte_lanes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/operations.rs (target/release/deps/operations-989d6fb865e10fa0)
+
+running 3 tests
+test random_operations_are_deterministic_independent_and_translate_without_expansion ... ok
+test repeat_prefixes_and_halt_are_valid_and_invalid_inputs_reject ... ok
+test all_guests_normalize_exact_original_memory_records_and_keep_stable_mapping ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/payloads.rs (target/release/deps/payloads-d32f3868f7fbfd3f)
+
+running 9 tests
+test embedded_elf_and_original_source_match_provenance_manifest ... ok
+test guest_program_options_reject_invalid_limits_and_padding_modes ... ok
+test random_ram_reads_and_replaces_the_same_word ... ok
+test random_is_reproducible_and_reads_precede_writes ... ok
+test pointer_chase_is_one_permutation_cycle_with_checked_outputs ... ok
+test repeated_guest_pattern_keeps_current_memory_across_periods_and_tail ... ok
+test actual_guest_outputs_and_ram_values_are_checked ... ok
+test erc20_balances_change_and_memory_filter_retains_real_word_zero ... ok
+test guest_limits_do_not_silently_truncate_or_repeat_execution ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running unittests src/lib.rs (target/release/deps/spice_argument-1a386fc002518aa8)
+
+running 15 tests
+test order::tests::native_carry_words_match_ripple_majority_and_strict_unsigned_order ... ok
+test masked_reduction::tests::zero_batch_weights_and_boolean_equality_points_match_dense_driver ... ok
+test order::tests::timestamp_bits_are_analytic_low_first_mles ... ok
+test masked_reduction::tests::malformed_mutated_and_false_claims_are_rejected ... ok
+test masked_reduction::tests::dense_cubic_proofs_and_transcripts_match_for_different_source_domains ... ok
+test masked_reduction::tests::cofactor_handles_both_boolean_folds_and_all_endpoint_modes ... ok
+test masked_reduction::tests::masked_claims_are_not_products_of_off_cube_mles ... ok
+test order::tests::invalid_order_carries_shapes_and_tampering_reject_or_expose_false_leaf ... ok
+test order::tests::quadratic_cofactor_handles_zero_weights_and_boolean_equality_points ... ok
+test order::tests::ordering_proof_matches_dense_rounds_claims_and_transcript ... ok
+test order_flock::tests::all_friendly_cycle_eq_weights_have_full_binary_rank ... ok
+test masked_reduction::tests::parallel_replicated_source_matches_dense_oracle ... ok
+test order_flock::tests::source_recombination_handles_phi_nodes_boolean_cycles_and_padding ... ok
+test order_flock::tests::word_packing_and_flock_proof_match_dense_boolean_oracle ... ok
+test order_flock::tests::malformed_words_proof_shapes_and_every_payload_mutation_are_detected ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.13s
+
+     Running tests/committed_ram.rs (target/release/deps/committed_ram-a199448aebbc7254)
+
+running 9 tests
+test malformed_inputs_and_proofs_return_errors ... ok
+test public_memory_configuration_and_commitment_are_bound ... ok
+test permutation_and_all_terminal_columns_are_authenticated ... ok
+test ripple_baseline_and_flock_prove_same_ram_and_bind_protocol_choice ... ok
+test full_width_zero_unchanged_and_untouched_words_match_twist ... ok
+test end_to_end_matches_twist_public_memory_and_prices_every_private_column ... ok
+test order_previous_and_carry_claims_are_authenticated ... ok
+test mosaic_ringswitch_and_ligerito_are_required ... ok
+test rectangular_domains_padding_and_all_value_word_widths_verify ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.27s
+
+     Running tests/operation_ram.rs (target/release/deps/operation_ram-b8293e09baf35e5a)
+
+running 6 tests
+test inconsistent_typed_reads_and_malformed_proofs_reject ... ok
+test every_mask_and_flag_claim_is_authenticated ... ok
+test typed_read_write_semantics_write_first_and_precise_pricing ... ok
+test both_ram_contracts_agree_on_public_state_for_same_typed_events ... ok
+test ordering_boundaries_pointers_and_pcs_are_required ... ok
+test read_only_write_only_mixed_full_width_and_rectangular_domains ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s
+
+   Doc-tests lookup_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ram_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ram_payload
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests spice_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

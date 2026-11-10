@@ -1,0 +1,19 @@
+{
+  "implementation": "gf128-iop-optimized-v1",
+  "patch_sha256": "bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3",
+  "test_counts": {
+    "native_vendor": 266,
+    "native_workspace": 33,
+    "portable_vendor": 266,
+    "portable_workspace": 33
+  },
+  "complete_proof_comparisons": {
+    "pinned_flat": 60,
+    "saved_flat_and_gkr": 108
+  },
+  "main_benchmark_verified_proofs": 720,
+  "rss_verified_proofs": 22,
+  "local_documentation_links": 165,
+  "pinned_source_checkouts": "all clean",
+  "syntax_and_formatting": "passed"
+}

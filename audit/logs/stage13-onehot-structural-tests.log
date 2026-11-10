@@ -1,0 +1,13 @@
+RUSTFLAGS="-C target-cpu=native" CARGO_TARGET_DIR=/home/user/Programming/memarg-exploration/target cargo test --manifest-path vendor/open-magnetar/Cargo.toml -p om-memcheck --lib optimized_tests::structural_tests --release --offline -j 4
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 8.04s
+     Running unittests src/lib.rs (target/release/deps/om_memcheck-f948c5b6c3e35441)
+
+running 4 tests
+test onehot::optimized_tests::structural_tests::four_declared_chunks_stay_four_regardless_of_their_contents ... ok
+test onehot::optimized_tests::structural_tests::explicit_shared_stream_reuses_same_chunk_but_equal_clones_do_not ... ok
+test onehot::optimized_tests::structural_tests::invalid_bits_keep_distinct_components_and_match_unmerged_oracle ... ok
+test onehot::optimized_tests::structural_tests::structural_selection_preserves_full_dense_proofs_and_transcripts ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 40 filtered out; finished in 0.02s
+

@@ -1,0 +1,84 @@
+   Compiling ram-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-argument)
+   Compiling ram-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-bench)
+    Finished `release` profile [optimized] target(s) in 5.48s
+     Running unittests src/lib.rs (target/release/deps/ram_argument-ca7e886b5f4aec0e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/committed_ram.rs (target/release/deps/committed_ram-ef433ab9fe4f6bfc)
+
+running 12 tests
+test invalid_configuration_and_trace_shapes_return_errors ... ok
+test inconsistent_supplied_reads_are_rejected_before_proving ... ok
+test shared_address_mode_rejects_independent_streams_and_multiple_ports ... ok
+test shared_address_mode_binds_aliases_values_and_internal_address_claims ... ok
+test commitment_and_challenge_replay_are_rejected ... ok
+test shared_address_commits_rv_inc_and_one_address_encoding ... ok
+test public_memory_and_config_are_bound ... ok
+test single_component_and_full_word_path_work ... ok
+test malformed_shapes_return_errors ... ok
+test every_kind_of_twist_input_claim_is_authenticated ... ok
+test mosaic_ringswitch_and_ligerito_tampering_is_rejected ... ok
+test complete_proof_verifies_without_witness ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/virtualization_tree.rs (target/release/deps/virtualization_tree-967c62421611692d)
+
+running 7 tests
+test tree_binds_internal_parent_mles_away_from_the_boolean_cube ... ok
+test tree_requires_power_of_two_component_count_while_flat_retains_other_counts ... ok
+test malformed_and_reordered_tree_nodes_return_errors ... ok
+test every_tree_layer_and_child_value_is_authenticated ... ok
+test mode_and_proof_branch_are_bound_including_the_direct_shortcut ... ok
+test tree_proves_traces_from_each_original_guest_and_memory_filter ... ok
+test complete_tree_proofs_cover_depths_small_cycle_counts_and_independent_ports ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running unittests src/main.rs (target/release/deps/ram_bench-f1cbe10ec74591e1)
+
+running 4 tests
+test tests::dummy_comparisons_use_exact_work_counts_and_match_programs ... ok
+test tests::no_useful_rows_have_no_normalized_cost_or_comparison ... ok
+test tests::mode_and_dummy_comparisons_keep_the_other_dimension_fixed ... ok
+test tests::virtualization_total_includes_exclusive_tree_children ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/ram_payload-8433ca3a6aa88c04)
+
+running 1 test
+test tests::replay_preserves_reads_and_unwritten_byte_lanes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/payloads.rs (target/release/deps/payloads-982881a376243f13)
+
+running 9 tests
+test embedded_elf_and_original_source_match_provenance_manifest ... ok
+test guest_program_options_reject_invalid_limits_and_padding_modes ... ok
+test random_ram_reads_and_replaces_the_same_word ... ok
+test random_is_reproducible_and_reads_precede_writes ... ok
+test pointer_chase_is_one_permutation_cycle_with_checked_outputs ... ok
+test repeated_guest_pattern_keeps_current_memory_across_periods_and_tail ... ok
+test actual_guest_outputs_and_ram_values_are_checked ... ok
+test erc20_balances_change_and_memory_filter_retains_real_word_zero ... ok
+test guest_limits_do_not_silently_truncate_or_repeat_execution ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests ram_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ram_payload
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

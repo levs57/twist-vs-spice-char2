@@ -1,0 +1,39 @@
+n18/primary random/operations spice-typed: prover=56.365 commit=4.329 open=14.852 masks=3.288 ordering=7.203 verifier=12.244; populated/padded_MiB=3.875000/4.0
+n18/primary random/operations spice: prover=60.851 commit=6.921 open=20.083 masks=-0.000 ordering=6.943 verifier=11.935; populated/padded_MiB=5.804688/8.0
+n18/primary random/operations twist: prover=295.592 commit=5.714 open=17.411 masks=-0.000 ordering=-0.000 verifier=38.318; populated/padded_MiB=6.000000/8.0
+n18/primary guest/erc20-mixed-block/memory/operations spice-typed: prover=46.704 commit=4.612 open=14.218 masks=2.979 ordering=6.706 verifier=12.446; populated/padded_MiB=3.875000/4.0
+n18/primary guest/erc20-mixed-block/memory/operations spice: prover=53.111 commit=6.076 open=17.086 masks=-0.000 ordering=7.302 verifier=12.365; populated/padded_MiB=5.804688/8.0
+n18/primary guest/erc20-mixed-block/memory/operations twist: prover=84.627 commit=6.061 open=16.503 masks=-0.000 ordering=-0.000 verifier=36.116; populated/padded_MiB=6.000000/8.0
+n18/primary guest/pointer-chase/memory/operations spice-typed: prover=45.382 commit=4.355 open=13.685 masks=2.553 ordering=5.336 verifier=12.171; populated/padded_MiB=3.875000/4.0
+n18/primary guest/pointer-chase/memory/operations spice: prover=45.723 commit=5.980 open=15.652 masks=-0.000 ordering=5.849 verifier=12.245; populated/padded_MiB=5.804688/8.0
+n18/primary guest/pointer-chase/memory/operations twist: prover=74.385 commit=6.093 open=15.854 masks=-0.000 ordering=-0.000 verifier=36.348; populated/padded_MiB=6.000000/8.0
+n18/reversed random/operations twist: prover=293.648 commit=6.424 open=18.319 masks=-0.000 ordering=-0.000 verifier=38.579; populated/padded_MiB=6.000000/8.0
+n18/reversed random/operations spice: prover=58.041 commit=6.036 open=17.550 masks=-0.000 ordering=7.939 verifier=12.214; populated/padded_MiB=5.804688/8.0
+n18/reversed random/operations spice-typed: prover=55.310 commit=4.677 open=13.975 masks=3.401 ordering=8.031 verifier=12.104; populated/padded_MiB=3.875000/4.0
+n18/reversed guest/erc20-mixed-block/memory/operations twist: prover=83.167 commit=6.039 open=17.172 masks=-0.000 ordering=-0.000 verifier=36.191; populated/padded_MiB=6.000000/8.0
+n18/reversed guest/erc20-mixed-block/memory/operations spice: prover=49.938 commit=5.921 open=16.817 masks=-0.000 ordering=6.479 verifier=12.361; populated/padded_MiB=5.804688/8.0
+n18/reversed guest/erc20-mixed-block/memory/operations spice-typed: prover=47.846 commit=4.543 open=14.308 masks=2.706 ordering=7.112 verifier=12.147; populated/padded_MiB=3.875000/4.0
+n18/reversed guest/pointer-chase/memory/operations twist: prover=72.230 commit=6.020 open=18.673 masks=-0.000 ordering=-0.000 verifier=39.042; populated/padded_MiB=6.000000/8.0
+n18/reversed guest/pointer-chase/memory/operations spice: prover=52.062 commit=6.182 open=18.121 masks=-0.000 ordering=7.142 verifier=12.336; populated/padded_MiB=5.804688/8.0
+n18/reversed guest/pointer-chase/memory/operations spice-typed: prover=48.605 commit=4.784 open=14.381 masks=2.786 ordering=6.762 verifier=11.936; populated/padded_MiB=3.875000/4.0
+n20/primary random/operations spice-typed: prover=171.256 commit=14.734 open=36.040 masks=11.496 ordering=29.361 verifier=14.008; populated/padded_MiB=15.546875/16.0
+n20/primary random/operations spice: prover=233.715 commit=35.586 open=80.388 masks=-0.000 ordering=27.579 verifier=13.512; populated/padded_MiB=23.289062/32.0
+n20/primary random/operations twist: prover=1315.163 commit=37.212 open=81.025 masks=-0.000 ordering=-0.000 verifier=41.804; populated/padded_MiB=24.000000/32.0
+n20/primary guest/erc20-mixed-block/memory/operations spice-typed: prover=141.821 commit=13.346 open=28.881 masks=9.926 ordering=26.124 verifier=14.536; populated/padded_MiB=15.546875/16.0
+n20/primary guest/erc20-mixed-block/memory/operations spice: prover=201.618 commit=36.695 open=80.257 masks=-0.000 ordering=23.473 verifier=14.310; populated/padded_MiB=23.289062/32.0
+n20/primary guest/erc20-mixed-block/memory/operations twist: prover=343.665 commit=39.688 open=75.415 masks=-0.000 ordering=-0.000 verifier=38.547; populated/padded_MiB=24.000000/32.0
+n20/primary guest/pointer-chase/memory/operations spice-typed: prover=135.243 commit=13.368 open=29.299 masks=9.550 ordering=26.003 verifier=14.686; populated/padded_MiB=15.546875/16.0
+n20/primary guest/pointer-chase/memory/operations spice: prover=204.867 commit=39.532 open=79.470 masks=-0.000 ordering=24.721 verifier=14.204; populated/padded_MiB=23.289062/32.0
+n20/primary guest/pointer-chase/memory/operations twist: prover=332.079 commit=39.093 open=78.458 masks=-0.000 ordering=-0.000 verifier=41.704; populated/padded_MiB=24.000000/32.0
+n20/reversed random/operations twist: prover=1204.054 commit=31.424 open=57.047 masks=-0.000 ordering=-0.000 verifier=39.338; populated/padded_MiB=24.000000/32.0
+n20/reversed random/operations spice: prover=203.134 commit=34.427 open=65.050 masks=-0.000 ordering=25.293 verifier=14.868; populated/padded_MiB=23.289062/32.0
+n20/reversed random/operations spice-typed: prover=154.844 commit=12.424 open=31.720 masks=11.637 ordering=27.124 verifier=13.931; populated/padded_MiB=15.546875/16.0
+n20/reversed guest/erc20-mixed-block/memory/operations twist: prover=306.410 commit=36.920 open=64.853 masks=-0.000 ordering=-0.000 verifier=40.554; populated/padded_MiB=24.000000/32.0
+n20/reversed guest/erc20-mixed-block/memory/operations spice: prover=179.201 commit=37.840 open=60.866 masks=-0.000 ordering=22.886 verifier=15.234; populated/padded_MiB=23.289062/32.0
+n20/reversed guest/erc20-mixed-block/memory/operations spice-typed: prover=135.836 commit=13.922 open=30.854 masks=9.908 ordering=22.782 verifier=13.898; populated/padded_MiB=15.546875/16.0
+n20/reversed guest/pointer-chase/memory/operations twist: prover=257.933 commit=35.216 open=58.477 masks=-0.000 ordering=-0.000 verifier=39.612; populated/padded_MiB=24.000000/32.0
+n20/reversed guest/pointer-chase/memory/operations spice: prover=173.690 commit=35.854 open=58.656 masks=-0.000 ordering=23.823 verifier=15.671; populated/padded_MiB=23.289062/32.0
+n20/reversed guest/pointer-chase/memory/operations spice-typed: prover=126.841 commit=13.550 open=27.802 masks=10.088 ordering=22.516 verifier=14.143; populated/padded_MiB=15.546875/16.0
+PASS 216 verified proofs: current binary/source, schema3, equal T typed operations + flags, same RMW baselines, exact pricing incl initial flags/carries, mask/order/PCS accounting and per-sample medians.
+native workspace tests passed: 99
+default workspace tests passed: 99

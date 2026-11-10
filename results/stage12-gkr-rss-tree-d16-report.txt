@@ -1,0 +1,37 @@
+Verified GF128 RAM proofs; times are medians in milliseconds.
+
+guest/pointer-chase/memory/natural/gkr-tree: chunk=1 bits, d=16, samples=3
+  payload cycles      262144 active + 0 idle (0.0% padding)
+  guest pattern       repeat-ram-pattern: 7300 VM cycles, 2094 selected rows; 125 full copies + 394 tail rows
+  actual RAM work     262144 memory + 0 dummy rows (100.00% memory)
+  trace values        6003 zero reads (0 dummy), 261894 unchanged writes, 70 distinct words
+  prover total          275.345
+  virtualization        122.140
+  virtual proof       4 sumchecks, 72 rounds, 4896 field bytes (216 round elements + 90 node evaluations)
+  ms / million RAM     1050.359
+  commitment             36.565  (11.4% median share)
+  everything else       243.846
+  verifier               51.458
+  committed witness  8192.0 KiB, 160 populated / 256 padded bits per cycle
+    column area: address encoding 12.50%, values 25.00%, increments 25.00%, padding 37.50%
+    mosaic.batch                   14.070
+    pcs.commit                     36.565
+    pcs.ligerito_open              32.140
+    pcs.open                        0.002
+    pcs.ringswitch                  4.069
+    ram.claims                      1.007
+    ram.pack                        2.228
+    ram.statement                   2.639
+    ram.twist                       0.001
+    ram.witness                     2.664
+    twist.final                     1.727
+    twist.onehot                   33.030
+    twist.other                     0.058
+    twist.rw.address                4.025
+    twist.rw.cycles                22.270
+    twist.rw.setup                  3.073
+    twist.val                       4.510
+    twist.virtualization            3.294
+    virt.tree.build                13.723
+    virt.tree.layers              102.963
+    unattributed                    0.433

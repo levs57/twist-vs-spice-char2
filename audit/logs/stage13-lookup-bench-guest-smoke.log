@@ -1,0 +1,3 @@
+pattern=guest/pointer-chase/memory method=logup-star chunk=- virtualization=- prove=11.827ms verify=11.343ms commit=0.874ms open=8.518ms remaining=2.435ms main_bits=16384 aux_bits=524288
+JSON: /tmp/stage13-lookup-bench-guest-smoke.json
+All 1 cases verified (1 measured proofs/case plus 0 warmups).

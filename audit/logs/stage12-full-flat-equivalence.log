@@ -1,0 +1,76 @@
+Reference kernels: febfc0e66f5809e034dd1afac78202bd4882de27
+     Locking 20 packages to latest Rust 1.96.0 compatible versions
+    Blocking waiting for file lock on build directory
+   Compiling om-field-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-h046581j/reference/crates/om-field)
+   Compiling om-transcript-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-h046581j/reference/crates/om-transcript)
+   Compiling om-sumcheck-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-h046581j/reference/crates/om-sumcheck)
+   Compiling om-mosaic-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-h046581j/reference/crates/om-mosaic)
+   Compiling om-pcs-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-h046581j/reference/crates/om-pcs)
+   Compiling om-memcheck-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-h046581j/reference/crates/om-memcheck)
+   Compiling ram-argument-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-h046581j/adapter)
+   Compiling memarg-optimization-equivalence v0.0.0 (/tmp/memarg-sumcheck-equivalence-h046581j/probe)
+    Finished `release` profile [optimized] target(s) in 27.55s
+     Running `target/release/memarg-optimization-equivalence`
+matched a=4 c=4 n=2 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=0 seed=17 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=1 seed=18 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=2 seed=19 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=0 seed=17 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=1 seed=18 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=2 seed=19 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=2 seed=19 tree=false
+completed workers=1
+matched a=4 c=4 n=2 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=0 seed=17 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=1 seed=18 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=2 seed=19 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=0 seed=17 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=1 seed=18 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=2 seed=19 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=2 seed=19 tree=false
+completed workers=4
+Matched 60 complete proof values; independently verified both versions for every case.

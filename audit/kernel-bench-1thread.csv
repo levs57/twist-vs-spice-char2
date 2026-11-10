@@ -1,0 +1,25 @@
+# RAYON_NUM_THREADS=1
+# compile pclmulqdq=true avx512f=false vpclmulqdq=true
+# 5 warmups, 9 samples each >=20ms cumulative timed work; median mean-ms/call; setup/clones and destruction excluded; includes returned allocations; no CPU pinning
+kernel,log2_input_len,om_ms,flock_ms
+dot_reduced,12,0.012633,0.027124
+dot_delayed_reduce,12,0.007533,0.025056
+fold_in_place,12,0.006779,0.014052
+fold_out_allocating,12,0.007173,0.018163
+sum_squares,12,0.011720,0.025483
+eq_table_allocating,12,0.026320,0.047269
+quadratic_first_round_flock_legacy_f128,12,0.012844,0.028299
+dot_reduced,16,0.198675,0.428734
+dot_delayed_reduce,16,0.119774,0.399460
+fold_in_place,16,0.143551,0.223143
+fold_out_allocating,16,0.143420,0.314623
+sum_squares,16,0.186929,0.406889
+eq_table_allocating,16,0.254436,0.799169
+quadratic_first_round_flock_legacy_f128,16,0.375535,0.978952
+dot_reduced,20,3.620941,6.510002
+dot_delayed_reduce,20,2.410746,6.193011
+fold_in_place,20,4.353313,3.690018
+fold_out_allocating,20,2.835042,5.039843
+sum_squares,20,3.051200,6.525483
+eq_table_allocating,20,3.746813,11.997086
+quadratic_first_round_flock_legacy_f128,20,4.481185,6.638327

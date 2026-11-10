@@ -1,0 +1,34 @@
+   Compiling lean-grandproduct v0.1.0 (/home/user/Programming/memarg-exploration/vendor/lean-grandproduct)
+   Compiling spice-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/spice-argument)
+    Finished `release` profile [optimized] target(s) in 8.89s
+     Running unittests src/lib.rs (target/release/deps/spice_argument-067d6b0b1fa27681)
+
+running 5 tests
+test order::tests::timestamp_bits_are_analytic_low_first_mles ... ok
+test order::tests::native_carry_words_match_ripple_majority_and_strict_unsigned_order ... ok
+test order::tests::ordering_proof_matches_dense_rounds_claims_and_transcript ... ok
+test order::tests::quadratic_cofactor_handles_zero_weights_and_boolean_equality_points ... ok
+test order::tests::invalid_order_carries_shapes_and_tampering_reject_or_expose_false_leaf ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/committed_ram.rs (target/release/deps/committed_ram-ec7d6a2832499b55)
+
+running 8 tests
+test malformed_inputs_and_proofs_return_errors ... ok
+test permutation_and_all_terminal_columns_are_authenticated ... ok
+test public_memory_configuration_and_commitment_are_bound ... ok
+test order_previous_and_carry_claims_are_authenticated ... ok
+test mosaic_ringswitch_and_ligerito_are_required ... ok
+test end_to_end_matches_twist_public_memory_and_prices_every_private_column ... ok
+test full_width_zero_unchanged_and_untouched_words_match_twist ... ok
+test rectangular_domains_padding_and_all_value_word_widths_verify ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+   Doc-tests spice_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

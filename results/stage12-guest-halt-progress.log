@@ -1,0 +1,2 @@
+guest/natural/shared: 2^18 cycles, 2^16 words, 4-bit components, 8 workers
+guest/permuted/shared: 2^18 cycles, 2^16 words, 4-bit components, 8 workers

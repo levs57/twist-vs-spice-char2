@@ -1,0 +1,3 @@
+V6 CLI functional smoke: 12 independently verified RAM/PCS proofs (random + all three memory-only guests; Flat/FlatLegacy/GKR).
+Both new sumchecks included in proof statistics and exclusive virtualization timer; CSV and source hash match.
+Small single-sample run checks integration only; no performance conclusions.

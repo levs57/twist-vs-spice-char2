@@ -1,0 +1,25 @@
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> vendor/flock-boolean/crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+   Compiling spice-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/spice-argument)
+    Finished `release` profile [optimized] target(s) in 5.18s
+     Running unittests src/lib.rs (target/release/deps/spice_argument-5f72fffa5b1be9f0)
+
+running 4 tests
+test order_flock::tests::all_friendly_cycle_eq_weights_have_full_binary_rank ... ok
+test order_flock::tests::source_recombination_handles_phi_nodes_boolean_cycles_and_padding ... ok
+test order_flock::tests::malformed_words_proof_shapes_and_every_payload_mutation_are_detected ... ok
+test order_flock::tests::word_packing_and_flock_proof_match_dense_boolean_oracle ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.03s
+

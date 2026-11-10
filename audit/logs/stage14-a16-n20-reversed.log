@@ -1,0 +1,126 @@
+random/spice/chunk=None: T=2^20 N=2^16 threads=8
+random spice chunk=None: prove=293.309ms verify=15.504ms commit=39.464ms open=67.629ms IOP+prep=183.929ms bits=195362816/268435456 populated/padded
+  preparation=12.092ms argument=169.444ms unattributed=2.147ms (independent medians)
+    mosaic.batch                               47.177ms
+    pcs.commit                                 39.464ms
+    pcs.ligerito_open                          45.512ms
+    pcs.open                                    0.001ms
+    pcs.ringswitch                             22.401ms
+    spice.order                               102.063ms
+    spice.pack                                  6.940ms
+    spice.permutation.claims                    9.715ms
+    spice.permutation.gkr                       8.094ms
+    spice.permutation.leaves                    2.460ms
+    spice.statement                             0.576ms
+    spice.witness                               4.440ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+random/twist/chunk=Some(4): T=2^20 N=2^16 threads=8
+random twist chunk=Some(4): prove=1687.667ms verify=43.998ms commit=32.646ms open=64.354ms IOP+prep=1589.503ms bits=201326592/268435456 populated/padded
+  preparation=26.267ms argument=1561.575ms unattributed=1.594ms (independent medians)
+    mosaic.batch                               46.930ms
+    pcs.commit                                 32.646ms
+    pcs.ligerito_open                          45.837ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             19.384ms
+    ram.claims                                  5.446ms
+    ram.pack                                    5.763ms
+    ram.statement                               0.681ms
+    ram.twist                                   0.002ms
+    ram.witness                                13.947ms
+    twist.final                                 6.939ms
+    twist.onehot                               25.101ms
+    twist.other                                 0.241ms
+    twist.rw.address                            1.582ms
+    twist.rw.cycles                          1384.321ms
+    twist.rw.setup                             32.350ms
+    twist.val                                  13.451ms
+    twist.virtualization                        1.584ms
+    virt.claim_reduction                        5.292ms
+    virt.flat.claims                            0.001ms
+    virt.flat.product                          46.594ms
+guest/erc20-mixed-block/memory/spice/chunk=None: T=2^20 N=2^16 threads=8
+guest/erc20-mixed-block/memory spice chunk=None: prove=281.137ms verify=16.249ms commit=37.883ms open=64.624ms IOP+prep=175.440ms bits=195362816/268435456 populated/padded
+  preparation=12.019ms argument=160.693ms unattributed=2.357ms (independent medians)
+    mosaic.batch                               26.477ms
+    pcs.commit                                 37.883ms
+    pcs.ligerito_open                          50.281ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             14.884ms
+    spice.order                               111.404ms
+    spice.pack                                  7.175ms
+    spice.permutation.claims                    8.413ms
+    spice.permutation.gkr                       7.832ms
+    spice.permutation.leaves                    2.460ms
+    spice.statement                             0.670ms
+    spice.witness                               4.262ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+guest/erc20-mixed-block/memory/twist/chunk=Some(4): T=2^20 N=2^16 threads=8
+guest/erc20-mixed-block/memory twist chunk=Some(4): prove=289.593ms verify=39.616ms commit=36.697ms open=56.643ms IOP+prep=197.136ms bits=201326592/268435456 populated/padded
+  preparation=22.355ms argument=172.831ms unattributed=1.559ms (independent medians)
+    mosaic.batch                               12.367ms
+    pcs.commit                                 36.697ms
+    pcs.ligerito_open                          44.346ms
+    pcs.open                                    0.003ms
+    pcs.ringswitch                             12.356ms
+    ram.claims                                  3.967ms
+    ram.pack                                    4.962ms
+    ram.statement                               0.558ms
+    ram.twist                                   0.001ms
+    ram.witness                                12.231ms
+    twist.final                                 5.576ms
+    twist.onehot                               25.313ms
+    twist.other                                 0.231ms
+    twist.rw.address                            1.376ms
+    twist.rw.cycles                            71.711ms
+    twist.rw.setup                             11.908ms
+    twist.val                                  10.933ms
+    twist.virtualization                        1.609ms
+    virt.claim_reduction                        4.668ms
+    virt.flat.claims                            0.001ms
+    virt.flat.product                          28.090ms
+guest/pointer-chase/memory/spice/chunk=None: T=2^20 N=2^16 threads=8
+guest/pointer-chase/memory spice chunk=None: prove=254.412ms verify=15.198ms commit=38.279ms open=59.493ms IOP+prep=154.466ms bits=195362816/268435456 populated/padded
+  preparation=10.749ms argument=141.769ms unattributed=2.058ms (independent medians)
+    mosaic.batch                               21.908ms
+    pcs.commit                                 38.279ms
+    pcs.ligerito_open                          46.469ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             13.594ms
+    spice.order                               101.936ms
+    spice.pack                                  6.532ms
+    spice.permutation.claims                    8.144ms
+    spice.permutation.gkr                       8.025ms
+    spice.permutation.leaves                    2.380ms
+    spice.statement                             0.582ms
+    spice.witness                               3.694ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+guest/pointer-chase/memory/twist/chunk=Some(4): T=2^20 N=2^16 threads=8
+guest/pointer-chase/memory twist chunk=Some(4): prove=262.915ms verify=40.583ms commit=36.357ms open=55.982ms IOP+prep=167.203ms bits=201326592/268435456 populated/padded
+  preparation=21.889ms argument=143.450ms unattributed=1.644ms (independent medians)
+    mosaic.batch                               10.880ms
+    pcs.commit                                 36.357ms
+    pcs.ligerito_open                          44.178ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             11.801ms
+    ram.claims                                  3.785ms
+    ram.pack                                    4.829ms
+    ram.statement                               0.575ms
+    ram.twist                                   0.001ms
+    ram.witness                                12.108ms
+    twist.final                                 5.178ms
+    twist.onehot                               25.846ms
+    twist.other                                 0.244ms
+    twist.rw.address                            1.440ms
+    twist.rw.cycles                            43.736ms
+    twist.rw.setup                             11.266ms
+    twist.val                                  10.061ms
+    twist.virtualization                        1.615ms
+    virt.claim_reduction                        4.366ms
+    virt.flat.claims                            0.001ms
+    virt.flat.product                          26.971ms
+JSON: results/stage14-a16-n20-reversed.json
+CSV: results/stage14-a16-n20-reversed.csv
+random Twist(Some(4))/Spice ratios: prover=5.754× verifier=2.838× populated=1.031× committed=1.000×
+guest/erc20-mixed-block/memory Twist(Some(4))/Spice ratios: prover=1.030× verifier=2.438× populated=1.031× committed=1.000×
+guest/pointer-chase/memory Twist(Some(4))/Spice ratios: prover=1.033× verifier=2.670× populated=1.031× committed=1.000×
+Verified 36 proofs across 6 cases, including warmups.

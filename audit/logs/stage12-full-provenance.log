@@ -1,0 +1,23 @@
+Verified 89 source/vector/license files at febfc0e66f5809e034dd1afac78202bd4882de27
+Recorded local change: crates/om-field/src/lib.rs
+Recorded local change: crates/om-transcript/Cargo.toml
+Recorded local change: crates/om-transcript/src/hashing.rs
+Recorded local change: crates/om-transcript/src/lib.rs
+Recorded local change: crates/om-transcript/src/sha256.rs
+Recorded local change: crates/om-sumcheck/src/lib.rs
+Recorded local change: crates/om-sumcheck/src/mle.rs
+Recorded local change: crates/om-sumcheck/src/sumcheck.rs
+Recorded local change: crates/om-pcs/src/ligerito.rs
+Recorded local change: crates/om-pcs/src/merkle.rs
+Recorded local change: crates/om-pcs/src/ntt.rs
+Recorded local change: crates/om-pcs/src/pcs.rs
+Recorded local change: crates/om-pcs/src/ring_switch.rs
+Recorded local change: crates/om-mosaic/src/mosaic.rs
+Recorded local change: crates/om-mosaic/tests/mosaic.rs
+Recorded local change: crates/om-memcheck/src/lazy.rs
+Recorded local change: crates/om-memcheck/src/lib.rs
+Recorded local change: crates/om-memcheck/src/onehot.rs
+Recorded local change: crates/om-memcheck/src/shout.rs
+Recorded local change: crates/om-memcheck/src/twist.rs
+Recorded local change: crates/om-memcheck/tests/vectors.rs
+Local patch: bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3

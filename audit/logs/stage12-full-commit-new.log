@@ -1,0 +1,13 @@
+     Locking 10 packages to latest Rust 1.96.0 compatible versions
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+   Compiling om-pcs v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-pcs)
+   Compiling memarg-commit-probe-new v0.0.0 (/tmp/memarg-commit-probe/new)
+    Finished `release` profile [optimized] target(s) in 5.26s
+     Running `target/release/memarg-commit-probe-new`
+native sha=true avx2=true vpclmul=true
+workers=1 sha4MiB_ms=13.7600
+workers=1 n=15 rows=32 encode1coset_ms=0.1201 commit_ms=13.9314 root=68192de4957b9beedbaa3ee8276f02029125f964428815770bf3fcc9e9b45e48
+workers=1 n=19 rows=32 encode1coset_ms=3.1722 commit_ms=236.6086 root=80e16f092e2a649938925b06f914822385eb9852094531b487db0b54a15ffa28
+workers=8 sha4MiB_ms=1.9933
+workers=8 n=15 rows=32 encode1coset_ms=0.1526 commit_ms=2.0800 root=68192de4957b9beedbaa3ee8276f02029125f964428815770bf3fcc9e9b45e48
+workers=8 n=19 rows=32 encode1coset_ms=0.7973 commit_ms=21.2075 root=80e16f092e2a649938925b06f914822385eb9852094531b487db0b54a15ffa28

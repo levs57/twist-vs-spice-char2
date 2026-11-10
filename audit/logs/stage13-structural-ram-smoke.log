@@ -1,0 +1,77 @@
+random/natural/shared/flat: 2^6 cycles, 2^8 words, 2-bit components, 2 workers
+random/natural/shared/gkr-tree: 2^6 cycles, 2^8 words, 2-bit components, 2 workers
+Verified GF128 RAM proofs; times are medians in milliseconds.
+
+random/natural/flat: chunk=2 bits, d=4, samples=1
+  payload cycles      64 active + 0 idle (0.0% padding)
+  prover total            3.390
+  virtualization          0.411
+  virtual proof       2 sumchecks, 12 rounds, 912 field bytes (42 round elements + 15 node evaluations)
+  ms / million RAM    52971.891
+  commitment              0.072  (2.1% median share)
+  everything else         3.318
+  verifier                3.405
+  committed witness  2.0 KiB, 144 populated / 256 padded bits per cycle
+    column area: address encoding 6.25%, values 25.00%, increments 25.00%, padding 43.75%
+    mosaic.batch                    1.136
+    pcs.commit                      0.072
+    pcs.ligerito_open               0.740
+    pcs.open                        0.001
+    pcs.ringswitch                  0.193
+    ram.claims                      0.019
+    ram.pack                        0.008
+    ram.statement                   0.035
+    ram.twist                       0.001
+    ram.witness                     0.014
+    twist.final                     0.126
+    twist.onehot                    0.141
+    twist.other                     0.112
+    twist.rw.address                0.088
+    twist.rw.cycles                 0.106
+    twist.rw.setup                  0.019
+    twist.val                       0.069
+    twist.virtualization            0.140
+    virt.claim_reduction            0.188
+    virt.flat.claims                0.000
+    virt.flat.product               0.083
+    unattributed                    0.100
+
+random/natural/gkr-tree: chunk=2 bits, d=4, samples=1
+  payload cycles      64 active + 0 idle (0.0% padding)
+  prover total            2.896
+  virtualization          0.329
+  virtual proof       2 sumchecks, 12 rounds, 864 field bytes (36 round elements + 18 node evaluations)
+  ms / million RAM    45244.250
+  commitment              0.057  (2.0% median share)
+  everything else         2.838
+  verifier                2.374
+  committed witness  2.0 KiB, 144 populated / 256 padded bits per cycle
+    column area: address encoding 6.25%, values 25.00%, increments 25.00%, padding 43.75%
+    mosaic.batch                    0.812
+    pcs.commit                      0.057
+    pcs.ligerito_open               0.702
+    pcs.open                        0.000
+    pcs.ringswitch                  0.163
+    ram.claims                      0.011
+    ram.pack                        0.003
+    ram.statement                   0.031
+    ram.twist                       0.000
+    ram.witness                     0.002
+    twist.final                     0.132
+    twist.onehot                    0.169
+    twist.other                     0.133
+    twist.rw.address                0.090
+    twist.rw.cycles                 0.098
+    twist.rw.setup                  0.012
+    twist.val                       0.077
+    twist.virtualization            0.142
+    virt.tree.build                 0.003
+    virt.tree.layers                0.184
+    unattributed                    0.072
+
+Matched flat / GKR-tree comparison at the same RAM workload:
+
+random//natural: chunk=2, d=4
+  prover           flat     3.390 ms; tree     2.896 ms; speedup 1.171x; saving 14.59%
+  virtualization   flat     0.411 ms; tree     0.329 ms; speedup 1.248x; saving 19.88%
+  verifier         flat     3.405 ms; tree     2.374 ms; speedup 1.434x; saving 30.27%

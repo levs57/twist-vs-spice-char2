@@ -1,0 +1,23 @@
+   Compiling syn v2.0.118
+   Compiling primitives v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/primitives)
+   Compiling tracing-core v0.1.36
+   Compiling verifier v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/verifier)
+   Compiling fiat_shamir v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/fiat_shamir)
+   Compiling tracing-attributes v0.1.31
+   Compiling tracing v0.1.44
+   Compiling pcs v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/pcs)
+   Compiling keccak_gkr v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/keccak_gkr)
+   Compiling leanvm_core v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/leanvm_core)
+   Compiling lean_compiler v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/lean_compiler)
+    Finished `release` profile [optimized] target(s) in 24.21s
+     Running unittests src/lib.rs (target/release/deps/leanvm_core-a7d4ce7ab8a33a83)
+
+running 5 tests
+test gkr::tests::quartic_round_message_matches_direct_evaluation ... ok
+test gkr::tests::radix_four_claims_are_true_at_even_and_odd_depths ... ok
+test gkr::tests::level_products_match_scalar ... ok
+test gkr::tests::implicit_identity_suffix_matches_dense_padding ... ok
+test gkr::tests::fused_fold_matches_separate_fold_and_message ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.02s
+

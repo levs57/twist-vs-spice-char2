@@ -1,0 +1,6 @@
+GKR virtualization versus flat; ranges across two programs and two case orders.
+d=4: virtualization 0.990x..1.155x; total time reduction -4.91%..12.73%; field payload 1632->2016 bytes
+d=8: virtualization 1.373x..1.615x; total time reduction 6.07%..17.79%; field payload 2976->3264 bytes
+d=16: virtualization 2.033x..2.609x; total time reduction 22.64%..37.04%; field payload 5664->4896 bytes
+d=8: process peak RSS 120.16->179.46 MiB (1.493x)
+d=16: process peak RSS 157.54->273.03 MiB (1.733x)

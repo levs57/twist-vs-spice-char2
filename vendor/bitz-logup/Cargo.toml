@@ -1,0 +1,14 @@
+[package]
+name = "bitz-logup"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "BitZ optimized weighted LogUp fraction reductions adapted to OM GF128"
+
+[dependencies]
+om-field = { path = "../open-magnetar/crates/om-field" }
+om-transcript = { path = "../open-magnetar/crates/om-transcript" }
+rayon = "1"
+
+[workspace]

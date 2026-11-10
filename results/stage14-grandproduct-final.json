@@ -1,0 +1,174 @@
+{
+  "tag": "final-joint-preparation-structural-trim",
+  "toolchain": "Rust1.98.1 thinLTO native",
+  "workers": 8,
+  "warmup": 1,
+  "samples": 5,
+  "scope": "Both constructors validate structural padding and trim its suffix; normalized per tree, portGF128x2 vs upstreamGF192x3. Input clones outside timer. Preparation and GKR measured separately.",
+  "binary_sha256": {
+    "ported": "0ec20c54b7f53944b09857600610f1d06b6c00ee11b79809c26ca4165e3321fe",
+    "upstream": "274aeff6662f9bc9d3bf936decd15c37b611bf274980dd22e2a133201d27dd48"
+  },
+  "cases": [
+    {
+      "order": "primary",
+      "backend": "ported",
+      "log_size": 18,
+      "padding": false,
+      "median_prepare_ms_per_tree": 0.406195,
+      "median_total_ms_per_tree": 2.650184,
+      "median_prove_ms_per_tree": 2.24091,
+      "csv": "results/stage14-grandproduct-final-primary-ported-n18-full.csv"
+    },
+    {
+      "order": "primary",
+      "backend": "upstream",
+      "log_size": 18,
+      "padding": false,
+      "median_prepare_ms_per_tree": 0.19599733333333333,
+      "median_total_ms_per_tree": 1.338107,
+      "median_prove_ms_per_tree": 1.0968186666666666,
+      "csv": "results/stage14-grandproduct-final-primary-upstream-n18-full.csv"
+    },
+    {
+      "order": "primary",
+      "backend": "upstream",
+      "log_size": 20,
+      "padding": false,
+      "median_prepare_ms_per_tree": 1.2492023333333333,
+      "median_total_ms_per_tree": 6.772372,
+      "median_prove_ms_per_tree": 5.485529666666667,
+      "csv": "results/stage14-grandproduct-final-primary-upstream-n20-full.csv"
+    },
+    {
+      "order": "primary",
+      "backend": "ported",
+      "log_size": 20,
+      "padding": false,
+      "median_prepare_ms_per_tree": 0.9064715,
+      "median_total_ms_per_tree": 5.544979,
+      "median_prove_ms_per_tree": 4.6350865,
+      "csv": "results/stage14-grandproduct-final-primary-ported-n20-full.csv"
+    },
+    {
+      "order": "primary",
+      "backend": "ported",
+      "log_size": 18,
+      "padding": true,
+      "median_prepare_ms_per_tree": 0.2428925,
+      "median_total_ms_per_tree": 1.34373,
+      "median_prove_ms_per_tree": 1.0723195,
+      "csv": "results/stage14-grandproduct-final-primary-ported-n18-padding.csv"
+    },
+    {
+      "order": "primary",
+      "backend": "upstream",
+      "log_size": 18,
+      "padding": true,
+      "median_prepare_ms_per_tree": 0.41435099999999997,
+      "median_total_ms_per_tree": 1.371085,
+      "median_prove_ms_per_tree": 0.9504413333333334,
+      "csv": "results/stage14-grandproduct-final-primary-upstream-n18-padding.csv"
+    },
+    {
+      "order": "primary",
+      "backend": "upstream",
+      "log_size": 20,
+      "padding": true,
+      "median_prepare_ms_per_tree": 1.7046533333333331,
+      "median_total_ms_per_tree": 5.118946,
+      "median_prove_ms_per_tree": 3.4558516666666663,
+      "csv": "results/stage14-grandproduct-final-primary-upstream-n20-padding.csv"
+    },
+    {
+      "order": "primary",
+      "backend": "ported",
+      "log_size": 20,
+      "padding": true,
+      "median_prepare_ms_per_tree": 1.23273,
+      "median_total_ms_per_tree": 4.494897,
+      "median_prove_ms_per_tree": 3.25433,
+      "csv": "results/stage14-grandproduct-final-primary-ported-n20-padding.csv"
+    },
+    {
+      "order": "reversed",
+      "backend": "upstream",
+      "log_size": 18,
+      "padding": false,
+      "median_prepare_ms_per_tree": 0.25326333333333334,
+      "median_total_ms_per_tree": 1.720408,
+      "median_prove_ms_per_tree": 1.4666816666666669,
+      "csv": "results/stage14-grandproduct-final-reversed-upstream-n18-full.csv"
+    },
+    {
+      "order": "reversed",
+      "backend": "ported",
+      "log_size": 18,
+      "padding": false,
+      "median_prepare_ms_per_tree": 0.285818,
+      "median_total_ms_per_tree": 1.965359,
+      "median_prove_ms_per_tree": 1.6254525,
+      "csv": "results/stage14-grandproduct-final-reversed-ported-n18-full.csv"
+    },
+    {
+      "order": "reversed",
+      "backend": "ported",
+      "log_size": 20,
+      "padding": false,
+      "median_prepare_ms_per_tree": 0.9345925,
+      "median_total_ms_per_tree": 6.379353,
+      "median_prove_ms_per_tree": 5.3388795,
+      "csv": "results/stage14-grandproduct-final-reversed-ported-n20-full.csv"
+    },
+    {
+      "order": "reversed",
+      "backend": "upstream",
+      "log_size": 20,
+      "padding": false,
+      "median_prepare_ms_per_tree": 1.2579553333333333,
+      "median_total_ms_per_tree": 6.80943,
+      "median_prove_ms_per_tree": 5.450415,
+      "csv": "results/stage14-grandproduct-final-reversed-upstream-n20-full.csv"
+    },
+    {
+      "order": "reversed",
+      "backend": "upstream",
+      "log_size": 18,
+      "padding": true,
+      "median_prepare_ms_per_tree": 0.43732966666666667,
+      "median_total_ms_per_tree": 1.410542,
+      "median_prove_ms_per_tree": 0.9896396666666667,
+      "csv": "results/stage14-grandproduct-final-reversed-upstream-n18-padding.csv"
+    },
+    {
+      "order": "reversed",
+      "backend": "ported",
+      "log_size": 18,
+      "padding": true,
+      "median_prepare_ms_per_tree": 0.2924185,
+      "median_total_ms_per_tree": 1.443624,
+      "median_prove_ms_per_tree": 1.162851,
+      "csv": "results/stage14-grandproduct-final-reversed-ported-n18-padding.csv"
+    },
+    {
+      "order": "reversed",
+      "backend": "ported",
+      "log_size": 20,
+      "padding": true,
+      "median_prepare_ms_per_tree": 1.227013,
+      "median_total_ms_per_tree": 4.374947,
+      "median_prove_ms_per_tree": 3.1448855,
+      "csv": "results/stage14-grandproduct-final-reversed-ported-n20-padding.csv"
+    },
+    {
+      "order": "reversed",
+      "backend": "upstream",
+      "log_size": 20,
+      "padding": true,
+      "median_prepare_ms_per_tree": 1.5407836666666668,
+      "median_total_ms_per_tree": 4.575333,
+      "median_prove_ms_per_tree": 3.041365666666667,
+      "csv": "results/stage14-grandproduct-final-reversed-upstream-n20-padding.csv"
+    }
+  ]
+}

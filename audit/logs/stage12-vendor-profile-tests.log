@@ -1,0 +1,245 @@
+   Compiling crossbeam-utils v0.8.23
+   Compiling crossbeam-epoch v0.9.21
+   Compiling om-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-field)
+   Compiling crossbeam-deque v0.8.8
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+   Compiling zmij v1.0.23
+   Compiling serde_core v1.0.229
+   Compiling rayon-core v1.13.0
+   Compiling serde_json v1.0.154
+   Compiling either v1.19.0
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling rayon v1.12.0
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+   Compiling om-mosaic v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-mosaic)
+   Compiling om-pcs v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-pcs)
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 9.65s
+     Running unittests src/lib.rs (target/release/deps/om_memcheck-bbf244f44266aa2c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/onehot.rs (target/release/deps/onehot-65f67d0f43b49f4f)
+
+running 9 tests
+test chunks_low_first ... ok
+test full_table_is_product ... ok
+test onehot_honest ... ok
+test eq_cubed ... ok
+test delta_star_formula ... ok
+test hamming_weight_two_rejected ... ok
+test zero_c_detected ... ok
+test hamming_weight_zero_accepted_here ... ok
+test virt_d2_d3 ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/shout.rs (target/release/deps/shout-3f62672a5d4393c4)
+
+running 10 tests
+test shout_d1 ... ok
+test hamming_zero_d1 ... ok
+test shout_d3 ... ok
+test shout_d2 ... ok
+test hamming_two ... ok
+test wrong_address_bit ... ok
+test hamming_zero ... ok
+test wrong_value ... ok
+test multi_point_groups ... ok
+test shout_parallel_cycles ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/twist.rs (target/release/deps/twist-df589d97b7a02481)
+
+running 22 tests
+test lt_brute_force ... ok
+test lt_is_mle ... ok
+test hamming_two_read ... ok
+test hamming_zero_read ... ok
+test ram_shared_write_address ... ok
+test hamming_zero_write ... ok
+test wrong_increment ... ok
+test final_untouched_region_equals_m0 ... ok
+test ram_like_p1_d2_final ... ok
+test twist_d3 ... ok
+test wrong_address_bit ... ok
+test wrong_write_value ... ok
+test reg_like_p2_d1 ... ok
+test ram_like_p1_d1 ... ok
+test wrong_read_trace ... ok
+test wrong_final_region ... ok
+test reg_like_p2_d2 ... ok
+test wrong_read_value ... ok
+test wrong_final_memory ... ok
+test real_register_shape ... ok
+test parallel_threshold_case ... ok
+test parallel_cycles_case ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/vectors.rs (target/release/deps/vectors-970711bb56a16268)
+
+running 8 tests
+test lt_vectors ... ok
+test onehot_vector ... ok
+test twist_reg_p2_d1_vector ... ok
+test twist_reg_p2_d2_vector ... ok
+test twist_ram_p1_d1_final_vector ... ok
+test twist_ram_p1_d2_final_vector ... ok
+test shout_d1_vector ... ok
+test shout_d2_vector ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/om_pcs-d46f309666c3c768)
+
+running 2 tests
+test ligerito::tests::cheating_prover_inconsistent_fold ... ok
+test ligerito::tests::cheating_in_each_repetition ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/ligerito.rs (target/release/deps/ligerito-226e273ff469c15a)
+
+running 16 tests
+test conjectured100_profile_shape ... ok
+test gap_params_encoding_and_shape ... ok
+test params_and_queries ... ok
+test bitpcs_end_to_end_and_negative ... ok
+test bitpcs_packed_matches_bool ... ok
+test wrong_value ... ok
+test wrong_point ... ok
+test gap_wrong_value ... ok
+test completeness ... ok
+test wrong_commitment ... ok
+test tamper_everything ... ok
+test gap_tamper_each_repetition_in_final ... ok
+test gap_completeness ... ok
+test provable120_profile_end_to_end ... ok
+test provable120_two_levels_bitpcs ... ok
+test bitpcs_packed_matches_bool_multilevel ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests/merkle.rs (target/release/deps/merkle-aeb93c2e82b258b6)
+
+running 9 tests
+test domain_separation ... ok
+test dedup_full_set_needs_no_auth ... ok
+test sha384_profile_48_byte_digests ... ok
+test multi_open_all_sizes ... ok
+test single_leaf ... ok
+test sha3_profile ... ok
+test two_leaves_formula ... ok
+test tamper ... ok
+test large_tree_matches_sequential_root ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/ntt.rs (target/release/deps/ntt-9f13e63b216fae51)
+
+running 7 tests
+test minimum_distance ... ok
+test degree_bound_is_rs ... ok
+test monomials ... ok
+test normalisation ... ok
+test linear ... ok
+test fast_equals_naive ... ok
+test large_encode_matches_definition_at_samples ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/ring_switch.rs (target/release/deps/ring_switch-e4e9713ca8399160)
+
+running 8 tests
+test a_eval_matches_table ... ok
+test pack_matches_convention ... ok
+test tampered_s_rejected_or_output_wrong ... ok
+test tampered_sumcheck_rejected ... ok
+test malformed ... ok
+test dishonest_prover_flipped_bit_caught_by_pcs_claim ... ok
+test wrong_value_rejected ... ok
+test completeness_and_output_claim ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vectors.rs (target/release/deps/vectors-86aac417ff6bd049)
+
+running 4 tests
+test merkle_vectors ... ok
+test ring_switch_vector ... ok
+test ntt_vectors ... ok
+test ligerito_vectors ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/release/deps/om_transcript-0a98d46e68198eaa)
+
+running 5 tests
+test transcript::tests::nonzero_retry_consumes_until_nonzero ... ok
+test sha256::tests::digest_slices_matches_concatenated ... ok
+test transcript::tests::label_validation ... ok
+test profiling::enabled::tests::repeated_stages_aggregate_and_threads_are_independent ... ok
+test profiling::enabled::tests::nested_stages_do_not_double_count_and_take_clears ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/hashing.rs (target/release/deps/hashing-f0ff6e64d2020f67)
+
+running 5 tests
+test profiles ... ok
+test sha3_256_kats ... ok
+test boundary_lengths ... ok
+test sha256_kats ... ok
+test sha384_kats ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/transcript.rs (target/release/deps/transcript-7ff53f127c0d8571)
+
+running 20 tests
+test absorb_ks_matches_concatenated_bytes ... ok
+test clone_is_independent ... ok
+test boundary_labels_accepted ... ok
+test absorb_resets_counter_and_challenge_ks_zero ... ok
+test control_in_label_rejected - should panic ... ok
+test enc_and_u64le ... ok
+test empty_protocol_label_rejected - should panic ... ok
+test deterministic_and_sensitive ... ok
+test framing_unambiguous ... ok
+test index_bits_65_rejected - should panic ... ok
+test index_range ... ok
+test index_rejected_call_consumes_nothing ... ok
+test known_answer_manual ... ok
+test json_vector_conformance ... ok
+test non_ascii_label_rejected - should panic ... ok
+test nonzero_is_nonzero_and_consumes_one ... ok
+test sha384_state_width ... ok
+test space_in_label_rejected - should panic ... ok
+test overlong_label_rejected - should panic ... ok
+test spec_28_known_answers ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_memcheck
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_pcs
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_transcript
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

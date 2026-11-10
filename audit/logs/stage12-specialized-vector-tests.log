@@ -1,0 +1,31 @@
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 2.83s
+     Running tests/onehot.rs (target/release/deps/onehot-986b1973e34f7cda)
+
+running 9 tests
+test chunks_low_first ... ok
+test eq_cubed ... ok
+test full_table_is_product ... ok
+test hamming_weight_zero_accepted_here ... ok
+test zero_c_detected ... ok
+test hamming_weight_two_rejected ... ok
+test delta_star_formula ... ok
+test onehot_honest ... ok
+test virt_d2_d3 ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vectors.rs (target/release/deps/vectors-84566cca6c652133)
+
+running 8 tests
+test lt_vectors ... ok
+test onehot_vector ... ok
+test twist_reg_p2_d1_vector ... ok
+test twist_ram_p1_d1_final_vector ... ok
+test twist_ram_p1_d2_final_vector ... ok
+test twist_reg_p2_d2_vector ... ok
+test shout_d1_vector ... ok
+test shout_d2_vector ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

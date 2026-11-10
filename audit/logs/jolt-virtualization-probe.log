@@ -1,0 +1,14 @@
+     Locking 9 packages to latest Rust 1.96.0 compatible versions
+   Compiling om-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-field)
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+   Compiling jolt-virtualization-probe v0.0.0 (/tmp/memarg-jolt-virt-p9nrgebf)
+    Finished `release` profile [optimized] target(s) in 2.66s
+     Running `target/release/jolt-virtualization-probe`
+off_cube: MLE(pointwise_product)=K(0x00000000000000000000000000000006) != product(MLEs)=K(0x00000000000000000000000000000014)
+characteristic_two: 1+1=0, but polynomial-basis t_2=K(0x00000000000000000000000000000002)
+a=16 d=4: nonroot_internal_cache=512 field_elements (8192 bytes); full_internal_tables_at_T=262144: 524288 field_elements
+a=16 d=8: nonroot_internal_cache=576 field_elements (9216 bytes); full_internal_tables_at_T=262144: 1572864 field_elements
+a=16 d=16: nonroot_internal_cache=608 field_elements (9728 bytes); full_internal_tables_at_T=262144: 3670016 field_elements
+PASS fixtures=144 subtree_nodes=1872 lazy_branch_checks=18252 paired_branch_checks=10692 exact_assertions=94471
+Exact algebra checks only; no performance measurements or production code changes.

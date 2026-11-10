@@ -1,0 +1,223 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.27
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.15
+   Compiling crossbeam-utils v0.8.23
+   Compiling cc v1.11.1
+   Compiling crossbeam-epoch v0.9.21
+   Compiling version_check v0.9.5
+   Compiling generic-array v0.14.7
+   Compiling syn v3.0.10
+   Compiling crossbeam-deque v0.8.8
+   Compiling typenum v1.20.1
+   Compiling rayon-core v1.13.0
+   Compiling sha2-asm v0.6.4
+   Compiling either v1.19.0
+   Compiling rayon v1.12.0
+   Compiling crypto-common v0.1.7
+   Compiling serde_derive v1.0.229
+   Compiling block-buffer v0.10.4
+   Compiling blake3 v1.8.7
+   Compiling cfg-if v1.0.5
+   Compiling digest v0.10.7
+   Compiling cpufeatures v0.2.17
+   Compiling zmij v1.0.23
+   Compiling hashbrown v0.17.1
+   Compiling arrayvec v0.7.8
+   Compiling constant_time_eq v0.4.2
+   Compiling cpufeatures v0.3.1
+   Compiling equivalent v1.0.3
+   Compiling indexmap v2.14.2
+   Compiling sha2 v0.10.9
+   Compiling winnow v0.7.15
+   Compiling serde_json v1.0.154
+   Compiling toml_write v0.1.2
+   Compiling flock-parallel v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-parallel)
+   Compiling itoa v1.0.18
+   Compiling flock-hash v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-hash)
+   Compiling toml_datetime v0.6.11
+   Compiling serde_spanned v0.6.9
+   Compiling flock-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-field)
+   Compiling memchr v2.8.3
+   Compiling flock-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-transcript)
+   Compiling flock-merkle v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-merkle)
+   Compiling toml_edit v0.22.27
+   Compiling bincode v1.3.3
+   Compiling flock-multilinear v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-multilinear)
+   Compiling rand_core v0.9.5
+   Compiling toml v0.8.23
+   Compiling flock-core v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-core)
+warning: function `butterfly_interleaved_block_par_rows` is never used
+    --> crates/flock-core/src/ntt/additive_ntt_f128.rs:1274:4
+     |
+1274 | fn butterfly_interleaved_block_par_rows(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `butterfly_interleaved_fused_3layer_par_rows` is never used
+    --> crates/flock-core/src/ntt/additive_ntt_f128.rs:1312:4
+     |
+1312 | fn butterfly_interleaved_fused_3layer_par_rows(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_interleaved_fused_2layer_serial` is never used
+    --> crates/flock-core/src/ntt/additive_ntt_f128.rs:1422:4
+     |
+1422 | fn butterfly_interleaved_fused_2layer_serial(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_interleaved_fused_2layer_par_rows` is never used
+    --> crates/flock-core/src/ntt/additive_ntt_f128.rs:1468:4
+     |
+1468 | fn butterfly_interleaved_fused_2layer_par_rows(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_interleaved_block` is never used
+    --> crates/flock-core/src/ntt/additive_ntt_f128.rs:1663:4
+     |
+1663 | fn butterfly_interleaved_block(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_interleaved_fused_4layer_par_rows` is never used
+    --> crates/flock-core/src/ntt/additive_ntt_f128.rs:1713:4
+     |
+1713 | fn butterfly_interleaved_fused_4layer_par_rows(
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_row_pair` is never used
+  --> crates/flock-core/src/ntt/additive_ntt_f128/kernels.rs:45:15
+   |
+45 | pub(super) fn butterfly_row_pair(top: &mut [F128], bot: &mut [F128], twiddle: F128) {
+   |               ^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_3layer` is never used
+   --> crates/flock-core/src/ntt/additive_ntt_f128/kernels.rs:104:15
+    |
+104 | pub(super) fn butterfly_fused_3layer(
+    |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_4layer_row` is never used
+   --> crates/flock-core/src/ntt/additive_ntt_f128/kernels.rs:119:22
+    |
+119 | pub(super) unsafe fn butterfly_fused_4layer_row(
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_row_pair` is never used
+ --> crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs:4:15
+  |
+4 | pub(super) fn butterfly_row_pair(top: &mut [F128], bot: &mut [F128], twiddle: F128) {
+  |               ^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_3layer` is never used
+  --> crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs:56:15
+   |
+56 | pub(super) fn butterfly_fused_3layer(
+   |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_4layer` is never used
+   --> crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs:102:15
+    |
+102 | pub(super) fn butterfly_fused_4layer(values: &mut [F128; 16], twiddles: &[F128; 15]) {
+    |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `butterfly_fused_4layer_row` is never used
+   --> crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs:136:22
+    |
+136 | pub(super) unsafe fn butterfly_fused_4layer_row(
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `flock-core` (lib test) generated 13 warnings
+    Finished `release` profile [optimized] target(s) in 43.50s
+     Running unittests src/lib.rs (vendor/flock-boolean/target/release/deps/flock_core-8286167802b16c29)
+
+running 83 tests
+test zerocheck::ag_skip::tests::credit_constants_are_pinned ... ok
+test zerocheck::ag_skip::tests::d_times_d_inv_is_one ... ok
+test zerocheck::multilinear::tests::live_layout_ranks_match_brute_force ... ok
+test zerocheck::multilinear::tests::lagrange_at_node_is_indicator ... ok
+test zerocheck::multilinear::tests::balanced_interval_tasks_partitions_the_live_set ... ok
+test zerocheck::ag_skip::tests::friendly_eq_is_gamma_geometric_over_d ... ok
+test zerocheck::multilinear::tests::fold_is_xor_linear ... ok
+test zerocheck::multilinear::tests::fold_in_place_pair_matches_formula ... ok
+test zerocheck::multilinear::tests::fold_at_node_recovers_witness_slice ... ok
+test zerocheck::multilinear::tests::live_layout_is_dense_only_for_full_cover ... ok
+test zerocheck::multilinear::tests::zero_witness_gives_zero_round_message ... ok
+test element_r1cs::zerocheck::tests::dirty_dummy_row_rejected ... ok
+test zerocheck::multilinear::tests::deterministic ... ok
+test zerocheck::ag_skip::tests::fused_nonce_gates_on_pow_and_point ... ok
+test zerocheck::multilinear::tests::round_pair_message_has_degree_two ... ok
+test zerocheck::tests::block_coverage_and_cleanse ... ok
+test element_r1cs::zerocheck::tests::audit_final_claims_bound_to_transcript ... ok
+test zerocheck::multilinear::tests::fold_table_one_row_matches_direct_lagrange ... ok
+test zerocheck::tests::padding_spec_rejects_oversized_useful_prefix - should panic ... ok
+test element_r1cs::zerocheck::tests::verify_rejects_bad_round_count ... ok
+test zerocheck::multilinear::tests::round_pair_symmetric_in_ab ... ok
+test zerocheck::tests::padding_spec_run_list_accessors ... ok
+test zerocheck::multilinear::tests::subspace_denominators_are_uniform_across_nodes_and_cosets ... ok
+test element_r1cs::zerocheck::tests::round_messages_match_brute_force_on_random_instances ... ok
+test element_r1cs::zerocheck::tests::unsatisfying_witness_rejected ... ok
+test zerocheck::ag_skip::tests::sha256_rng_seeds_sampler_deterministically ... ok
+test zerocheck::multilinear::tests::phi8_node_sets_have_linearized_vanishing_polynomials ... ok
+test element_r1cs::zerocheck::tests::verify_rejects_mutations ... ok
+test element_r1cs::zerocheck::tests::prove_verify_roundtrip_honest ... ok
+test element_r1cs::zerocheck::tests::satisfying_witness_has_zero_eq_weighted_sum ... ok
+test zerocheck::univariate_skip::tests::build_eq_basic ... ok
+test zerocheck::univariate_skip::tests::extract_c_deterministic ... ok
+test zerocheck::univariate_skip::tests::extract_c_honest_witness_combined_matches_naive ... ok
+test zerocheck::tests::verify_rejects_shape_errors ... ok
+test zerocheck::univariate_skip::tests::extract_c_output_shape ... ok
+test zerocheck::multilinear::tests::parallel_matches_serial ... ok
+test zerocheck::multilinear::tests::fused_round_matches_unfused ... ok
+test zerocheck::univariate_skip::tests::ntt_extend_round_trips_naive_c_path ... ok
+test zerocheck::univariate_skip::tests::round1_all_zero_witness_gives_zero_message ... ok
+test zerocheck::univariate_skip::tests::round1_at_s_nonzero_for_random_witness ... ok
+test zerocheck::univariate_skip::tests::round1_at_s_zero_for_honest_witness ... ok
+test zerocheck::univariate_skip::tests::round1_deterministic ... ok
+test zerocheck::univariate_skip::tests::round1_message_nonzero_for_random_witness ... ok
+test zerocheck::univariate_skip::tests::round1_output_shape ... ok
+test zerocheck::univariate_skip::tests::round1_p_c_is_xor_linear_in_c ... ok
+test zerocheck::univariate_skip::tests::split_eq_basic ... ok
+test zerocheck::univariate_skip_optimized::tests::convert_table_structure ... ok
+test zerocheck::univariate_skip::tests::extract_c_matches_naive ... ok
+test zerocheck::univariate_skip::tests::extract_c_with_s_hat_v_matches_original_wire ... ok
+test zerocheck::univariate_skip_optimized::tests::friendly_challenges_f2_independent ... ok
+test zerocheck::univariate_skip::tests::extract_c_with_s_hat_v_matches_fold_1b_rows ... ok
+test zerocheck::tests::per_challenge_grinding_roundtrip_and_tape ... ok
+test zerocheck::univariate_skip_optimized::tests::deterministic ... ok
+test zerocheck::tests::audit_last_round_inf_constrained ... ok
+test zerocheck::univariate_skip_optimized::tests::output_shape ... ok
+test zerocheck::univariate_skip_optimized::tests::small_and_medium_challenges_sanity ... ok
+test zerocheck::tests::prove_deterministic ... ok
+test element_r1cs::zerocheck::tests::fold_low_matches_serial_kernel ... ok
+test zerocheck::univariate_skip_optimized::tests::parallel_matches_serial ... ok
+test zerocheck::tests::prove_padded_single_run_matches_dense ... ok
+test zerocheck::multilinear::tests::lagrange_weights_sum_to_one ... ok
+test zerocheck::univariate_skip_optimized::tests::matches_naive_with_structured_b_shortcuts ... ok
+test zerocheck::multilinear::tests::uni_skip_fold_round_pair_padded_matches_dense ... ok
+test zerocheck::multilinear::tests::optimized_matches_naive ... ok
+test zerocheck::univariate_skip_optimized::tests::matches_naive_with_c_s_factor ... ok
+test zerocheck::tests::audit_final_ab_claims_bound_to_transcript ... ok
+test zerocheck::tests::prove_padded_multi_run_matches_dense ... ok
+test zerocheck::tests::prove_padded_sparse_multi_run_matches_dense ... ok
+test zerocheck::univariate_skip_optimized::tests::padded_matches_dense_with_zero_padding ... ok
+test zerocheck::multilinear::tests::c_eval_from_round1_c_matches_direct_fold ... ok
+test zerocheck::univariate_skip_optimized::tests::fusion_matches_existing_and_scalar_oracle ... ok
+test zerocheck::tests::prove_runs_end_to_end ... ok
+test zerocheck::tests::lookahead_tail_transcript_identical_to_classic ... ok
+test zerocheck::tests::compact_k_degen_b_transcript_identical ... ok
+test zerocheck::tests::verify_rejects_mutations ... ok
+test zerocheck::tests::compact_k_transcript_identical_to_classic ... ok
+test zerocheck::tests::audit_false_statement_rejected ... ok
+test zerocheck::tests::prove_verify_roundtrip_honest ... ok
+test zerocheck::tests::audit_round_msg_1_tamper_rejected ... ok
+test zerocheck::tests::audit_round_msg_inf_tamper_rejected ... ok
+test zerocheck::tests::prove_sparse_fragmented_multi_run_matches_dense ... ok
+test zerocheck::tests::audit_many_false_statements_rejected ... ok
+test zerocheck::multilinear::tests::closed_form_lagrange_matches_the_textbook_product ... ok
+
+test result: ok. 83 passed; 0 failed; 0 ignored; 0 measured; 370 filtered out; finished in 6.31s
+

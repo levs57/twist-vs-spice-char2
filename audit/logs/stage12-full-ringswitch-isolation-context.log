@@ -1,0 +1,49 @@
+RingSwitch isolation, native release, 2026-11-10; no other benchmark/test/build jobs ran during measurements.
+Host: Intel Core i9-13980HX; target-cpu=native; thin LTO, codegen-units=1; Rayon 1 or 8 workers; no affinity pinning.
+Source driver: audit/ringswitch-benchmark.rs. Scalar reference: audit/ringswitch-before-sumcheck.rs, copied verbatim from /tmp/memarg-before-full-kernel-pass/vendor/open-magnetar/crates/om-sumcheck/src/sumcheck.rs.
+Actual temporary projects: /tmp/memarg-rs-isolation/{before,after}; their manifests are reproduced below. Before dependency root: /tmp/memarg-before-full-kernel-pass; after dependency root: current workspace. Both were built offline with RUSTFLAGS='-C target-cpu=native' CARGO_BUILD_JOBS=4 cargo build --release.
+Input is the exact shared-address random RAM generator algorithm with n18,a12,c4,p1,wordbits64,seed42. The global packed witness has ell26. The deterministic opening point is generated after that payload with SplitMix64. It is held identical across binaries, rather than derived from different surrounding RAM proofs.
+Fingerprint fields in every line are (y, final packed evaluation v, transcript challenge after RS). Every invocation has the same fingerprint. The driver also asserts old-scalar/current dense sumcheck messages, challenges, terminal MLEs, and transcript equality inside each process.
+Each per-operation number is the median of 11 timed samples after 2 warmups. Source setup, table clones, and output destruction are excluded. Per-stage medians need not sum to the full-RS median. Process order: before1, after1, after8, before8, after1, before1, before8, after8.
+Full RS one worker: 1.10–1.25x faster current. Eight workers: 0.95–1.08x; no stable material regression in these two orders. Within current binary, new packed dense sumcheck is faster than retained scalar dense source in both worker settings. Unchanged partial_evals_packed varied from 2.18 to 3.22 ms at eight workers, indicating scheduling/frequency/cache noise large enough to explain the small stage-level reversals. These runs do not establish a speedup on all inputs or machines.
+To reproduce independently, create two Cargo projects with the manifests below, replace absolute dependency roots with retained-before/current paths as needed, and set [[bin]] path to the absolute audit/ringswitch-benchmark.rs. The retained scalar source no longer depends on /tmp. Recreating the full before build uses the archived workspace audit/baselines/gkr-tree-v1.tar.gz (archive manifest alongside it); replace the dependency root with its extracted gkr-tree-v1 directory.
+
+before Cargo.toml:
+[package]
+name="rs-isolation-before"
+version="0.0.0"
+edition="2024"
+[dependencies]
+om-field={path="/tmp/memarg-before-full-kernel-pass/vendor/open-magnetar/crates/om-field"}
+om-sumcheck={path="/tmp/memarg-before-full-kernel-pass/vendor/open-magnetar/crates/om-sumcheck"}
+om-pcs={path="/tmp/memarg-before-full-kernel-pass/vendor/open-magnetar/crates/om-pcs"}
+om-mosaic={path="/tmp/memarg-before-full-kernel-pass/vendor/open-magnetar/crates/om-mosaic"}
+om-transcript={path="/tmp/memarg-before-full-kernel-pass/vendor/open-magnetar/crates/om-transcript"}
+rayon="1"
+[profile.release]
+lto="thin"
+codegen-units=1
+
+[[bin]]
+name="rs-isolation-before"
+path="/home/user/Programming/memarg-exploration/audit/ringswitch-benchmark.rs"
+
+after Cargo.toml:
+[package]
+name="rs-isolation-after"
+version="0.0.0"
+edition="2024"
+[dependencies]
+om-field={path="/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-field"}
+om-sumcheck={path="/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck"}
+om-pcs={path="/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-pcs"}
+om-mosaic={path="/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-mosaic"}
+om-transcript={path="/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript"}
+rayon="1"
+[profile.release]
+lto="thin"
+codegen-units=1
+
+[[bin]]
+name="rs-isolation-after"
+path="/home/user/Programming/memarg-exploration/audit/ringswitch-benchmark.rs"

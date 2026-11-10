@@ -1,0 +1,115 @@
+pattern=random method=shout chunk=2 virtualization=flat prove=5.418ms verify=3.678ms commit=0.235ms open=3.793ms iop+prep=1.389ms main_bits=32768 aux_bits=0
+  phase medians: preparation=0.204ms argument=0.863ms virtualization(total)=0.363ms read=0.155ms onehot=0.345ms unattributed=0.321ms
+  exclusive stage medians:
+    lookup.claims                             0.124ms
+    lookup.main.commit                        0.236ms
+    lookup.main.open                          0.008ms
+    lookup.mosaic                             1.865ms
+    lookup.pack                               0.031ms
+    lookup.statement                          0.017ms
+    lookup.witness                            0.032ms
+    pcs.ligerito_open                         1.523ms
+    pcs.ringswitch                            0.397ms
+    shout.onehot                              0.345ms
+    shout.read                                0.155ms
+    shout.virtualization                      0.363ms
+  Subtotals are computed per proof, then medianed; these overlapping diagnostics and independently medianed rows are not additive. iop+prep includes unattributed preparation/core overhead.
+pattern=random method=shout chunk=2 virtualization=gkr prove=2.500ms verify=2.029ms commit=0.084ms open=1.633ms iop+prep=0.783ms main_bits=32768 aux_bits=0
+  phase medians: preparation=0.060ms argument=0.576ms virtualization(total)=0.289ms read=0.096ms onehot=0.191ms unattributed=0.147ms
+  exclusive stage medians:
+    lookup.claims                             0.014ms
+    lookup.main.commit                        0.084ms
+    lookup.main.open                          0.003ms
+    lookup.mosaic                             0.685ms
+    lookup.pack                               0.006ms
+    lookup.statement                          0.039ms
+    lookup.witness                            0.000ms
+    pcs.ligerito_open                         0.776ms
+    pcs.ringswitch                            0.170ms
+    shout.onehot                              0.191ms
+    shout.read                                0.096ms
+    shout.virtualization                      0.057ms
+    virt.tree.build                           0.006ms
+    virt.tree.layers                          0.226ms
+  Subtotals are computed per proof, then medianed; these overlapping diagnostics and independently medianed rows are not additive. iop+prep includes unattributed preparation/core overhead.
+pattern=random method=logup-star chunk=- virtualization=- prove=2.785ms verify=3.691ms commit=0.076ms open=1.964ms iop+prep=0.745ms main_bits=32768 aux_bits=32768
+  phase medians: preparation=0.024ms argument=0.687ms virtualization(total)=0.000ms read=0.000ms onehot=0.000ms unattributed=0.034ms
+  exclusive stage medians:
+    lookup.aux.commit                         0.036ms
+    lookup.aux.open                           0.001ms
+    lookup.claims                             0.004ms
+    lookup.logup                              0.015ms
+    lookup.logup.fraction_witness             0.013ms
+    lookup.logup.pack_aux                     0.001ms
+    lookup.logup.pushforward                  0.001ms
+    lookup.logup.rational                     0.591ms
+    lookup.logup.source_claims                0.004ms
+    lookup.logup.table_product                0.062ms
+    lookup.main.commit                        0.040ms
+    lookup.main.open                          0.001ms
+    lookup.mosaic                             0.525ms
+    lookup.pack                               0.002ms
+    lookup.statement                          0.019ms
+    lookup.witness                            0.000ms
+    pcs.ligerito_open                         1.178ms
+    pcs.ringswitch                            0.259ms
+  Subtotals are computed per proof, then medianed; these overlapping diagnostics and independently medianed rows are not additive. iop+prep includes unattributed preparation/core overhead.
+pattern=local method=shout chunk=2 virtualization=flat prove=1.756ms verify=4.586ms commit=0.053ms open=1.252ms iop+prep=0.450ms main_bits=32768 aux_bits=0
+  phase medians: preparation=0.037ms argument=0.304ms virtualization(total)=0.114ms read=0.064ms onehot=0.125ms unattributed=0.109ms
+  exclusive stage medians:
+    lookup.claims                             0.009ms
+    lookup.main.commit                        0.053ms
+    lookup.main.open                          0.002ms
+    lookup.mosaic                             0.537ms
+    lookup.pack                               0.004ms
+    lookup.statement                          0.024ms
+    lookup.witness                            0.000ms
+    pcs.ligerito_open                         0.586ms
+    pcs.ringswitch                            0.128ms
+    shout.onehot                              0.125ms
+    shout.read                                0.064ms
+    shout.virtualization                      0.114ms
+  Subtotals are computed per proof, then medianed; these overlapping diagnostics and independently medianed rows are not additive. iop+prep includes unattributed preparation/core overhead.
+pattern=local method=shout chunk=2 virtualization=gkr prove=1.835ms verify=1.836ms commit=0.046ms open=1.219ms iop+prep=0.571ms main_bits=32768 aux_bits=0
+  phase medians: preparation=0.035ms argument=0.442ms virtualization(total)=0.225ms read=0.073ms onehot=0.144ms unattributed=0.094ms
+  exclusive stage medians:
+    lookup.claims                             0.009ms
+    lookup.main.commit                        0.046ms
+    lookup.main.open                          0.002ms
+    lookup.mosaic                             0.508ms
+    lookup.pack                               0.005ms
+    lookup.statement                          0.021ms
+    lookup.witness                            0.000ms
+    pcs.ligerito_open                         0.578ms
+    pcs.ringswitch                            0.132ms
+    shout.onehot                              0.144ms
+    shout.read                                0.073ms
+    shout.virtualization                      0.041ms
+    virt.tree.build                           0.006ms
+    virt.tree.layers                          0.178ms
+  Subtotals are computed per proof, then medianed; these overlapping diagnostics and independently medianed rows are not additive. iop+prep includes unattributed preparation/core overhead.
+pattern=local method=logup-star chunk=- virtualization=- prove=3.046ms verify=3.777ms commit=0.076ms open=2.222ms iop+prep=0.748ms main_bits=32768 aux_bits=32768
+  phase medians: preparation=0.024ms argument=0.691ms virtualization(total)=0.000ms read=0.000ms onehot=0.000ms unattributed=0.033ms
+  exclusive stage medians:
+    lookup.aux.commit                         0.035ms
+    lookup.aux.open                           0.001ms
+    lookup.claims                             0.004ms
+    lookup.logup                              0.015ms
+    lookup.logup.fraction_witness             0.012ms
+    lookup.logup.pack_aux                     0.001ms
+    lookup.logup.pushforward                  0.001ms
+    lookup.logup.rational                     0.599ms
+    lookup.logup.source_claims                0.004ms
+    lookup.logup.table_product                0.059ms
+    lookup.main.commit                        0.041ms
+    lookup.main.open                          0.001ms
+    lookup.mosaic                             0.719ms
+    lookup.pack                               0.001ms
+    lookup.statement                          0.018ms
+    lookup.witness                            0.000ms
+    pcs.ligerito_open                         1.255ms
+    pcs.ringswitch                            0.247ms
+  Subtotals are computed per proof, then medianed; these overlapping diagnostics and independently medianed rows are not additive. iop+prep includes unattributed preparation/core overhead.
+JSON: results/stage13-no-content-merging-smoke.json
+CSV: results/stage13-no-content-merging-smoke.csv
+All 6 cases verified (1 measured proofs/case plus 0 warmups).

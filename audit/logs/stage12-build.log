@@ -1,0 +1,4 @@
+   Compiling ram-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-argument)
+   Compiling ram-payload v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-payload)
+   Compiling ram-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-bench)
+    Finished `release` profile [optimized] target(s) in 4.76s

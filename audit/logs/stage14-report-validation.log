@@ -1,0 +1,31 @@
+n18/primary random twist: prove=385.277 verify=42.516 commit=6.967 open=21.026 order=0.000 unattributed=0.465
+n18/primary random spice: prove=92.436 verify=13.003 commit=6.918 open=21.115 order=35.591 unattributed=0.779
+n18/primary guest/erc20-mixed-block/memory twist: prove=100.464 verify=40.397 commit=8.287 open=20.130 order=0.000 unattributed=0.515
+n18/primary guest/erc20-mixed-block/memory spice: prove=85.969 verify=13.303 commit=6.731 open=18.538 order=35.544 unattributed=0.774
+n18/primary guest/pointer-chase/memory twist: prove=85.398 verify=39.150 commit=6.619 open=18.010 order=0.000 unattributed=0.465
+n18/primary guest/pointer-chase/memory spice: prove=81.419 verify=14.223 commit=6.771 open=17.882 order=37.038 unattributed=0.753
+n18/reversed random spice: prove=80.799 verify=12.918 commit=6.913 open=19.353 order=28.018 unattributed=0.773
+n18/reversed random twist: prove=381.697 verify=41.348 commit=7.029 open=21.744 order=0.000 unattributed=0.484
+n18/reversed guest/erc20-mixed-block/memory spice: prove=69.973 verify=14.058 commit=6.579 open=18.595 order=24.227 unattributed=0.700
+n18/reversed guest/erc20-mixed-block/memory twist: prove=90.105 verify=38.490 commit=6.529 open=19.375 order=0.000 unattributed=0.481
+n18/reversed guest/pointer-chase/memory spice: prove=70.583 verify=13.405 commit=7.380 open=19.629 order=25.418 unattributed=0.736
+n18/reversed guest/pointer-chase/memory twist: prove=79.639 verify=42.634 commit=7.638 open=18.212 order=0.000 unattributed=0.496
+n20/primary random twist: prove=1923.283 verify=43.915 commit=46.299 open=93.677 order=0.000 unattributed=5.136
+n20/primary random spice: prove=320.254 verify=17.846 commit=39.894 open=76.545 order=116.687 unattributed=2.450
+n20/primary guest/erc20-mixed-block/memory twist: prove=353.552 verify=44.746 commit=50.007 open=76.853 order=0.000 unattributed=1.550
+n20/primary guest/erc20-mixed-block/memory spice: prove=293.635 verify=17.372 commit=41.899 open=69.860 order=120.454 unattributed=2.292
+n20/primary guest/pointer-chase/memory twist: prove=313.767 verify=42.768 commit=41.975 open=78.552 order=0.000 unattributed=1.700
+n20/primary guest/pointer-chase/memory spice: prove=303.986 verify=15.197 commit=40.302 open=69.962 order=136.388 unattributed=2.216
+n20/reversed random spice: prove=293.309 verify=15.504 commit=39.464 open=67.629 order=102.063 unattributed=2.147
+n20/reversed random twist: prove=1687.667 verify=43.998 commit=32.646 open=64.354 order=0.000 unattributed=1.594
+n20/reversed guest/erc20-mixed-block/memory spice: prove=281.137 verify=16.249 commit=37.883 open=64.624 order=111.404 unattributed=2.357
+n20/reversed guest/erc20-mixed-block/memory twist: prove=289.593 verify=39.616 commit=36.697 open=56.643 order=0.000 unattributed=1.559
+n20/reversed guest/pointer-chase/memory spice: prove=254.412 verify=15.198 commit=38.279 open=59.493 order=101.936 unattributed=2.058
+n20/reversed guest/pointer-chase/memory twist: prove=262.915 verify=40.583 commit=36.357 open=55.982 order=0.000 unattributed=1.644
+PASS: 144 verified proofs; current source/binary provenance, identical traces, all populated/padded pricing, per-sample PCS accounting, order-phase visibility and medians checked.
+workspace-native: 70 tests passed
+workspace-default: 70 tests passed
+grandproduct-native-tests: 7 tests passed
+grandproduct-default-tests: 7 tests passed
+vendor-native: 295 tests passed
+vendor-default: 295 tests passed

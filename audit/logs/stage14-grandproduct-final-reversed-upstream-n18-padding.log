@@ -1,0 +1,7 @@
+COMMAND ['/home/user/Programming/memarg-exploration/target/stage14-grandproduct/release/lean-grandproduct-upstream-benchmark', '18', '8', '5', '1']
+backend,field_bits,trees,log_size,logical_leaves_per_tree,active_leaves_per_tree,threads,sample,prepare_ms,prove_ms,total_ms,total_ms_per_tree,quartic_pair_upper_bound_per_tree,fold_row_upper_bound_per_tree,proof_fields,root0,leaf0
+upstream-radix4,192,3,18,262144,139264,8,0,1.346817,4.781175,6.129621,2.043207,87372,87372,398,14f6ae2124d03a4812f1d3a0bbffdfdc4936fbe22358fae1,289ce9becdf221a92186a4821167cd51298a08df7c869be0
+upstream-radix4,192,3,18,262144,139264,8,1,1.241222,2.989175,4.231626,1.410542,87372,87372,398,14f6ae2124d03a4812f1d3a0bbffdfdc4936fbe22358fae1,289ce9becdf221a92186a4821167cd51298a08df7c869be0
+upstream-radix4,192,3,18,262144,139264,8,2,1.210166,2.730113,3.941574,1.313858,87372,87372,398,14f6ae2124d03a4812f1d3a0bbffdfdc4936fbe22358fae1,289ce9becdf221a92186a4821167cd51298a08df7c869be0
+upstream-radix4,192,3,18,262144,139264,8,3,1.447986,2.734913,4.184413,1.394804,87372,87372,398,14f6ae2124d03a4812f1d3a0bbffdfdc4936fbe22358fae1,289ce9becdf221a92186a4821167cd51298a08df7c869be0
+upstream-radix4,192,3,18,262144,139264,8,4,1.311989,2.968919,4.282207,1.427402,87372,87372,398,14f6ae2124d03a4812f1d3a0bbffdfdc4936fbe22358fae1,289ce9becdf221a92186a4821167cd51298a08df7c869be0

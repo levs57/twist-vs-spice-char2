@@ -1,0 +1,5 @@
+# Original retained stdout; invocation numbers identify chronological/reverse order.
+# invocation 4: rs-isolation-before 8 18 4
+workers=8 n=18 c=4 ell=26 fingerprint=K(0x7f69ee73c1c9b19534fd5e96baaa7355)/K(0xec86746972ce468306f566b06829112d)/K(0x74445a675138817fc3dead39cd641a91) partial_ms=3.21553 A_ms=0.91770 pack_ms=0.09689 scalar_sc_ms=3.54075 current_sc_ms=3.99610 full_rs_ms=10.15589
+# invocation 7: rs-isolation-before 8 18 4
+workers=8 n=18 c=4 ell=26 fingerprint=K(0x7f69ee73c1c9b19534fd5e96baaa7355)/K(0xec86746972ce468306f566b06829112d)/K(0x74445a675138817fc3dead39cd641a91) partial_ms=2.67836 A_ms=0.81923 pack_ms=0.09033 scalar_sc_ms=3.75878 current_sc_ms=3.57367 full_rs_ms=9.64946

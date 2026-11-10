@@ -1,0 +1,22 @@
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> /home/user/Programming/memarg-exploration/sources/flock/crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+   Compiling stage11-compatibility-probe v0.1.0 (/home/user/Programming/memarg-exploration/audit/compatibility-probe)
+    Finished `release` profile [optimized] target(s) in 0.71s
+     Running `audit/compatibility-probe/target/release/stage11-compatibility-probe`
+PASS: 20480 products (all 16,384 basis pairs + 4,096 deterministic random pairs), 4,096 sums/squares/byte roundtrips, 16 nonzero inverses, 15 equality/MLE shapes (0..14 variables), 14 low-fold shapes through both Flock APIs, 128 packing coordinates.
+Compile-time Flock scalar PCLMUL backend: true
+Compile-time Flock AVX-512 slice-fold backend: false
+PASS: real RingSwitch packing, slice-fold kernels (including split MFR), ordinary-prefix adapter and claim check, tensor transpose, transformed equality table, inner-product target, and succinct weight evaluation agree at 8/12/16 bit-witness variables.
+PASS: 24 cross-repository NTT codeword/layout shapes (log2 columns 1/4/8/10, lanes 1/4/16, inverse rates 2/4).
+CONFIRMED UPSTREAM BUG: generic degree-2 combine is misidentified as multiplication from Boolean-corner probes: g(t2) returns integer 4, expected integer 2 (no T&S exploit established).

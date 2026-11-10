@@ -1,0 +1,17 @@
+[package]
+name = "ram-argument"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+om-field = { path = "../../vendor/open-magnetar/crates/om-field" }
+om-transcript = { path = "../../vendor/open-magnetar/crates/om-transcript" }
+om-sumcheck = { path = "../../vendor/open-magnetar/crates/om-sumcheck" }
+om-memcheck = { path = "../../vendor/open-magnetar/crates/om-memcheck" }
+om-mosaic = { path = "../../vendor/open-magnetar/crates/om-mosaic" }
+om-pcs = { path = "../../vendor/open-magnetar/crates/om-pcs" }
+
+[dev-dependencies]
+ram-payload = { path = "../ram-payload" }

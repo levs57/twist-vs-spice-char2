@@ -1,0 +1,134 @@
+   Compiling bitz-logup v0.1.0 (/home/user/Programming/memarg-exploration/vendor/bitz-logup)
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+   Compiling ram-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-argument)
+   Compiling lookup-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/lookup-argument)
+   Compiling ram-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-bench)
+   Compiling lookup-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/lookup-bench)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.96s
+     Running unittests src/lib.rs (target/debug/deps/lookup_argument-a1e74ef1467219d2)
+
+running 2 tests
+test tests::word_opening_conversion_matches_every_polynomial_basis_coefficient ... ok
+test tests::encoded_word_mle_is_an_opening_of_the_actual_committed_bits ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/indexed_lookup.rs (target/debug/deps/indexed_lookup-d975512a3d8cb4b7)
+
+running 6 tests
+test invalid_trace_values_and_non_power_of_two_lengths_are_rejected ... ok
+test malformed_branches_shapes_and_zero_denominators_reject ... ok
+test all_public_parameters_and_input_claims_are_bound ... ok
+test all_rational_messages_and_auxiliary_openings_are_authenticated ... ok
+test shout_virtualization_choices_preserve_lookup_semantics ... ok
+test both_methods_prove_indexed_reads_with_full_width_duplicate_and_zero_values ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+
+     Running unittests src/main.rs (target/debug/deps/lookup_bench-43a79694f2b9b3e6)
+
+running 3 tests
+test tests::requested_method_and_chunk_order_are_preserved ... ok
+test tests::security_bound_and_csv_escape ... ok
+test tests::logup_is_not_duplicated_by_shout_sweeps ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/ram_argument-c753e445ed0384f3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/committed_ram.rs (target/debug/deps/committed_ram-6ebdc70b9b106a4a)
+
+running 12 tests
+test invalid_configuration_and_trace_shapes_return_errors ... ok
+test shared_address_mode_rejects_independent_streams_and_multiple_ports ... ok
+test inconsistent_supplied_reads_are_rejected_before_proving ... ok
+test shared_address_mode_binds_aliases_values_and_internal_address_claims ... ok
+test commitment_and_challenge_replay_are_rejected ... ok
+test public_memory_and_config_are_bound ... ok
+test every_kind_of_twist_input_claim_is_authenticated ... ok
+test malformed_shapes_return_errors ... ok
+test single_component_and_full_word_path_work ... ok
+test shared_address_commits_rv_inc_and_one_address_encoding ... ok
+test mosaic_ringswitch_and_ligerito_tampering_is_rejected ... ok
+test complete_proof_verifies_without_witness ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/virtualization_flat.rs (target/debug/deps/virtualization_flat-1c3b1e148243ece7)
+
+running 5 tests
+test malformed_flat_shapes_and_missing_proofs_reject_without_panics ... ok
+test every_reduction_product_and_leaf_message_is_authenticated ... ok
+test new_legacy_and_tree_domains_and_branches_are_distinct ... ok
+test aggregate_flat_proves_all_real_guests_and_row_filters ... ok
+test aggregate_flat_proofs_cover_chunk_counts_cycles_and_ports ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+
+     Running tests/virtualization_tree.rs (target/debug/deps/virtualization_tree-7430742cb0ca59d2)
+
+running 7 tests
+test tree_binds_internal_parent_mles_away_from_the_boolean_cube ... ok
+test tree_requires_power_of_two_component_count_while_flat_retains_other_counts ... ok
+test malformed_and_reordered_tree_nodes_return_errors ... ok
+test mode_and_proof_branch_are_bound_including_the_direct_shortcut ... ok
+test every_tree_layer_and_child_value_is_authenticated ... ok
+test tree_proves_traces_from_each_original_guest_and_memory_filter ... ok
+test complete_tree_proofs_cover_depths_small_cycle_counts_and_independent_ports ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+
+     Running unittests src/main.rs (target/debug/deps/ram_bench-fbf039a9be41bc38)
+
+running 4 tests
+test tests::no_useful_rows_have_no_normalized_cost_or_comparison ... ok
+test tests::virtualization_total_includes_exclusive_claim_and_product_children ... ok
+test tests::mode_and_dummy_comparisons_keep_the_other_dimension_fixed ... ok
+test tests::dummy_comparisons_use_exact_work_counts_and_match_programs ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/ram_payload-6871175132e4e564)
+
+running 1 test
+test tests::replay_preserves_reads_and_unwritten_byte_lanes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/payloads.rs (target/debug/deps/payloads-c22561b53aef709f)
+
+running 9 tests
+test guest_program_options_reject_invalid_limits_and_padding_modes ... ok
+test random_ram_reads_and_replaces_the_same_word ... ok
+test embedded_elf_and_original_source_match_provenance_manifest ... ok
+test random_is_reproducible_and_reads_precede_writes ... ok
+test pointer_chase_is_one_permutation_cycle_with_checked_outputs ... ok
+test actual_guest_outputs_and_ram_values_are_checked ... ok
+test repeated_guest_pattern_keeps_current_memory_across_periods_and_tail ... ok
+test erc20_balances_change_and_memory_filter_retains_real_word_zero ... ok
+test guest_limits_do_not_silently_truncate_or_repeat_execution ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+   Doc-tests lookup_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ram_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ram_payload
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

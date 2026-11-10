@@ -1,0 +1,53 @@
+     Locking 46 packages to latest compatible versions
+      Adding generic-array v0.14.7 (available: v0.14.9)
+      Adding rand_core v0.9.5 (available: v0.10.1)
+      Adding sha2 v0.10.9 (available: v0.11.0)
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.15
+   Compiling version_check v0.9.5
+    Checking typenum v1.20.1
+   Compiling cc v1.11.1
+    Checking cfg-if v1.0.5
+    Checking equivalent v1.0.3
+    Checking arrayvec v0.7.8
+   Compiling generic-array v0.14.7
+    Checking constant_time_eq v0.4.2
+    Checking cpufeatures v0.3.1
+    Checking hashbrown v0.17.1
+    Checking cpufeatures v0.2.17
+    Checking serde_spanned v0.6.9
+    Checking toml_datetime v0.6.11
+    Checking flock-hash v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-hash)
+    Checking toml_write v0.1.2
+    Checking winnow v0.7.15
+    Checking indexmap v2.14.2
+    Checking block-buffer v0.10.4
+    Checking crypto-common v0.1.7
+    Checking digest v0.10.7
+    Checking flock-parallel v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-parallel)
+    Checking flock-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-field)
+    Checking flock-multilinear v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-multilinear)
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+    Checking bincode v1.3.3
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+    Checking rand_core v0.9.5
+   Compiling sha2-asm v0.6.4
+   Compiling blake3 v1.8.7
+    Checking toml_edit v0.22.27
+    Checking sha2 v0.10.9
+    Checking flock-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-transcript)
+    Checking flock-merkle v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-merkle)
+    Checking toml v0.8.23
+    Checking flock-core v0.1.0 (/home/user/Programming/memarg-exploration/vendor/flock-boolean/crates/flock-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.57s

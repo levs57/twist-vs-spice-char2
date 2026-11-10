@@ -1,0 +1,109 @@
+{
+  "schema": "memarg-iop-memory-comparison/v1",
+  "workload": "pointer-chase memory rows, A16 n18 c1/d16, native 8workers",
+  "measure": "Separate-process maximum RSS includes payload/proving/verification and allocator-retained memory; not an isolated live-allocation count.",
+  "groups": [
+    {
+      "style": "warm",
+      "allocator_environment": {},
+      "cases": [
+        {
+          "mode": "flat",
+          "before": {
+            "report": "results/stage12-full-rss-before-flat-d16.json",
+            "peak_rss_kib": 159612,
+            "proofs_including_warmups": 4,
+            "patch": "28aec6504a11bec56166ef8bb306fffc964f0f3af86f41c5ca45a2e6ded9c18a"
+          },
+          "after": {
+            "report": "results/stage12-full-rss-after-flat-d16.json",
+            "peak_rss_kib": 212632,
+            "proofs_including_warmups": 4,
+            "patch": "bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3"
+          },
+          "rss_ratio": 1.3321805378041751
+        },
+        {
+          "mode": "gkr",
+          "before": {
+            "report": "results/stage12-full-rss-before-gkr-d16.json",
+            "peak_rss_kib": 294948,
+            "proofs_including_warmups": 4,
+            "patch": "28aec6504a11bec56166ef8bb306fffc964f0f3af86f41c5ca45a2e6ded9c18a"
+          },
+          "after": {
+            "report": "results/stage12-full-rss-after-gkr-d16.json",
+            "peak_rss_kib": 262476,
+            "proofs_including_warmups": 4,
+            "patch": "bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3"
+          },
+          "rss_ratio": 0.8899060173318687
+        }
+      ]
+    },
+    {
+      "style": "cold",
+      "allocator_environment": {},
+      "cases": [
+        {
+          "mode": "flat",
+          "before": {
+            "report": "results/stage12-full-rss-cold-before-flat-d16.json",
+            "peak_rss_kib": 145744,
+            "proofs_including_warmups": 1,
+            "patch": "28aec6504a11bec56166ef8bb306fffc964f0f3af86f41c5ca45a2e6ded9c18a"
+          },
+          "after": {
+            "report": "results/stage12-full-rss-cold-after-flat-d16.json",
+            "peak_rss_kib": 210900,
+            "proofs_including_warmups": 1,
+            "patch": "bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3"
+          },
+          "rss_ratio": 1.447057854868811
+        },
+        {
+          "mode": "gkr",
+          "before": {
+            "report": "results/stage12-full-rss-cold-before-gkr-d16.json",
+            "peak_rss_kib": 237824,
+            "proofs_including_warmups": 1,
+            "patch": "28aec6504a11bec56166ef8bb306fffc964f0f3af86f41c5ca45a2e6ded9c18a"
+          },
+          "after": {
+            "report": "results/stage12-full-rss-cold-after-gkr-d16.json",
+            "peak_rss_kib": 235684,
+            "proofs_including_warmups": 1,
+            "patch": "bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3"
+          },
+          "rss_ratio": 0.9910017491926802
+        }
+      ]
+    },
+    {
+      "style": "allocator-control",
+      "allocator_environment": {
+        "MALLOC_MMAP_THRESHOLD_": "131072",
+        "MALLOC_TRIM_THRESHOLD_": "131072"
+      },
+      "cases": [
+        {
+          "mode": "flat",
+          "before": {
+            "report": "results/stage12-full-rss-allocator-old.json",
+            "peak_rss_kib": 145900,
+            "proofs_including_warmups": 1,
+            "patch": "28aec6504a11bec56166ef8bb306fffc964f0f3af86f41c5ca45a2e6ded9c18a"
+          },
+          "after": {
+            "report": "results/stage12-full-rss-allocator-new.json",
+            "peak_rss_kib": 145984,
+            "proofs_including_warmups": 1,
+            "patch": "bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3"
+          },
+          "rss_ratio": 1.0005757368060315
+        }
+      ]
+    }
+  ],
+  "verified_proofs_including_warmups": 22
+}

@@ -1,0 +1,88 @@
+   Compiling proc-macro2 v1.0.106
+   Compiling cfg-if v1.0.4
+   Compiling libc v0.2.186
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.46
+   Compiling zerocopy v0.8.52
+   Compiling getrandom v0.3.4
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.11
+   Compiling once_cell v1.21.4
+   Compiling cc v1.4.4
+   Compiling syn v2.0.118
+   Compiling tracing-core v0.1.36
+   Compiling regex-syntax v0.8.11
+   Compiling typenum v1.20.1
+   Compiling hybrid-array v0.4.14
+   Compiling regex-automata v0.4.16
+   Compiling ppv-lite86 v0.2.21
+   Compiling tikv-jemalloc-sys v0.7.1+5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8
+   Compiling rand_core v0.9.5
+   Compiling lazy_static v1.5.0
+   Compiling thiserror v2.0.18
+   Compiling pin-project-lite v0.2.17
+   Compiling log v0.4.33
+   Compiling matchers v0.2.0
+   Compiling tracing-log v0.2.0
+   Compiling sharded-slab v0.1.7
+   Compiling rand_chacha v0.9.0
+   Compiling tracing-attributes v0.1.31
+   Compiling thiserror-impl v2.0.18
+   Compiling thread_local v1.1.10
+   Compiling tracing v0.1.44
+   Compiling nu-ansi-term v0.50.3
+   Compiling smallvec v1.15.2
+   Compiling rand v0.9.4
+   Compiling tracing-subscriber v0.3.23
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling parallel v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/parallel)
+   Compiling const-oid v0.10.2
+   Compiling ansi_term v0.12.1
+   Compiling tracing-forest v0.3.1
+   Compiling digest v0.11.3
+   Compiling primitives v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/primitives)
+   Compiling keccak v0.2.2
+   Compiling sha3 v0.11.0
+   Compiling tikv-jemallocator v0.7.0
+   Compiling bench v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/bench)
+    Finished `release` profile [optimized] target(s) in 38.04s
+     Running unittests src/lib.rs (target/release/deps/primitives-d95bcb13cb32021a)
+
+running 33 tests
+test bits::tests::every_arm_matches_reference ... ok
+test bits::tests::transpose_8x8_bits_matches_definition ... ok
+test bit_fold::tests::lookup_matches_definition ... ok
+test bit_fold::tests::fold_block_pair_matches_lookup ... ok
+test field::gf2_64::tests::inverses ... ok
+test field::gf2_64::tests::pow_matches_repeated_products ... ok
+test field::gf2_64::tests::python_vectors ... ok
+test field::gf2_64::tests::x_is_primitive ... ok
+test field::gf2_64x3::tests::base_poly_irreducible ... ok
+test field::f192x8::tests::kernels_match_the_scalar_forms ... ok
+test field::gf2_64x3::tests::batched_mixed_products_match_scalar ... ok
+test field::gf2_64x3::tests::frobenius_is_the_64th_squaring ... ok
+test field::gf2_64x3::tests::python_vectors_and_modulus ... ok
+test field::gf2_64x3::tests::extension_poly_irreducible_over_base ... ok
+test field::gf2_64x3::tests::unreduced_accumulation_matches_reduced_sum ... ok
+test formatting_tests::pretty_f64_rounds_groups_and_trims ... ok
+test field::gf2_64x3::tests::square_and_inv ... ok
+test field::x4::tests::lanes_match_scalar ... ok
+test formatting_tests::pretty_integer_groups_decimal_digits ... ok
+test hash::tests::digest_halves_from_a_final_state_match_hashing ... ok
+test hash::tests::matches_reference_vector ... ok
+test hash::tests::streaming_matches_one_shot ... ok
+test hash::tests::every_backend_matches_scalar ... ok
+test bit_fold::tests::fold_columns_matches_lookup ... ok
+test stream::tests::streamed_copy_matches_a_plain_one ... ok
+test hash::tests::continued_from_zero_prefix_matches_whole_image ... ok
+test hash::tests::batched_matches_one_shot_across_lengths ... ok
+test field::tests::g_pow32_matches_square_and_multiply ... ok
+test hash::tests::matches_ethereum_keccak256 ... ok
+test multilinear::tests::parallel_mle_matches_folding ... ok
+test field::gf2_64x3::tests::batched_products_match_software ... ok
+test field::gf2_64::tests::mul_and_square_match_the_reference ... ok
+test field::gf2_64x3::tests::products_match_software ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+

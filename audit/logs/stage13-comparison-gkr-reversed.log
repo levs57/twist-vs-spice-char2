@@ -1,0 +1,19 @@
+pattern=guest/pointer-chase/memory method=logup-star chunk=- virtualization=- prove=55.697ms verify=18.881ms commit=6.454ms open=30.528ms remaining=19.256ms main_bits=33554432 aux_bits=8388608
+pattern=guest/pointer-chase/memory method=shout chunk=1 virtualization=gkr prove=83.178ms verify=11.850ms commit=4.620ms open=24.153ms remaining=54.476ms main_bits=33554432 aux_bits=0
+pattern=guest/pointer-chase/memory method=shout chunk=2 virtualization=gkr prove=63.210ms verify=12.335ms commit=4.553ms open=26.272ms remaining=34.584ms main_bits=33554432 aux_bits=0
+pattern=guest/pointer-chase/memory method=shout chunk=4 virtualization=gkr prove=54.095ms verify=12.836ms commit=5.895ms open=28.426ms remaining=19.824ms main_bits=67108864 aux_bits=0
+pattern=guest/erc20-mixed-block/memory method=logup-star chunk=- virtualization=- prove=52.216ms verify=18.944ms commit=6.076ms open=26.852ms remaining=19.299ms main_bits=33554432 aux_bits=8388608
+pattern=guest/erc20-mixed-block/memory method=shout chunk=1 virtualization=gkr prove=93.881ms verify=12.290ms commit=4.220ms open=24.880ms remaining=63.830ms main_bits=33554432 aux_bits=0
+pattern=guest/erc20-mixed-block/memory method=shout chunk=2 virtualization=gkr prove=67.021ms verify=12.266ms commit=4.802ms open=25.349ms remaining=36.173ms main_bits=33554432 aux_bits=0
+pattern=guest/erc20-mixed-block/memory method=shout chunk=4 virtualization=gkr prove=56.525ms verify=12.725ms commit=5.910ms open=28.919ms remaining=22.297ms main_bits=67108864 aux_bits=0
+pattern=local method=logup-star chunk=- virtualization=- prove=58.277ms verify=20.081ms commit=6.315ms open=28.883ms remaining=23.514ms main_bits=33554432 aux_bits=8388608
+pattern=local method=shout chunk=1 virtualization=gkr prove=104.271ms verify=13.058ms commit=4.600ms open=24.327ms remaining=75.445ms main_bits=33554432 aux_bits=0
+pattern=local method=shout chunk=2 virtualization=gkr prove=74.846ms verify=12.084ms commit=4.789ms open=25.319ms remaining=44.826ms main_bits=33554432 aux_bits=0
+pattern=local method=shout chunk=4 virtualization=gkr prove=59.956ms verify=12.389ms commit=5.940ms open=27.809ms remaining=25.583ms main_bits=67108864 aux_bits=0
+pattern=random method=logup-star chunk=- virtualization=- prove=69.009ms verify=19.024ms commit=6.224ms open=32.114ms remaining=30.737ms main_bits=33554432 aux_bits=8388608
+pattern=random method=shout chunk=1 virtualization=gkr prove=115.670ms verify=13.157ms commit=4.597ms open=28.040ms remaining=80.758ms main_bits=33554432 aux_bits=0
+pattern=random method=shout chunk=2 virtualization=gkr prove=75.834ms verify=13.179ms commit=4.727ms open=25.085ms remaining=48.243ms main_bits=33554432 aux_bits=0
+pattern=random method=shout chunk=4 virtualization=gkr prove=69.347ms verify=12.856ms commit=6.200ms open=29.145ms remaining=32.865ms main_bits=67108864 aux_bits=0
+JSON: results/stage13-comparison-gkr-reversed.json
+CSV: results/stage13-comparison-gkr-reversed.csv
+All 16 cases verified (5 measured proofs/case plus 1 warmups).

@@ -1,0 +1,207 @@
+{
+  "repository": "https://github.com/worldfnd/BitZ",
+  "revision": "cdfb9b73b5857f4dc83761866e475186c6a75ab3",
+  "commit_date": "2026-09-23T21:55:28+03:00",
+  "implementation": "gf128-weighted-logup-bitz-v1",
+  "ported_on": "2026-11-10",
+  "license": "MIT",
+  "license_notice": "LICENSE",
+  "copyright": "Copyright (c) 2026 World Foundation",
+  "license_note": "The donor retained LICENSE grants MIT permission; copied verbatim. Its workspace declares MIT OR Apache-2.0.",
+  "reference_directory": "sources/bitz-reference",
+  "reference_manifest": "audit/bitz-reference.json",
+  "reference_manifest_sha256": "530c5693daac36215818dca2d0460066de7f522a4359e672306781c3b70e9be2",
+  "donor_sources": [
+    {
+      "path": "crates/gkr/src/logup_cut/fraction.rs",
+      "sha256": "9852712859e81ab3f9f314ab842f4b5da4d80cb6dad3eeb4f3d79a240fc59512",
+      "function_ranges": [
+        {
+          "symbol": "FractionTreeWitness",
+          "lines": [
+            24,
+            253
+          ],
+          "role": "Retained fraction witness levels, 3-multiply recurrence, reusable buffers, sqrt-Eq evaluation and folded layer prover"
+        },
+        {
+          "symbol": "prove_rational",
+          "lines": [
+            255,
+            272
+          ],
+          "role": "Rational root equality and sequential left/right fraction reductions"
+        },
+        {
+          "symbol": "verify_rational",
+          "lines": [
+            274,
+            327
+          ],
+          "role": "Rational root and layer verification"
+        },
+        {
+          "symbol": "mle_eval",
+          "lines": [
+            329,
+            439
+          ],
+          "role": "Square-root Eq evaluation with virtual constant padding and deferred reductions"
+        }
+      ]
+    },
+    {
+      "path": "crates/gkr/src/lib.rs",
+      "sha256": "9b280041bf08df797cfa5ed3bea1b609ce8a22cd43d40671ac17d1bc45151de9",
+      "function_ranges": [
+        {
+          "symbol": "prove_product_relation_inner",
+          "lines": [
+            56,
+            159
+          ],
+          "role": "Equality-factored two-statistic product sumcheck with in-place folds"
+        },
+        {
+          "symbol": "prove_product_relation_into",
+          "lines": [
+            173,
+            192
+          ],
+          "role": "Point reversal at low-first public boundary"
+        },
+        {
+          "symbol": "reduce_sumcheck_round",
+          "lines": [
+            194,
+            242
+          ],
+          "role": "Chunked Rayon wide-product reduction"
+        },
+        {
+          "symbol": "eq_factor",
+          "lines": [
+            244,
+            250
+          ],
+          "role": "Characteristic-two equality factor 1+r+z"
+        },
+        {
+          "symbol": "SuffixTable",
+          "lines": [
+            252,
+            307
+          ],
+          "role": "Retained suffix equality-table layout; unused alloc helpers omitted"
+        },
+        {
+          "symbol": "verify_product_relation_inner",
+          "lines": [
+            354,
+            392
+          ],
+          "role": "Endpoint recovery and equality-product relation check"
+        },
+        {
+          "symbol": "verify_product_relation",
+          "lines": [
+            394,
+            408
+          ],
+          "role": "Verifier low-first public point boundary"
+        }
+      ]
+    },
+    {
+      "path": "crates/gkr/src/logup_cut/inner_product.rs",
+      "sha256": "eaedc5790762c4a0f6116c7ac3ba4c0c518ebafea25e5f70f64bcf23aba6ac0e",
+      "function_ranges": [
+        {
+          "symbol": "prove_inner_product",
+          "lines": [
+            14,
+            47
+          ],
+          "role": "Quadratic IP proving and terminal committed evaluation"
+        },
+        {
+          "symbol": "verify_inner_product",
+          "lines": [
+            49,
+            70
+          ],
+          "role": "Transparent public-polynomial terminal check"
+        },
+        {
+          "symbol": "round",
+          "lines": [
+            72,
+            95
+          ],
+          "role": "Two-coefficient Rayon U256 round accumulation"
+        },
+        {
+          "symbol": "fold",
+          "lines": [
+            97,
+            103
+          ],
+          "role": "Low-first adjacent-pair in-place fold"
+        }
+      ]
+    },
+    {
+      "path": "crates/field/src/gf128.rs",
+      "sha256": "264f954fd2fdd26b0713d1582da3a7c97d6040bf7ac4a036a399c56d09fe6af7",
+      "function_ranges": [
+        {
+          "symbol": "GHASH field",
+          "lines": [
+            1,
+            9
+          ],
+          "role": "Same modulus and monomial basis"
+        },
+        {
+          "symbol": "to_bytes",
+          "lines": [
+            138,
+            153
+          ],
+          "role": "Canonical 16-byte LE encoding"
+        },
+        {
+          "symbol": "impl From<u128>",
+          "lines": [
+            205,
+            210
+          ],
+          "role": "Index encoding injects bits as polynomial coefficients"
+        }
+      ]
+    }
+  ],
+  "local_adaptations": [
+    "K/U256 static field shim replaces F128/Wide256 without changing field basis or arithmetic formulas.",
+    "Typed proof structs and checked dimensions/round/layer counts replace donor stream deserialization.",
+    "Result errors replace invalid-input root/shape/denominator and zero-gamma assertions; terminal IP validation adds no full-table scan.",
+    "OM hash-chain transcript uses explicit label/domain/dimension and canonical field-message framing; this is a new wire format, not original-proof-byte compatibility.",
+    "Donor product loop retains high-variable-first scheduling and boundary reversals; every public point is OM low-variable-first.",
+    "Unused upstream grand-product orchestration, tracing attributes and standalone allocation helpers omitted.",
+    "Independent dense algebra/proof/transcript oracles added for native/default regression coverage."
+  ],
+  "protocol_scope": "Weighted rational pushforward and public-table inner-product reductions only. Caller must commit weighted pushforward before tau and authenticate every returned nonpublic evaluation.",
+  "shared_dependencies": "om-field and om-transcript provenance is recorded separately in vendor/open-magnetar/UPSTREAM.json; rayon is resolved by the caller Cargo lockfile.",
+  "fingerprint_scope": "Cargo.toml, LICENSE, and every src file (including tests); excludes Cargo.lock, provenance/docs and target outputs.",
+  "fingerprint_algorithm": "SHA256 over sorted UTF-8 relative path + NUL + raw 32-byte file SHA256 for each local_sha256 entry.",
+  "local_sha256": {
+    "Cargo.toml": "4a7109c364f2dd9f6d55c8dcbbe1e329f795f3bee1dbfcc358e54534b3fec3ea",
+    "LICENSE": "408b9b4599bf389f97538c1f066bbc74912522d02350ae44528e09f8ccf3c3fc",
+    "src/fraction.rs": "f4adce0573b2bcc87c526528814f652682d69000354d140ebd79e5ab7c41995c",
+    "src/inner_product.rs": "de14e8307efd93b655887cfbf71befa5c6308d5219828e8c8116749382106e89",
+    "src/lib.rs": "a07e7a705e1b1d28cc8046057aa13d55621178c083705bc4d7f79b5fe8825c85",
+    "src/product.rs": "5c0f4a54e925fa631a3af8666a16e8e087f3dee6a9ceabc70cdd0b0a83f0ae51",
+    "src/tests.rs": "7ea433284521ca863481bfdafdf1b69fcc694d784bc5339b97c29c720e264867"
+  },
+  "local_source_sha256": "822e0395bb2e1e26e0a2b382f1df7c96e0583aef3c2724aeb181f6adbde6ee88"
+}

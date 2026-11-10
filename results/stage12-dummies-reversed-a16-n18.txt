@@ -1,0 +1,144 @@
+Verified GF128 RAM proofs; times are medians in milliseconds.
+
+guest/pointer-chase/memory/natural: chunk=4 bits, d=4, samples=5
+  payload cycles      262144 active + 0 idle (0.0% padding)
+  guest pattern       repeat-ram-pattern: 7300 VM cycles, 2094 selected rows; 125 full copies + 394 tail rows
+  actual RAM work     262144 memory + 0 dummy rows (100.00% memory)
+  trace values        6003 zero reads (0 dummy), 261894 unchanged writes, 70 distinct words
+  prover total          295.788
+  ms / million RAM     1128.341
+  commitment             33.986  (12.2% median share)
+  everything else       253.792
+  verifier               60.879
+  committed witness  8192.0 KiB, 192 populated / 256 padded bits per cycle
+    column area: address encoding 25.00%, values 25.00%, increments 25.00%, padding 25.00%
+    mosaic.batch                    6.923
+    pcs.commit                     33.986
+    pcs.ligerito_open              42.461
+    pcs.open                        0.002
+    pcs.ringswitch                  4.780
+    ram.claims                      0.949
+    ram.pack                        1.357
+    ram.statement                   2.817
+    ram.twist                       0.001
+    ram.witness                     2.570
+    twist.final                     2.354
+    twist.onehot                   62.351
+    twist.other                     0.057
+    twist.rw.address                4.952
+    twist.rw.cycles                53.809
+    twist.rw.setup                  8.698
+    twist.val                       4.997
+    twist.virtualization           43.421
+    unattributed                    0.437
+
+guest/pointer-chase/all/natural: chunk=4 bits, d=4, samples=5
+  payload cycles      262144 active + 0 idle (0.0% padding)
+  guest pattern       repeat-ram-pattern: 7300 VM cycles, 7300 selected rows; 35 full copies + 6644 tail rows
+  actual RAM work     75191 memory + 186953 dummy rows (28.68% memory)
+  trace values        188660 zero reads (186953 dummy), 262074 unchanged writes, 71 distinct words
+  prover total          298.369
+  ms / million RAM     3968.142
+  commitment             41.334  (13.9% median share)
+  everything else       257.034
+  verifier               53.948
+  committed witness  8192.0 KiB, 192 populated / 256 padded bits per cycle
+    column area: address encoding 25.00%, values 25.00%, increments 25.00%, padding 25.00%
+    mosaic.batch                    7.004
+    pcs.commit                     41.334
+    pcs.ligerito_open              43.313
+    pcs.open                        0.002
+    pcs.ringswitch                  5.106
+    ram.claims                      0.975
+    ram.pack                        1.489
+    ram.statement                   2.922
+    ram.twist                       0.001
+    ram.witness                     2.753
+    twist.final                     3.754
+    twist.onehot                   69.124
+    twist.other                     0.059
+    twist.rw.address                5.818
+    twist.rw.cycles                38.903
+    twist.rw.setup                  6.226
+    twist.val                       6.386
+    twist.virtualization           57.041
+    unattributed                    0.440
+
+guest/erc20-mixed-block/memory/natural: chunk=4 bits, d=4, samples=5
+  payload cycles      262144 active + 0 idle (0.0% padding)
+  guest pattern       repeat-ram-pattern: 24020 VM cycles, 7913 selected rows; 33 full copies + 1015 tail rows
+  actual RAM work     262144 memory + 0 dummy rows (100.00% memory)
+  trace values        9916 zero reads (0 dummy), 246089 unchanged writes, 923 distinct words
+  prover total          295.711
+  ms / million RAM     1128.047
+  commitment             39.270  (13.3% median share)
+  everything else       260.838
+  verifier               49.504
+  committed witness  8192.0 KiB, 192 populated / 256 padded bits per cycle
+    column area: address encoding 25.00%, values 25.00%, increments 25.00%, padding 25.00%
+    mosaic.batch                    7.058
+    pcs.commit                     39.270
+    pcs.ligerito_open              40.222
+    pcs.open                        0.002
+    pcs.ringswitch                  4.576
+    ram.claims                      1.069
+    ram.pack                        1.315
+    ram.statement                   2.703
+    ram.twist                       0.001
+    ram.witness                     2.414
+    twist.final                     3.506
+    twist.onehot                   67.272
+    twist.other                     0.055
+    twist.rw.address                5.101
+    twist.rw.cycles                61.376
+    twist.rw.setup                  5.460
+    twist.val                       6.766
+    twist.virtualization           49.563
+    unattributed                    0.389
+
+guest/erc20-mixed-block/all/natural: chunk=4 bits, d=4, samples=5
+  payload cycles      262144 active + 0 idle (0.0% padding)
+  guest pattern       repeat-ram-pattern: 24020 VM cycles, 24020 selected rows; 10 full copies + 21944 tail rows
+  actual RAM work     86097 memory + 176047 dummy rows (32.84% memory)
+  trace values        3443 zero reads (63 dummy), 256757 unchanged writes, 923 distinct words
+  prover total          261.313
+  ms / million RAM     3035.094
+  commitment             38.184  (14.3% median share)
+  everything else       223.129
+  verifier               51.682
+  committed witness  8192.0 KiB, 192 populated / 256 padded bits per cycle
+    column area: address encoding 25.00%, values 25.00%, increments 25.00%, padding 25.00%
+    mosaic.batch                    7.008
+    pcs.commit                     38.184
+    pcs.ligerito_open              38.189
+    pcs.open                        0.002
+    pcs.ringswitch                  4.646
+    ram.claims                      1.018
+    ram.pack                        1.362
+    ram.statement                   2.727
+    ram.twist                       0.001
+    ram.witness                     2.480
+    twist.final                     2.803
+    twist.onehot                   57.024
+    twist.other                     0.052
+    twist.rw.address                5.273
+    twist.rw.cycles                41.798
+    twist.rw.setup                  5.006
+    twist.val                       5.640
+    twist.virtualization           50.114
+    unattributed                    0.387
+
+Equal-RAM-work estimates: memory-only timings scaled by the exact useful-row ratio.
+These are proportional estimates; fixed per-proof costs do not scale linearly.
+
+pointer-chase/natural: chunk=4, 75191 / 262144 useful rows, scale=0.286831
+  prover               all   298.369 ms; memory   295.788 ms; scaled    84.841 ms; estimated saving  71.57%
+  commitment           all    41.334 ms; memory    33.986 ms; scaled     9.748 ms; estimated saving  76.42%
+  everything else      all   257.034 ms; memory   253.792 ms; scaled    72.795 ms; estimated saving  71.68%
+  twist.rw.cycles      all    38.903 ms; memory    53.809 ms; scaled    15.434 ms; estimated saving  60.33%
+
+erc20-mixed-block/natural: chunk=4, 86097 / 262144 useful rows, scale=0.328434
+  prover               all   261.313 ms; memory   295.711 ms; scaled    97.121 ms; estimated saving  62.83%
+  commitment           all    38.184 ms; memory    39.270 ms; scaled    12.897 ms; estimated saving  66.22%
+  everything else      all   223.129 ms; memory   260.838 ms; scaled    85.668 ms; estimated saving  61.61%
+  twist.rw.cycles      all    41.798 ms; memory    61.376 ms; scaled    20.158 ms; estimated saving  51.77%

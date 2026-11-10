@@ -1,0 +1,59 @@
+Verified GF128 RAM proofs; times are medians in milliseconds.
+
+guest/natural: chunk=4 bits, d=4, samples=3
+  payload cycles      3655 active + 258489 idle (98.6% padding)
+  guest pattern       vm-halt: 3655 source cycles, 1 full copies + 0 tail cycles
+  prover total          268.240
+  commitment             43.110  (16.1% median share)
+  everything else       225.129
+  verifier               50.673
+  committed witness  8192.0 KiB, 192 populated / 256 padded bits per cycle
+    column area: address encoding 25.00%, values 25.00%, increments 25.00%, padding 25.00%
+    mosaic.batch                    6.353
+    pcs.commit                     43.110
+    pcs.ligerito_open              36.876
+    pcs.open                        0.003
+    pcs.ringswitch                  6.600
+    ram.claims                      1.045
+    ram.pack                        2.181
+    ram.statement                   2.784
+    ram.twist                       0.001
+    ram.witness                     3.397
+    twist.final                     2.489
+    twist.onehot                   61.344
+    twist.other                     0.058
+    twist.rw.address                6.803
+    twist.rw.cycles                30.145
+    twist.rw.setup                  6.742
+    twist.val                       7.466
+    twist.virtualization           45.846
+    unattributed                    1.397
+
+guest/permuted: chunk=4 bits, d=4, samples=3
+  payload cycles      3655 active + 258489 idle (98.6% padding)
+  guest pattern       vm-halt: 3655 source cycles, 1 full copies + 0 tail cycles
+  prover total          276.331
+  commitment             39.820  (14.6% median share)
+  everything else       236.511
+  verifier               64.524
+  committed witness  8192.0 KiB, 192 populated / 256 padded bits per cycle
+    column area: address encoding 25.00%, values 25.00%, increments 25.00%, padding 25.00%
+    mosaic.batch                    6.643
+    pcs.commit                     39.820
+    pcs.ligerito_open              45.702
+    pcs.open                        0.002
+    pcs.ringswitch                  5.316
+    ram.claims                      1.739
+    ram.pack                        1.544
+    ram.statement                   2.880
+    ram.twist                       0.001
+    ram.witness                     2.591
+    twist.final                     3.093
+    twist.onehot                   61.109
+    twist.other                     0.056
+    twist.rw.address                6.390
+    twist.rw.cycles                32.374
+    twist.rw.setup                  5.532
+    twist.val                       7.095
+    twist.virtualization           52.162
+    unattributed                    0.418

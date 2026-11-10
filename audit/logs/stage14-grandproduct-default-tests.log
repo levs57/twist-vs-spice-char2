@@ -1,0 +1,30 @@
+   Compiling crossbeam-utils v0.8.23
+   Compiling crossbeam-epoch v0.9.21
+   Compiling crossbeam-deque v0.8.8
+   Compiling rayon-core v1.13.0
+   Compiling om-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-field)
+   Compiling either v1.19.0
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+   Compiling rayon v1.12.0
+   Compiling lean-grandproduct v0.1.0 (/home/user/Programming/memarg-exploration/vendor/lean-grandproduct)
+    Finished `release` profile [optimized] target(s) in 9.95s
+     Running unittests src/lib.rs (vendor/lean-grandproduct/target/release/deps/lean_grandproduct-12546c321973a10e)
+
+running 8 tests
+test tests::benchmark_dense_definition_against_port ... ignored
+test tests::retained_upstream_files_match_provenance ... ok
+test tests::malformed_proofs_and_every_message_child_and_root_tamper_reject ... ok
+test tests::two_declared_padding_ranges_are_exact_and_do_not_merge_actual_data ... ok
+test tests::transcript_is_thread_count_independent_and_roots_are_not_silently_equalized ... ok
+test tests::complete_port_matches_dense_definition_and_verifier_even_odd_and_prefixes ... ok
+test tests::generated_pair_prepares_exact_levels_without_visiting_padding ... ok
+test tests::quartic_coefficients_and_fused_folds_match_dense_at_boolean_and_zero_eq_factors ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+   Doc-tests lean_grandproduct
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

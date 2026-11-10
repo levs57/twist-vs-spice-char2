@@ -1,0 +1,3 @@
+Final native integration: 266 vendor tests +33 project tests passed, zero warnings.
+The initial workspace-wide package selector could not select excluded vendor members; the final gate runs both workspaces separately.
+Complete final output: stage12-full-vendor-tests-native.log and stage12-full-workspace-tests-native.log.

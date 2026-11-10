@@ -1,0 +1,597 @@
+{
+  "schema": "memarg-virtualization-tree-experiment/v1",
+  "vendor_patch_sha256": "28aec6504a11bec56166ef8bb306fffc964f0f3af86f41c5ca45a2e6ded9c18a",
+  "verified_benchmark_proofs_including_warmups": 244,
+  "comparison_ranges": {
+    "4": {
+      "virtualization_speedup": [
+        0.9895273708146403,
+        1.154965255175498
+      ],
+      "prover_saving_fraction": [
+        -0.04907764500831524,
+        0.12734844268984413
+      ],
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 90,
+        "node_evaluation_field_elements": 12,
+        "field_payload_bytes": 1632
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 36,
+        "round_message_field_elements": 108,
+        "node_evaluation_field_elements": 18,
+        "field_payload_bytes": 2016
+      }
+    },
+    "8": {
+      "virtualization_speedup": [
+        1.3728868027088095,
+        1.6152850957396594
+      ],
+      "prover_saving_fraction": [
+        0.06074052649692796,
+        0.17785079572366147
+      ],
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 24,
+        "field_payload_bytes": 2976
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 3,
+        "sumcheck_rounds": 54,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 42,
+        "field_payload_bytes": 3264
+      }
+    },
+    "16": {
+      "virtualization_speedup": [
+        2.0331248542089355,
+        2.60862424389467
+      ],
+      "prover_saving_fraction": [
+        0.2264362299683952,
+        0.37036556050035074
+      ],
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 306,
+        "node_evaluation_field_elements": 48,
+        "field_payload_bytes": 5664
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 4,
+        "sumcheck_rounds": 72,
+        "round_message_field_elements": 216,
+        "node_evaluation_field_elements": 90,
+        "field_payload_bytes": 4896
+      }
+    }
+  },
+  "paired_runs": [
+    {
+      "report": "results/stage12-gkr-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "erc20-mixed-block",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 4,
+      "address_components": 4,
+      "prover": {
+        "flat_ms": 199.819203,
+        "gkr_tree_ms": 204.545382,
+        "speedup": 0.9768942278051528,
+        "saving_fraction": -0.023652276302993824
+      },
+      "virtualization": {
+        "flat_ms": 27.798045000000002,
+        "gkr_tree_ms": 24.202666,
+        "speedup": 1.1485530147794463,
+        "saving_fraction": 0.12933927547782587
+      },
+      "verifier": {
+        "flat_ms": 55.236743999999995,
+        "gkr_tree_ms": 52.446723,
+        "speedup": 1.053197241703738,
+        "saving_fraction": 0.05051023644695629
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 90,
+        "node_evaluation_field_elements": 12,
+        "field_payload_bytes": 1632
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 36,
+        "round_message_field_elements": 108,
+        "node_evaluation_field_elements": 18,
+        "field_payload_bytes": 2016
+      }
+    },
+    {
+      "report": "results/stage12-gkr-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "erc20-mixed-block",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 2,
+      "address_components": 8,
+      "prover": {
+        "flat_ms": 274.01934,
+        "gkr_tree_ms": 229.532467,
+        "speedup": 1.1938151651548274,
+        "saving_fraction": 0.162349391105022
+      },
+      "virtualization": {
+        "flat_ms": 76.794928,
+        "gkr_tree_ms": 49.647749,
+        "speedup": 1.5467957671152424,
+        "saving_fraction": 0.3535022391062077
+      },
+      "verifier": {
+        "flat_ms": 53.430028,
+        "gkr_tree_ms": 53.593906,
+        "speedup": 0.9969422269763283,
+        "saving_fraction": -0.003067151677330182
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 24,
+        "field_payload_bytes": 2976
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 3,
+        "sumcheck_rounds": 54,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 42,
+        "field_payload_bytes": 3264
+      }
+    },
+    {
+      "report": "results/stage12-gkr-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "erc20-mixed-block",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 1,
+      "address_components": 16,
+      "prover": {
+        "flat_ms": 467.795809,
+        "gkr_tree_ms": 294.540352,
+        "speedup": 1.5882231613548152,
+        "saving_fraction": 0.37036556050035074
+      },
+      "virtualization": {
+        "flat_ms": 263.45288999999997,
+        "gkr_tree_ms": 100.99303900000001,
+        "speedup": 2.60862424389467,
+        "saving_fraction": 0.6166561733295086
+      },
+      "verifier": {
+        "flat_ms": 52.795829000000005,
+        "gkr_tree_ms": 54.356313,
+        "speedup": 0.9712915774842934,
+        "saving_fraction": -0.029556956099694887
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 306,
+        "node_evaluation_field_elements": 48,
+        "field_payload_bytes": 5664
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 4,
+        "sumcheck_rounds": 72,
+        "round_message_field_elements": 216,
+        "node_evaluation_field_elements": 90,
+        "field_payload_bytes": 4896
+      }
+    },
+    {
+      "report": "results/stage12-gkr-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "pointer-chase",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 4,
+      "address_components": 4,
+      "prover": {
+        "flat_ms": 207.85487,
+        "gkr_tree_ms": 181.384876,
+        "speedup": 1.1459327513061233,
+        "saving_fraction": 0.12734844268984413
+      },
+      "virtualization": {
+        "flat_ms": 25.529443999999998,
+        "gkr_tree_ms": 25.799633999999998,
+        "speedup": 0.9895273708146403,
+        "saving_fraction": -0.010583465899218103
+      },
+      "verifier": {
+        "flat_ms": 54.818244,
+        "gkr_tree_ms": 54.103564,
+        "speedup": 1.0132094809872414,
+        "saving_fraction": 0.013037265476800064
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 90,
+        "node_evaluation_field_elements": 12,
+        "field_payload_bytes": 1632
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 36,
+        "round_message_field_elements": 108,
+        "node_evaluation_field_elements": 18,
+        "field_payload_bytes": 2016
+      }
+    },
+    {
+      "report": "results/stage12-gkr-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "pointer-chase",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 2,
+      "address_components": 8,
+      "prover": {
+        "flat_ms": 246.095529,
+        "gkr_tree_ms": 231.147557,
+        "speedup": 1.064668526866585,
+        "saving_fraction": 0.06074052649692796
+      },
+      "virtualization": {
+        "flat_ms": 75.87707300000001,
+        "gkr_tree_ms": 55.268266000000004,
+        "speedup": 1.3728868027088095,
+        "saving_fraction": 0.2716078280984824
+      },
+      "verifier": {
+        "flat_ms": 54.335817,
+        "gkr_tree_ms": 54.919602999999995,
+        "speedup": 0.9893701707931137,
+        "saving_fraction": -0.010744036479657604
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 24,
+        "field_payload_bytes": 2976
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 3,
+        "sumcheck_rounds": 54,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 42,
+        "field_payload_bytes": 3264
+      }
+    },
+    {
+      "report": "results/stage12-gkr-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "pointer-chase",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 1,
+      "address_components": 16,
+      "prover": {
+        "flat_ms": 432.567953,
+        "gkr_tree_ms": 292.797101,
+        "speedup": 1.477364193575127,
+        "saving_fraction": 0.32311883261495333
+      },
+      "virtualization": {
+        "flat_ms": 247.48008,
+        "gkr_tree_ms": 108.064583,
+        "speedup": 2.2901127559988823,
+        "saving_fraction": 0.563340277730636
+      },
+      "verifier": {
+        "flat_ms": 53.654193,
+        "gkr_tree_ms": 54.086967,
+        "speedup": 0.9919985529970649,
+        "saving_fraction": -0.008065986566977212
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 306,
+        "node_evaluation_field_elements": 48,
+        "field_payload_bytes": 5664
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 4,
+        "sumcheck_rounds": 72,
+        "round_message_field_elements": 216,
+        "node_evaluation_field_elements": 90,
+        "field_payload_bytes": 4896
+      }
+    },
+    {
+      "report": "results/stage12-gkr-reversed-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "pointer-chase",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 1,
+      "address_components": 16,
+      "prover": {
+        "flat_ms": 418.310843,
+        "gkr_tree_ms": 275.356043,
+        "speedup": 1.5191634744693072,
+        "saving_fraction": 0.34174299421638465
+      },
+      "virtualization": {
+        "flat_ms": 246.941056,
+        "gkr_tree_ms": 106.73014699999999,
+        "speedup": 2.3136954547621866,
+        "saving_fraction": 0.5677909994845086
+      },
+      "verifier": {
+        "flat_ms": 51.815622999999995,
+        "gkr_tree_ms": 56.310853,
+        "speedup": 0.9201711613212464,
+        "saving_fraction": -0.0867543366216017
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 306,
+        "node_evaluation_field_elements": 48,
+        "field_payload_bytes": 5664
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 4,
+        "sumcheck_rounds": 72,
+        "round_message_field_elements": 216,
+        "node_evaluation_field_elements": 90,
+        "field_payload_bytes": 4896
+      }
+    },
+    {
+      "report": "results/stage12-gkr-reversed-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "pointer-chase",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 2,
+      "address_components": 8,
+      "prover": {
+        "flat_ms": 245.411316,
+        "gkr_tree_ms": 202.000976,
+        "speedup": 1.2149016349307142,
+        "saving_fraction": 0.17688809427190388
+      },
+      "virtualization": {
+        "flat_ms": 82.372842,
+        "gkr_tree_ms": 53.775898,
+        "speedup": 1.5317799434981079,
+        "saving_fraction": 0.3471647123696425
+      },
+      "verifier": {
+        "flat_ms": 52.014911,
+        "gkr_tree_ms": 53.321659000000004,
+        "speedup": 0.9754931105950773,
+        "saving_fraction": -0.02512256533515944
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 24,
+        "field_payload_bytes": 2976
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 3,
+        "sumcheck_rounds": 54,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 42,
+        "field_payload_bytes": 3264
+      }
+    },
+    {
+      "report": "results/stage12-gkr-reversed-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "pointer-chase",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 4,
+      "address_components": 4,
+      "prover": {
+        "flat_ms": 174.432514,
+        "gkr_tree_ms": 182.993251,
+        "speedup": 0.9532182910942437,
+        "saving_fraction": -0.04907764500831524
+      },
+      "virtualization": {
+        "flat_ms": 25.572004,
+        "gkr_tree_ms": 23.141635,
+        "speedup": 1.1050214904867353,
+        "saving_fraction": 0.09504022445796578
+      },
+      "verifier": {
+        "flat_ms": 52.538838,
+        "gkr_tree_ms": 52.016235,
+        "speedup": 1.010046920927668,
+        "saving_fraction": 0.009946984362311118
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 90,
+        "node_evaluation_field_elements": 12,
+        "field_payload_bytes": 1632
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 36,
+        "round_message_field_elements": 108,
+        "node_evaluation_field_elements": 18,
+        "field_payload_bytes": 2016
+      }
+    },
+    {
+      "report": "results/stage12-gkr-reversed-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "erc20-mixed-block",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 1,
+      "address_components": 16,
+      "prover": {
+        "flat_ms": 435.43035499999996,
+        "gkr_tree_ms": 336.833147,
+        "speedup": 1.2927182460460163,
+        "saving_fraction": 0.2264362299683952
+      },
+      "virtualization": {
+        "flat_ms": 242.302534,
+        "gkr_tree_ms": 119.1774,
+        "speedup": 2.0331248542089355,
+        "saving_fraction": 0.5081462911980936
+      },
+      "verifier": {
+        "flat_ms": 53.916292999999996,
+        "gkr_tree_ms": 53.159457,
+        "speedup": 1.0142370904954878,
+        "saving_fraction": 0.014037241024712044
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 306,
+        "node_evaluation_field_elements": 48,
+        "field_payload_bytes": 5664
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 4,
+        "sumcheck_rounds": 72,
+        "round_message_field_elements": 216,
+        "node_evaluation_field_elements": 90,
+        "field_payload_bytes": 4896
+      }
+    },
+    {
+      "report": "results/stage12-gkr-reversed-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "erc20-mixed-block",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 2,
+      "address_components": 8,
+      "prover": {
+        "flat_ms": 268.193734,
+        "gkr_tree_ms": 220.495265,
+        "speedup": 1.216324232631481,
+        "saving_fraction": 0.17785079572366147
+      },
+      "virtualization": {
+        "flat_ms": 84.384015,
+        "gkr_tree_ms": 52.240942000000004,
+        "speedup": 1.6152850957396594,
+        "saving_fraction": 0.38091424068883184
+      },
+      "verifier": {
+        "flat_ms": 54.650565,
+        "gkr_tree_ms": 53.833307,
+        "speedup": 1.015181270584027,
+        "saving_fraction": 0.014954246127190096
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 24,
+        "field_payload_bytes": 2976
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 3,
+        "sumcheck_rounds": 54,
+        "round_message_field_elements": 162,
+        "node_evaluation_field_elements": 42,
+        "field_payload_bytes": 3264
+      }
+    },
+    {
+      "report": "results/stage12-gkr-reversed-a16-n18.json",
+      "payload": "guest",
+      "guest_program": "erc20-mixed-block",
+      "guest_rows": "memory",
+      "layout": "natural",
+      "chunk_bits": 4,
+      "address_components": 4,
+      "prover": {
+        "flat_ms": 212.343851,
+        "gkr_tree_ms": 190.97966699999998,
+        "speedup": 1.1118662752721211,
+        "saving_fraction": 0.10061126752382399
+      },
+      "virtualization": {
+        "flat_ms": 31.037625,
+        "gkr_tree_ms": 26.873210999999998,
+        "speedup": 1.154965255175498,
+        "saving_fraction": 0.13417308830814212
+      },
+      "verifier": {
+        "flat_ms": 54.448113,
+        "gkr_tree_ms": 57.854833,
+        "speedup": 0.9411160689030076,
+        "saving_fraction": -0.0625681922163217
+      },
+      "flat_stats": {
+        "sumchecks": 1,
+        "sumcheck_rounds": 18,
+        "round_message_field_elements": 90,
+        "node_evaluation_field_elements": 12,
+        "field_payload_bytes": 1632
+      },
+      "gkr_tree_stats": {
+        "sumchecks": 2,
+        "sumcheck_rounds": 36,
+        "round_message_field_elements": 108,
+        "node_evaluation_field_elements": 18,
+        "field_payload_bytes": 2016
+      }
+    }
+  ],
+  "peak_process_rss": [
+    {
+      "address_components": 8,
+      "flat_peak_rss_kib": 123048,
+      "gkr_tree_peak_rss_kib": 183768,
+      "ratio": 1.493465964501658,
+      "flat_report": "results/stage12-gkr-rss-flat-d8.json",
+      "gkr_tree_report": "results/stage12-gkr-rss-tree-d8.json"
+    },
+    {
+      "address_components": 16,
+      "flat_peak_rss_kib": 161324,
+      "gkr_tree_peak_rss_kib": 279584,
+      "ratio": 1.733058937293893,
+      "flat_report": "results/stage12-gkr-rss-flat-d16.json",
+      "gkr_tree_report": "results/stage12-gkr-rss-tree-d16.json"
+    }
+  ],
+  "notes": [
+    "All main cases use matched T=2^18, N=2^16, eight workers, the same payload and commitment dimensions; no proportional scaling.",
+    "Two run orders; host load and CPU affinity uncontrolled.",
+    "RSS is whole-process peak in separate matched pointer-chase processes, including payload generation, proving, verification and allocator retention; one warmup plus three measured proofs.",
+    "Virtualization field bytes exclude framing and all other proof phases."
+  ]
+}

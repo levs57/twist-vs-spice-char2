@@ -1,0 +1,188 @@
+{
+  "schema": "memarg-stage-1.2/v2",
+  "upstream_revision": "febfc0e66f5809e034dd1afac78202bd4882de27",
+  "field": "GF(2^128), X^128+X^7+X^2+X+1",
+  "options": {
+    "payload": "random",
+    "log_cycles": 18,
+    "address_bits": 16,
+    "chunk_bits": [
+      4
+    ],
+    "memory_model": "shared",
+    "reads": 1,
+    "layout": "natural",
+    "threads": 8,
+    "repeat": 3,
+    "warmup": 1,
+    "seed": 1,
+    "profile": "provable-120",
+    "log_rate": 2,
+    "guest_keys": 64,
+    "guest_queries": 16,
+    "output": "results/stage12-a16-n18.json",
+    "csv": null
+  },
+  "environment": {
+    "architecture": "x86_64",
+    "compiled_avx2": "true",
+    "compiled_avx512f": "false",
+    "compiled_pclmulqdq": "true",
+    "cpu_model": "13th Gen Intel(R) Core(TM) i9-13980HX",
+    "os": "linux",
+    "rustc_on_path": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "cases": [
+    {
+      "payload": "random",
+      "layout": "natural",
+      "chunk_bits": 4,
+      "address_components": 4,
+      "payload_generation_ms": 9.982813,
+      "source_payload_metadata": {
+        "address_bits": 16,
+        "cycles": 262144,
+        "guest": null,
+        "kind": "uniform-random",
+        "memory_model": "shared-address",
+        "padding_cycles": 0,
+        "read_ports": 1,
+        "real_cycles": 262144,
+        "seed": 1
+      },
+      "address_relabeling": "Identity; source compact_to_original mapping applies directly.",
+      "proof_summary": {
+        "cycles": 262144,
+        "memory_cells": 65536,
+        "address_components": 4,
+        "chunk_bits": 4,
+        "committed_bits": 67108864,
+        "packed_field_elements": 524288,
+        "mosaic_claims": 33,
+        "commitment_components": [
+          {
+            "name": "ram/ra0/1",
+            "log_size": 22
+          },
+          {
+            "name": "ram/ra0/2",
+            "log_size": 22
+          },
+          {
+            "name": "ram/ra0/3",
+            "log_size": 22
+          },
+          {
+            "name": "ram/ra0/4",
+            "log_size": 22
+          },
+          {
+            "name": "ram/inc",
+            "log_size": 24
+          },
+          {
+            "name": "input/rv0",
+            "log_size": 24
+          }
+        ],
+        "commitment_footprint": {
+          "address_encoding_bits": 16777216,
+          "read_write_value_bits": 16777216,
+          "increment_bits": 16777216,
+          "raw_binary_address_bits": 0,
+          "other_bits": 0,
+          "populated_bits": 50331648,
+          "padding_bits": 16777216,
+          "populated_bits_per_cycle": 192,
+          "padded_bits_per_cycle": 256
+        }
+      },
+      "samples": [
+        {
+          "prover_ms": 840.505759,
+          "commitment_ms": 84.899172,
+          "everything_else_ms": 755.606587,
+          "commitment_fraction": 0.10100962556283924,
+          "verifier_ms": 104.93746399999999,
+          "unattributed_ms": 0.6150090000001001,
+          "stages_ms": {
+            "mosaic.batch": 17.570580999999997,
+            "pcs.commit": 84.899172,
+            "pcs.ligerito_open": 52.912671,
+            "pcs.open": 0.002605,
+            "pcs.ringswitch": 11.265278,
+            "ram.claims": 1.887599,
+            "ram.pack": 2.908657,
+            "ram.statement": 7.218877,
+            "ram.twist": 0.00083,
+            "ram.witness": 6.780003,
+            "twist.final": 3.977896,
+            "twist.onehot": 69.697397,
+            "twist.other": 0.06310800000000001,
+            "twist.rw.address": 11.689556999999999,
+            "twist.rw.cycles": 483.772857,
+            "twist.rw.setup": 15.980904,
+            "twist.val": 7.818666,
+            "twist.virtualization": 61.444092
+          }
+        },
+        {
+          "prover_ms": 925.22205,
+          "commitment_ms": 49.612442,
+          "everything_else_ms": 875.609608,
+          "commitment_fraction": 0.05362220020588571,
+          "verifier_ms": 71.304606,
+          "unattributed_ms": 0.4711810000000014,
+          "stages_ms": {
+            "mosaic.batch": 20.899137000000003,
+            "pcs.commit": 49.612442,
+            "pcs.ligerito_open": 77.223483,
+            "pcs.open": 0.0032559999999999998,
+            "pcs.ringswitch": 12.343266,
+            "ram.claims": 2.3559050000000004,
+            "ram.pack": 2.07083,
+            "ram.statement": 3.2501539999999998,
+            "ram.twist": 0.00091,
+            "ram.witness": 3.644568,
+            "twist.final": 7.3431169999999995,
+            "twist.onehot": 70.625366,
+            "twist.other": 0.083218,
+            "twist.rw.address": 23.442142,
+            "twist.rw.cycles": 553.484207,
+            "twist.rw.setup": 8.778053,
+            "twist.val": 16.486751,
+            "twist.virtualization": 73.104064
+          }
+        },
+        {
+          "prover_ms": 1365.868852,
+          "commitment_ms": 48.645607,
+          "everything_else_ms": 1317.2232450000001,
+          "commitment_fraction": 0.035615137521270594,
+          "verifier_ms": 61.984072,
+          "unattributed_ms": 0.4133110000002489,
+          "stages_ms": {
+            "mosaic.batch": 34.949917,
+            "pcs.commit": 48.645607,
+            "pcs.ligerito_open": 106.267091,
+            "pcs.open": 0.014450000000000001,
+            "pcs.ringswitch": 19.053618,
+            "ram.claims": 1.5322149999999999,
+            "ram.pack": 2.3120369999999997,
+            "ram.statement": 3.288119,
+            "ram.twist": 0.001222,
+            "ram.witness": 3.2656080000000003,
+            "twist.final": 4.89383,
+            "twist.onehot": 80.95473799999999,
+            "twist.other": 0.068641,
+            "twist.rw.address": 11.710229,
+            "twist.rw.cycles": 939.7372809999999,
+            "twist.rw.setup": 9.09485,
+            "twist.val": 13.086323,
+            "twist.virtualization": 86.57976500000001
+          }
+        }
+      ]
+    }
+  ]
+}

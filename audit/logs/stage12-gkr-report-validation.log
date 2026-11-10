@@ -1,0 +1,8 @@
+stage12-gkr-smoke: 36 cases, 36 measured verified proofs + 0 verified warmups, 18 matched mode pairs
+stage12-gkr-a16-n18: 12 cases, 84 measured verified proofs + 12 verified warmups, 6 matched mode pairs
+stage12-gkr-reversed-a16-n18: 12 cases, 84 measured verified proofs + 12 verified warmups, 6 matched mode pairs
+stage12-gkr-rss-flat-d8: 1 cases, 3 measured verified proofs + 1 verified warmups, 0 matched mode pairs
+stage12-gkr-rss-tree-d8: 1 cases, 3 measured verified proofs + 1 verified warmups, 0 matched mode pairs
+stage12-gkr-rss-flat-d16: 1 cases, 3 measured verified proofs + 1 verified warmups, 0 matched mode pairs
+stage12-gkr-rss-tree-d16: 1 cases, 3 measured verified proofs + 1 verified warmups, 0 matched mode pairs
+All proof statistics, aggregate timers, CSV metrics, comparison arithmetic, matched workloads/commitments and current patch hash validated; 244 verified benchmark proofs including warmups.

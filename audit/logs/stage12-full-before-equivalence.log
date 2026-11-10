@@ -1,0 +1,131 @@
+Reference kernels: 28aec6504a11bec56166ef8bb306fffc964f0f3af86f41c5ca45a2e6ded9c18a
+     Locking 20 packages to latest Rust 1.96.0 compatible versions
+    Blocking waiting for file lock on build directory
+   Compiling om-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-field)
+   Compiling om-field-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-g4r8qv74/reference/crates/om-field)
+   Compiling om-transcript-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-g4r8qv74/reference/crates/om-transcript)
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+   Compiling om-sumcheck-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-g4r8qv74/reference/crates/om-sumcheck)
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+   Compiling om-mosaic-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-g4r8qv74/reference/crates/om-mosaic)
+   Compiling om-pcs-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-g4r8qv74/reference/crates/om-pcs)
+   Compiling om-mosaic v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-mosaic)
+   Compiling om-pcs v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-pcs)
+   Compiling om-memcheck-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-g4r8qv74/reference/crates/om-memcheck)
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+   Compiling ram-argument-reference v0.1.0 (/tmp/memarg-sumcheck-equivalence-g4r8qv74/adapter)
+   Compiling ram-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-argument)
+   Compiling memarg-optimization-equivalence v0.0.0 (/tmp/memarg-sumcheck-equivalence-g4r8qv74/probe)
+    Finished `release` profile [optimized] target(s) in 18.89s
+     Running `target/release/memarg-optimization-equivalence`
+matched a=4 c=4 n=2 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=4 c=4 n=2 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=4 c=4 n=2 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=6 c=2 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=8 c=4 n=6 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=8 c=4 n=6 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=8 c=2 n=5 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=8 c=2 n=5 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=8 c=2 n=5 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=6 c=3 n=5 ports=2 shared=false pattern=0 seed=17 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=1 seed=18 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=2 seed=19 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=0 seed=17 tree=true
+matched a=6 c=3 n=5 ports=2 shared=false pattern=1 seed=18 tree=true
+matched a=6 c=3 n=5 ports=2 shared=false pattern=2 seed=19 tree=true
+matched a=8 c=4 n=5 ports=1 shared=false pattern=0 seed=17 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=1 seed=18 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=2 seed=19 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=0 seed=17 tree=true
+matched a=8 c=4 n=5 ports=1 shared=false pattern=1 seed=18 tree=true
+matched a=8 c=4 n=5 ports=1 shared=false pattern=2 seed=19 tree=true
+matched a=8 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=8 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=8 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=12 c=4 n=16 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=16 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=16 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=16 c=4 n=14 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=16 c=4 n=14 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=16 c=4 n=14 ports=1 shared=true pattern=2 seed=19 tree=true
+completed workers=1
+matched a=4 c=4 n=2 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=4 c=4 n=2 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=4 c=4 n=2 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=4 c=4 n=2 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=6 c=2 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=6 c=2 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=4 n=6 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=8 c=4 n=6 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=8 c=4 n=6 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=8 c=2 n=5 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=2 n=5 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=8 c=2 n=5 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=8 c=2 n=5 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=6 c=3 n=5 ports=2 shared=false pattern=0 seed=17 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=1 seed=18 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=2 seed=19 tree=false
+matched a=6 c=3 n=5 ports=2 shared=false pattern=0 seed=17 tree=true
+matched a=6 c=3 n=5 ports=2 shared=false pattern=1 seed=18 tree=true
+matched a=6 c=3 n=5 ports=2 shared=false pattern=2 seed=19 tree=true
+matched a=8 c=4 n=5 ports=1 shared=false pattern=0 seed=17 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=1 seed=18 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=2 seed=19 tree=false
+matched a=8 c=4 n=5 ports=1 shared=false pattern=0 seed=17 tree=true
+matched a=8 c=4 n=5 ports=1 shared=false pattern=1 seed=18 tree=true
+matched a=8 c=4 n=5 ports=1 shared=false pattern=2 seed=19 tree=true
+matched a=8 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=8 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=8 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=8 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=12 c=4 n=16 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=12 c=4 n=16 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=1 n=4 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=16 c=1 n=4 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=16 c=1 n=4 ports=1 shared=true pattern=2 seed=19 tree=true
+matched a=16 c=4 n=14 ports=1 shared=true pattern=0 seed=17 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=1 seed=18 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=2 seed=19 tree=false
+matched a=16 c=4 n=14 ports=1 shared=true pattern=0 seed=17 tree=true
+matched a=16 c=4 n=14 ports=1 shared=true pattern=1 seed=18 tree=true
+matched a=16 c=4 n=14 ports=1 shared=true pattern=2 seed=19 tree=true
+completed workers=4
+Matched 108 complete proof values; independently verified both versions for every case.

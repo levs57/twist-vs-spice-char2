@@ -1,0 +1,216 @@
+{
+  "description": "Matched Mosaic sharing benchmark; commitment-only padding estimates are projections, and every opening/sumcheck cost is measured.",
+  "threads": 8,
+  "address_bits": 16,
+  "log_cycles": 20,
+  "warmup": 1,
+  "repeat": 5,
+  "rows": [
+    {
+      "order": "primary",
+      "pattern": "random/operations",
+      "method": "twist",
+      "before_report": "results/mosaic-sharing-before.json",
+      "after_report": "results/mosaic-sharing-after.json",
+      "mosaic_before_ms": 36.210726,
+      "mosaic_after_ms": 37.615534,
+      "prover_before_ms": 1331.7621550000001,
+      "prover_after_ms": 1614.461951,
+      "actual_commit_after_ms": 49.773059,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 1602.01868625,
+        "commit_ms": 37.329794250000006,
+        "removed_padding_ms": 12.443264749999997
+      }
+    },
+    {
+      "order": "primary",
+      "pattern": "random/operations",
+      "method": "spice-typed",
+      "before_report": "results/mosaic-sharing-before.json",
+      "after_report": "results/mosaic-sharing-after.json",
+      "mosaic_before_ms": 40.826532,
+      "mosaic_after_ms": 38.010834,
+      "prover_before_ms": 170.5277,
+      "prover_after_ms": 190.07809,
+      "actual_commit_after_ms": 15.559139,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 189.63745032128907,
+        "commit_ms": 15.118499321289063,
+        "removed_padding_ms": 0.44063967871093723
+      }
+    },
+    {
+      "order": "primary",
+      "pattern": "guest/erc20-mixed-block/memory/operations",
+      "method": "twist",
+      "before_report": "results/mosaic-sharing-before.json",
+      "after_report": "results/mosaic-sharing-after.json",
+      "mosaic_before_ms": 12.769198000000001,
+      "mosaic_after_ms": 11.954199,
+      "prover_before_ms": 363.422497,
+      "prover_after_ms": 403.860394,
+      "actual_commit_after_ms": 48.837427000000005,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 388.74386475000006,
+        "commit_ms": 36.62807025000001,
+        "removed_padding_ms": 12.209356749999998
+      }
+    },
+    {
+      "order": "primary",
+      "pattern": "guest/erc20-mixed-block/memory/operations",
+      "method": "spice-typed",
+      "before_report": "results/mosaic-sharing-before.json",
+      "after_report": "results/mosaic-sharing-after.json",
+      "mosaic_before_ms": 24.297065999999997,
+      "mosaic_after_ms": 28.239078999999997,
+      "prover_before_ms": 132.84185300000001,
+      "prover_after_ms": 146.612788,
+      "actual_commit_after_ms": 15.091723,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 146.22658486132812,
+        "commit_ms": 14.664320688476563,
+        "removed_padding_ms": 0.4274023115234371
+      }
+    },
+    {
+      "order": "primary",
+      "pattern": "guest/pointer-chase/memory/operations",
+      "method": "twist",
+      "before_report": "results/mosaic-sharing-before.json",
+      "after_report": "results/mosaic-sharing-after.json",
+      "mosaic_before_ms": 10.509098999999999,
+      "mosaic_after_ms": 9.553747999999999,
+      "prover_before_ms": 329.11181,
+      "prover_after_ms": 365.98897600000004,
+      "actual_commit_after_ms": 50.414995999999995,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 352.2827745,
+        "commit_ms": 37.811246999999995,
+        "removed_padding_ms": 12.603749
+      }
+    },
+    {
+      "order": "primary",
+      "pattern": "guest/pointer-chase/memory/operations",
+      "method": "spice-typed",
+      "before_report": "results/mosaic-sharing-before.json",
+      "after_report": "results/mosaic-sharing-after.json",
+      "mosaic_before_ms": 22.1018,
+      "mosaic_after_ms": 24.534699,
+      "prover_before_ms": 131.969386,
+      "prover_after_ms": 172.21921700000001,
+      "actual_commit_after_ms": 14.578624999999999,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 171.8063457841797,
+        "commit_ms": 14.165753784179687,
+        "removed_padding_ms": 0.41287121582031183
+      }
+    },
+    {
+      "order": "reversed",
+      "pattern": "random/operations",
+      "method": "spice-typed",
+      "before_report": "results/mosaic-sharing-before-reversed.json",
+      "after_report": "results/mosaic-sharing-after-reversed.json",
+      "mosaic_before_ms": 41.823272,
+      "mosaic_after_ms": 42.726009,
+      "prover_before_ms": 195.771217,
+      "prover_after_ms": 194.004091,
+      "actual_commit_after_ms": 14.316568,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 193.6262280800781,
+        "commit_ms": 13.9111183203125,
+        "removed_padding_ms": 0.4054496796875
+      }
+    },
+    {
+      "order": "reversed",
+      "pattern": "random/operations",
+      "method": "twist",
+      "before_report": "results/mosaic-sharing-before-reversed.json",
+      "after_report": "results/mosaic-sharing-after-reversed.json",
+      "mosaic_before_ms": 38.412065000000005,
+      "mosaic_after_ms": 33.515638,
+      "prover_before_ms": 1457.384485,
+      "prover_after_ms": 1390.247028,
+      "actual_commit_after_ms": 37.390781999999994,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 1380.9402925,
+        "commit_ms": 28.043086499999994,
+        "removed_padding_ms": 9.3476955
+      }
+    },
+    {
+      "order": "reversed",
+      "pattern": "guest/erc20-mixed-block/memory/operations",
+      "method": "spice-typed",
+      "before_report": "results/mosaic-sharing-before-reversed.json",
+      "after_report": "results/mosaic-sharing-after-reversed.json",
+      "mosaic_before_ms": 25.213892,
+      "mosaic_after_ms": 25.557287999999996,
+      "prover_before_ms": 141.249458,
+      "prover_after_ms": 145.82605800000002,
+      "actual_commit_after_ms": 14.8506,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 145.4111664980469,
+        "commit_ms": 14.4300263671875,
+        "removed_padding_ms": 0.42057363281250026
+      }
+    },
+    {
+      "order": "reversed",
+      "pattern": "guest/erc20-mixed-block/memory/operations",
+      "method": "twist",
+      "before_report": "results/mosaic-sharing-before-reversed.json",
+      "after_report": "results/mosaic-sharing-after-reversed.json",
+      "mosaic_before_ms": 13.668428,
+      "mosaic_after_ms": 11.533660999999999,
+      "prover_before_ms": 406.682081,
+      "prover_after_ms": 374.71779399999997,
+      "actual_commit_after_ms": 38.964093,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 364.97677074999996,
+        "commit_ms": 29.22306975,
+        "removed_padding_ms": 9.741023249999998
+      }
+    },
+    {
+      "order": "reversed",
+      "pattern": "guest/pointer-chase/memory/operations",
+      "method": "spice-typed",
+      "before_report": "results/mosaic-sharing-before-reversed.json",
+      "after_report": "results/mosaic-sharing-after-reversed.json",
+      "mosaic_before_ms": 24.3663,
+      "mosaic_after_ms": 23.484672,
+      "prover_before_ms": 155.14546800000002,
+      "prover_after_ms": 151.279607,
+      "actual_commit_after_ms": 15.635887,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 150.79762439453125,
+        "commit_ms": 15.193073793945313,
+        "removed_padding_ms": 0.4428132060546872
+      }
+    },
+    {
+      "order": "reversed",
+      "pattern": "guest/pointer-chase/memory/operations",
+      "method": "twist",
+      "before_report": "results/mosaic-sharing-before-reversed.json",
+      "after_report": "results/mosaic-sharing-after-reversed.json",
+      "mosaic_before_ms": 12.9023,
+      "mosaic_after_ms": 11.503549,
+      "prover_before_ms": 426.611694,
+      "prover_after_ms": 393.87699399999997,
+      "actual_commit_after_ms": 48.943488,
+      "commitment_padding_adjusted_estimate": {
+        "prover_ms": 381.641122,
+        "commit_ms": 36.707616,
+        "removed_padding_ms": 12.235872
+      }
+    }
+  ],
+  "verified_proofs": 144,
+  "timing_limit": "Wall-clock results are not CPU-pinned or isolated from host load. Timings vary; the shared-table count reduction is independent of that variation."
+}

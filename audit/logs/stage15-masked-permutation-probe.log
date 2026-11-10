@@ -1,0 +1,11 @@
+Recorded output of the earlier completed in-memory exhaustive probe.
+Its loop has been preserved as audit/spice-masked-permutation-probe.py.
+This historical output was retained without rerunning during the final CPU test window.
+Reproduce: python3 audit/spice-masked-permutation-probe.py
+
+PASS N=1 T=1: structural_chains=1 exact_flag/value_checks=64 accepted=6 valid_typed_traces=6
+PASS N=1 T=2: structural_chains=1 exact_flag/value_checks=512 accepted=18 valid_typed_traces=18
+PASS N=1 T=3: structural_chains=1 exact_flag/value_checks=4096 accepted=54 valid_typed_traces=54
+PASS N=2 T=1: structural_chains=2 exact_flag/value_checks=1024 accepted=24 valid_typed_traces=24
+PASS N=2 T=2: structural_chains=4 exact_flag/value_checks=16384 accepted=144 valid_typed_traces=144
+PASS counterexamples: missing order or a write-type final boundary permits an incorrect final state

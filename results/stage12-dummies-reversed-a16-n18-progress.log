@@ -1,0 +1,4 @@
+guest/pointer-chase/memory/natural/shared: 2^18 cycles, 2^16 words, 4-bit components, 8 workers
+guest/pointer-chase/all/natural/shared: 2^18 cycles, 2^16 words, 4-bit components, 8 workers
+guest/erc20-mixed-block/memory/natural/shared: 2^18 cycles, 2^16 words, 4-bit components, 8 workers
+guest/erc20-mixed-block/all/natural/shared: 2^18 cycles, 2^16 words, 4-bit components, 8 workers

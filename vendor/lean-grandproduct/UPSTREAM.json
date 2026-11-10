@@ -1,0 +1,22 @@
+{
+  "repository": "https://github.com/leanEthereum/leanVM",
+  "revision": "e5d75f858e91161921c0afe3d9f56300e9a3a03c",
+  "license": "MIT OR Apache-2.0",
+  "source_sha256": {
+    "crates/leanvm_core/src/gkr.rs": "e0baa6b9799963c1b184366a66ed30776166f984d7a3e3ad6d7520dd889ba925",
+    "crates/verifier/src/bus.rs": "9009e097a226498004df9b17fbf464e3135e111f0f1db19e118134e2d68d231b",
+    "crates/verifier/src/transcript.rs": "41c7ef163dfe37acaa6b9dba88ab81ff85a611f843286e5d12d721c8836bfcbb"
+  },
+  "adaptations": [
+    "F192 -> existing OM polynomial-basis GF128 with two packed carryless lanes; field modulus and representation unchanged",
+    "Three-tree fixed batch -> two-tree fixed batch; both roots are transcript-bound, outer permutation verifier checks equality",
+    "leanVM proof transport -> labelled OM Transcript with bound dimensions and roots; same normalized quartic equality recurrence without divisions",
+    "Scalar native schedule -> Rayon disjoint output windows; donor parallel threshold 2^11, fused 64-pair tiles and recycled uninitialized output allocations",
+    "Known identity ranges and implicit suffix retained; structural suffix trimmed while original logical extent is checked; no content-based merging",
+    "Joint fours/sixteens preparation plus a production from_fn_pair API generating both trees and both prepared levels in one tiled pass",
+    "AVX512 F192 vertical kernels and non-temporal Stream stores not ported; OM native AVX2/VPCLMUL helpers used",
+    "Independent full binary-tree/schoolbook coefficient oracle verifies exact GF128 proof messages, terminal MLEs and Fiat-Shamir continuation",
+    "Benchmark-only thin harness compiles byte-identical original three-tree source with actual pinned GF192 primitives, custom pool and transcript; cross-field/batch timings explicitly labelled"
+  ],
+  "reference_files": "Byte-identical pinned upstream sources retained under reference/; they are not compiled."
+}

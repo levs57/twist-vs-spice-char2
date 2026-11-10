@@ -1,0 +1,9 @@
+{
+  "archive": "audit/baselines/gkr-tree-v1.tar.gz",
+  "sha256": "1b1a44e89872ae029e5b2915bb099f7bf1a2393c0218178fad5c018a484b07be",
+  "bytes": 326677,
+  "implementation": "gf128-virtualization-tree-v1",
+  "vendor_patch_sha256": "28aec6504a11bec56166ef8bb306fffc964f0f3af86f41c5ca45a2e6ded9c18a",
+  "files": 124,
+  "description": "Exact pre-full-IOP-pass source and original guest ELF fixtures; source manifests retained inside. No benchmark executables or build output."
+}

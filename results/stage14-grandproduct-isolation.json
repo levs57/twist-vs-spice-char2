@@ -1,0 +1,102 @@
+{
+  "toolchain": "Rust 1.98.1, release thin LTO, codegen-units=1",
+  "rustflags": "-C target-cpu=native",
+  "workers": 8,
+  "warmup": 1,
+  "samples": 5,
+  "scope": "Input cloning, verification, tuple generation and PCS excluded; preparation+GKR included. Port two GF128 trees; unmodified pinned upstream three GF192 trees. Per-tree normalization descriptive, different arithmetic and pool.",
+  "binary_sha256": {
+    "ported": "85548c9abc3f5c9e33e33de0a38b379d62db42b71524d2aa9eb1df960491c972",
+    "upstream": "a6aa8bfe28fb3ae10947a4f65b40a2cd1ce2e717ab562a09cc8768ff41170366"
+  },
+  "cases": [
+    {
+      "backend": "ported",
+      "log_size": 18,
+      "padding": false,
+      "csv": "results/stage14-grandproduct-ported-n18-full.csv",
+      "wall_seconds": 0.04847227099890006,
+      "median_prepare_ms": 0.637338,
+      "median_prove_ms": 3.809177,
+      "median_total_ms": 4.471253,
+      "median_total_ms_per_tree": 2.235626
+    },
+    {
+      "backend": "upstream",
+      "log_size": 18,
+      "padding": false,
+      "csv": "results/stage14-grandproduct-upstream-n18-full.csv",
+      "wall_seconds": 0.05721933899985743,
+      "median_prepare_ms": 0.611669,
+      "median_prove_ms": 3.682351,
+      "median_total_ms": 4.347381,
+      "median_total_ms_per_tree": 1.449127
+    },
+    {
+      "backend": "upstream",
+      "log_size": 20,
+      "padding": false,
+      "csv": "results/stage14-grandproduct-upstream-n20-full.csv",
+      "wall_seconds": 0.26190152499839314,
+      "median_prepare_ms": 4.087858,
+      "median_prove_ms": 17.242216,
+      "median_total_ms": 21.609788,
+      "median_total_ms_per_tree": 7.203263
+    },
+    {
+      "backend": "ported",
+      "log_size": 20,
+      "padding": false,
+      "csv": "results/stage14-grandproduct-ported-n20-full.csv",
+      "wall_seconds": 0.1564863849998801,
+      "median_prepare_ms": 2.345722,
+      "median_prove_ms": 11.332234,
+      "median_total_ms": 14.087747,
+      "median_total_ms_per_tree": 7.043874
+    },
+    {
+      "backend": "ported",
+      "log_size": 18,
+      "padding": true,
+      "csv": "results/stage14-grandproduct-ported-n18-padding.csv",
+      "wall_seconds": 0.04319071899953997,
+      "median_prepare_ms": 0.70182,
+      "median_prove_ms": 2.865685,
+      "median_total_ms": 3.640926,
+      "median_total_ms_per_tree": 1.820463
+    },
+    {
+      "backend": "upstream",
+      "log_size": 18,
+      "padding": true,
+      "csv": "results/stage14-grandproduct-upstream-n18-padding.csv",
+      "wall_seconds": 0.039171864998934325,
+      "median_prepare_ms": 0.563943,
+      "median_prove_ms": 2.499743,
+      "median_total_ms": 3.159356,
+      "median_total_ms_per_tree": 1.053119
+    },
+    {
+      "backend": "upstream",
+      "log_size": 20,
+      "padding": true,
+      "csv": "results/stage14-grandproduct-upstream-n20-padding.csv",
+      "wall_seconds": 0.13998485000047367,
+      "median_prepare_ms": 2.648806,
+      "median_prove_ms": 8.194723,
+      "median_total_ms": 10.904286,
+      "median_total_ms_per_tree": 3.634762
+    },
+    {
+      "backend": "ported",
+      "log_size": 20,
+      "padding": true,
+      "csv": "results/stage14-grandproduct-ported-n20-padding.csv",
+      "wall_seconds": 0.1452745650021825,
+      "median_prepare_ms": 3.135041,
+      "median_prove_ms": 7.47041,
+      "median_total_ms": 10.807554,
+      "median_total_ms_per_tree": 5.403777
+    }
+  ]
+}

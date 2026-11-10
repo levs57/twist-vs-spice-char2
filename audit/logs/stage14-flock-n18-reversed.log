@@ -1,0 +1,108 @@
+random/spice/chunk=None: T=2^18 N=2^16 threads=8
+random spice chunk=None: prove=79.564ms verify=14.201ms commit=8.279ms open=32.056ms IOP+prep=39.229ms bits=48693248/67108864 populated/padded
+  preparation=4.105ms argument=34.086ms ordering(total)=7.139ms unattributed=0.783ms (independent medians)
+    mosaic.batch                               20.681ms
+    pcs.commit                                  8.279ms
+    pcs.ligerito_open                          22.341ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             10.418ms
+    spice.order                                 0.039ms
+    spice.order.claims                          2.333ms
+    spice.order.pack                            0.435ms
+    spice.order.zerocheck                       4.332ms
+    spice.pack                                  2.313ms
+    spice.permutation.claims                    2.381ms
+    spice.permutation.gkr                       3.301ms
+    spice.permutation.leaves                    0.734ms
+    spice.statement                             0.613ms
+    spice.witness                               1.052ms
+  fingerprint_bound_bits≈109.678 (GP term only; excludes other checks)
+random/spice-ripple/chunk=None: T=2^18 N=2^16 threads=8
+random spice-ripple chunk=None: prove=101.321ms verify=14.605ms commit=8.224ms open=22.891ms IOP+prep=69.550ms bits=48693248/67108864 populated/padded
+  preparation=4.167ms argument=64.132ms ordering(total)=42.348ms unattributed=0.837ms (independent medians)
+    mosaic.batch                               16.190ms
+    pcs.commit                                  8.224ms
+    pcs.ligerito_open                          16.416ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                              6.906ms
+    spice.order                                42.348ms
+    spice.pack                                  2.076ms
+    spice.permutation.claims                    2.641ms
+    spice.permutation.gkr                       3.326ms
+    spice.permutation.leaves                    0.688ms
+    spice.statement                             0.753ms
+    spice.witness                               1.230ms
+  fingerprint_bound_bits≈109.678 (GP term only; excludes other checks)
+guest/erc20-mixed-block/memory/spice/chunk=None: T=2^18 N=2^16 threads=8
+guest/erc20-mixed-block/memory spice chunk=None: prove=57.467ms verify=13.786ms commit=6.785ms open=19.779ms IOP+prep=31.136ms bits=48693248/67108864 populated/padded
+  preparation=3.305ms argument=26.629ms ordering(total)=7.169ms unattributed=0.739ms (independent medians)
+    mosaic.batch                               14.280ms
+    pcs.commit                                  6.785ms
+    pcs.ligerito_open                          14.721ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                              5.243ms
+    spice.order                                 0.043ms
+    spice.order.claims                          2.645ms
+    spice.order.pack                            0.514ms
+    spice.order.zerocheck                       3.623ms
+    spice.pack                                  1.842ms
+    spice.permutation.claims                    1.907ms
+    spice.permutation.gkr                       2.681ms
+    spice.permutation.leaves                    0.488ms
+    spice.statement                             0.586ms
+    spice.witness                               0.852ms
+  fingerprint_bound_bits≈109.678 (GP term only; excludes other checks)
+guest/erc20-mixed-block/memory/spice-ripple/chunk=None: T=2^18 N=2^16 threads=8
+guest/erc20-mixed-block/memory spice-ripple chunk=None: prove=80.217ms verify=13.208ms commit=6.453ms open=17.976ms IOP+prep=55.541ms bits=48693248/67108864 populated/padded
+  preparation=3.399ms argument=51.433ms ordering(total)=36.122ms unattributed=0.695ms (independent medians)
+    mosaic.batch                               10.270ms
+    pcs.commit                                  6.453ms
+    pcs.ligerito_open                          13.487ms
+    pcs.open                                    0.001ms
+    pcs.ringswitch                              4.464ms
+    spice.order                                36.122ms
+    spice.pack                                  1.966ms
+    spice.permutation.claims                    2.002ms
+    spice.permutation.gkr                       2.743ms
+    spice.permutation.leaves                    0.485ms
+    spice.statement                             0.618ms
+    spice.witness                               0.799ms
+  fingerprint_bound_bits≈109.678 (GP term only; excludes other checks)
+guest/pointer-chase/memory/spice/chunk=None: T=2^18 N=2^16 threads=8
+guest/pointer-chase/memory spice chunk=None: prove=53.822ms verify=13.200ms commit=6.180ms open=20.196ms IOP+prep=28.251ms bits=48693248/67108864 populated/padded
+  preparation=3.208ms argument=24.266ms ordering(total)=7.657ms unattributed=0.671ms (independent medians)
+    mosaic.batch                               11.632ms
+    pcs.commit                                  6.180ms
+    pcs.ligerito_open                          15.196ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                              4.874ms
+    spice.order                                 0.039ms
+    spice.order.claims                          2.768ms
+    spice.order.pack                            0.364ms
+    spice.order.zerocheck                       4.069ms
+    spice.pack                                  1.814ms
+    spice.permutation.claims                    1.695ms
+    spice.permutation.gkr                       2.670ms
+    spice.permutation.leaves                    0.413ms
+    spice.statement                             0.583ms
+    spice.witness                               0.779ms
+  fingerprint_bound_bits≈109.678 (GP term only; excludes other checks)
+guest/pointer-chase/memory/spice-ripple/chunk=None: T=2^18 N=2^16 threads=8
+guest/pointer-chase/memory spice-ripple chunk=None: prove=80.304ms verify=13.700ms commit=6.456ms open=17.214ms IOP+prep=56.897ms bits=48693248/67108864 populated/padded
+  preparation=3.287ms argument=53.035ms ordering(total)=39.322ms unattributed=0.723ms (independent medians)
+    mosaic.batch                                9.046ms
+    pcs.commit                                  6.456ms
+    pcs.ligerito_open                          13.338ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                              4.020ms
+    spice.order                                39.322ms
+    spice.pack                                  1.885ms
+    spice.permutation.claims                    1.688ms
+    spice.permutation.gkr                       2.683ms
+    spice.permutation.leaves                    0.485ms
+    spice.statement                             0.594ms
+    spice.witness                               0.821ms
+  fingerprint_bound_bits≈109.678 (GP term only; excludes other checks)
+JSON: results/stage14-flock-n18-reversed.json
+CSV: results/stage14-flock-n18-reversed.csv
+Verified 36 proofs across 6 cases, including warmups.

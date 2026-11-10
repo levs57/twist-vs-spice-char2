@@ -1,0 +1,28 @@
+Execution summary of the completed native reference gate.
+The command's full compiler/stdout stream was returned through the execution
+tool rather than redirected to disk. This file records its command, reference,
+coverage, and exact successful completion lines; it is not a raw stdout capture.
+
+Command:
+CARGO_BUILD_JOBS=4 RUSTFLAGS='-C target-cpu=native' python3 scripts/check_sumcheck_optimizations.py
+
+Reference kernels: febfc0e66f5809e034dd1afac78202bd4882de27
+Exit status: 0
+
+Comparison:
+- Current FlatLegacy versus pinned upstream prover kernels.
+- Original source hashes checked before copying the reference.
+- Copied reference receives API-only FlatLegacy dispatch/profiler shims.
+- Copied adapter excludes the new Flat v4 branches.
+- Complete proof Debug values compared after checking and removing precisely
+  one virt_flat: None and one virt_tree: None field from the current proof.
+- Both versions independently verified for every fixture.
+- Ten configurations, three all-zero/sparse/random patterns, and 1/4 workers.
+- Includes independent two-port accesses, direct d=1, degree9/17 products,
+  n=16 parallel dense/sparse work, and a16/c4/n14.
+
+Captured completion lines:
+    Finished `release` profile [optimized] target(s) in 18.60s
+completed workers=1
+completed workers=4
+Matched 60 complete proof values; independently verified both versions for every case.

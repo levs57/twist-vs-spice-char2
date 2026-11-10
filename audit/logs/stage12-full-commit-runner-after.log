@@ -1,0 +1,14 @@
+Vendor: /home/user/Programming/memarg-exploration/vendor/open-magnetar; four-stream SHA: True; 2 warmups, median of 7
+     Locking 10 packages to latest Rust 1.96.0 compatible versions
+   Compiling memarg-commit-benchmark v0.0.0 (/tmp/memarg-commit-benchmark-50z0i2yt)
+    Finished `release` profile [optimized] target(s) in 2.52s
+     Running `target/release/memarg-commit-benchmark`
+native sha=true avx2=true vpclmul=true
+workers=1 sha4MiB_ms=13.5420
+workers=1 sha4MiB_batch4_ms=1.9438
+workers=1 n=15 rows=32 encode1coset_ms=0.1378 commit_ms=1.7702 root=68192de4957b9beedbaa3ee8276f02029125f964428815770bf3fcc9e9b45e48
+workers=1 n=19 rows=32 encode1coset_ms=2.6894 commit_ms=39.0960 root=80e16f092e2a649938925b06f914822385eb9852094531b487db0b54a15ffa28
+workers=8 sha4MiB_ms=0.9447
+workers=8 sha4MiB_batch4_ms=0.2068
+workers=8 n=15 rows=32 encode1coset_ms=0.1542 commit_ms=0.9567 root=68192de4957b9beedbaa3ee8276f02029125f964428815770bf3fcc9e9b45e48
+workers=8 n=19 rows=32 encode1coset_ms=1.0911 commit_ms=8.6160 root=80e16f092e2a649938925b06f914822385eb9852094531b487db0b54a15ffa28

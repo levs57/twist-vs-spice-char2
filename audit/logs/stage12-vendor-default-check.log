@@ -1,0 +1,13 @@
+    Checking crossbeam-utils v0.8.23
+    Checking om-field v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-field)
+    Checking either v1.19.0
+    Checking om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+    Checking crossbeam-epoch v0.9.21
+    Checking crossbeam-deque v0.8.8
+    Checking rayon-core v1.13.0
+    Checking rayon v1.12.0
+    Checking om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+    Checking om-mosaic v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-mosaic)
+    Checking om-pcs v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-pcs)
+    Checking om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 1.81s

@@ -1,0 +1,34 @@
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+   Compiling bitz-logup v0.1.0 (/home/user/Programming/memarg-exploration/vendor/bitz-logup)
+   Compiling om-mosaic v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-mosaic)
+   Compiling om-pcs v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-pcs)
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+   Compiling lookup-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/lookup-argument)
+    Finished `release` profile [optimized] target(s) in 11.71s
+     Running unittests src/lib.rs (target/release/deps/lookup_argument-36f75de38700933d)
+
+running 2 tests
+test tests::encoded_word_mle_is_an_opening_of_the_actual_committed_bits ... ok
+test tests::word_opening_conversion_matches_every_polynomial_basis_coefficient ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/indexed_lookup.rs (target/release/deps/indexed_lookup-3cce415ee7c1ef4d)
+
+running 6 tests
+test invalid_trace_values_and_non_power_of_two_lengths_are_rejected ... ok
+test malformed_branches_shapes_and_zero_denominators_reject ... ok
+test all_public_parameters_and_input_claims_are_bound ... ok
+test all_rational_messages_and_auxiliary_openings_are_authenticated ... ok
+test shout_virtualization_choices_preserve_lookup_semantics ... ok
+test both_methods_prove_indexed_reads_with_full_width_duplicate_and_zero_values ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+   Doc-tests lookup_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

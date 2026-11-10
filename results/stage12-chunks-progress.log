@@ -1,0 +1,12 @@
+random/natural/shared: 2^12 cycles, 2^12 words, 2-bit components, 4 workers
+random/natural/shared: 2^12 cycles, 2^12 words, 4-bit components, 4 workers
+random/natural/shared: 2^12 cycles, 2^12 words, 6-bit components, 4 workers
+random/permuted/shared: 2^12 cycles, 2^12 words, 2-bit components, 4 workers
+random/permuted/shared: 2^12 cycles, 2^12 words, 4-bit components, 4 workers
+random/permuted/shared: 2^12 cycles, 2^12 words, 6-bit components, 4 workers
+guest/natural/shared: 2^12 cycles, 2^12 words, 2-bit components, 4 workers
+guest/natural/shared: 2^12 cycles, 2^12 words, 4-bit components, 4 workers
+guest/natural/shared: 2^12 cycles, 2^12 words, 6-bit components, 4 workers
+guest/permuted/shared: 2^12 cycles, 2^12 words, 2-bit components, 4 workers
+guest/permuted/shared: 2^12 cycles, 2^12 words, 4-bit components, 4 workers
+guest/permuted/shared: 2^12 cycles, 2^12 words, 6-bit components, 4 workers

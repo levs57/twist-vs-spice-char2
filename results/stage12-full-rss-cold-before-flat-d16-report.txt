@@ -1,0 +1,35 @@
+Verified GF128 RAM proofs; times are medians in milliseconds.
+
+guest/pointer-chase/memory/natural/flat: chunk=1 bits, d=16, samples=1
+  payload cycles      262144 active + 0 idle (0.0% padding)
+  guest pattern       repeat-ram-pattern: 7300 VM cycles, 2094 selected rows; 125 full copies + 394 tail rows
+  actual RAM work     262144 memory + 0 dummy rows (100.00% memory)
+  trace values        6003 zero reads (0 dummy), 261894 unchanged writes, 70 distinct words
+  prover total          410.423
+  virtualization        221.601
+  virtual proof       1 sumchecks, 18 rounds, 5664 field bytes (306 round elements + 48 node evaluations)
+  ms / million RAM     1565.641
+  commitment             41.141  (10.0% median share)
+  everything else       369.283
+  verifier               51.257
+  committed witness  8192.0 KiB, 160 populated / 256 padded bits per cycle
+    column area: address encoding 12.50%, values 25.00%, increments 25.00%, padding 37.50%
+    mosaic.batch                   12.489
+    pcs.commit                     41.141
+    pcs.ligerito_open              39.041
+    pcs.open                        0.003
+    pcs.ringswitch                  7.550
+    ram.claims                      1.172
+    ram.pack                        4.607
+    ram.statement                   2.784
+    ram.twist                       0.013
+    ram.witness                     6.880
+    twist.final                     1.615
+    twist.onehot                   31.438
+    twist.other                     0.048
+    twist.rw.address                3.513
+    twist.rw.cycles                25.352
+    twist.rw.setup                  5.967
+    twist.val                       4.511
+    twist.virtualization          221.601
+    unattributed                    0.698

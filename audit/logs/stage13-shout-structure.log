@@ -1,0 +1,36 @@
+RUSTFLAGS=-C target-cpu=native
+Production source: 92b17bba03e779b17b7de1ae1748a54a696f961ce9b241d11ce0b8f7bd37a55a
+     Locking 28 packages to latest Rust 1.96.0 compatible versions
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-transcript)
+   Compiling om-isa v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-isa)
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-sumcheck)
+   Compiling bitz-logup v0.1.0 (/home/user/Programming/memarg-exploration/vendor/bitz-logup)
+   Compiling om-mosaic v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-mosaic)
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+   Compiling om-pcs v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-pcs)
+   Compiling om-elf v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-elf)
+   Compiling lookup-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/lookup-argument)
+   Compiling ram-payload v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-payload)
+   Compiling shout-structure-probe v0.0.0 (/tmp/memarg-shout-structure-b_kznzst)
+    Finished `release` profile [optimized] target(s) in 13.38s
+     Running `target/release/shout-structure-probe 20 8 1 5 /home/user/Programming/memarg-exploration/results/stage13-shout-structure.json`
+pointer-compact iteration=0 prove=245.653ms read=4.009ms onehot=32.359ms virt=18.253ms
+pointer-relabeled iteration=0 prove=293.410ms read=4.894ms onehot=40.545ms virt=24.282ms
+random-full-domain iteration=0 prove=278.115ms read=4.645ms onehot=37.812ms virt=34.116ms
+random-same-working-set iteration=0 prove=259.193ms read=4.188ms onehot=40.007ms virt=23.599ms
+pointer-relabeled iteration=1 prove=227.011ms read=4.353ms onehot=32.255ms virt=23.770ms
+random-full-domain iteration=1 prove=222.795ms read=4.097ms onehot=29.153ms virt=25.840ms
+random-same-working-set iteration=1 prove=202.753ms read=3.839ms onehot=28.204ms virt=21.019ms
+pointer-compact iteration=1 prove=214.029ms read=4.590ms onehot=26.230ms virt=24.354ms
+random-full-domain iteration=2 prove=259.875ms read=5.133ms onehot=33.966ms virt=35.300ms
+random-same-working-set iteration=2 prove=227.400ms read=3.980ms onehot=32.554ms virt=18.117ms
+pointer-compact iteration=2 prove=239.210ms read=4.713ms onehot=31.295ms virt=17.193ms
+pointer-relabeled iteration=2 prove=234.722ms read=4.783ms onehot=39.610ms virt=21.226ms
+random-same-working-set iteration=3 prove=227.838ms read=3.942ms onehot=27.755ms virt=15.272ms
+pointer-compact iteration=3 prove=244.856ms read=4.882ms onehot=34.594ms virt=20.063ms
+pointer-relabeled iteration=3 prove=231.614ms read=4.096ms onehot=38.599ms virt=22.244ms
+random-full-domain iteration=3 prove=260.875ms read=6.101ms onehot=36.825ms virt=31.047ms
+pointer-compact iteration=4 prove=257.848ms read=4.410ms onehot=35.398ms virt=20.461ms
+pointer-relabeled iteration=4 prove=276.138ms read=4.351ms onehot=41.884ms virt=20.548ms
+random-full-domain iteration=4 prove=296.622ms read=5.146ms onehot=41.614ms virt=37.237ms
+random-same-working-set iteration=4 prove=276.349ms read=4.689ms onehot=37.803ms virt=28.980ms

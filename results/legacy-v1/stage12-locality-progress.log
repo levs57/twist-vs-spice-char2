@@ -1,0 +1,8 @@
+random/natural: 2^14 cycles, 2^18 words, 3-bit components, 4 workers
+random/natural: 2^14 cycles, 2^18 words, 6-bit components, 4 workers
+random/permuted: 2^14 cycles, 2^18 words, 3-bit components, 4 workers
+random/permuted: 2^14 cycles, 2^18 words, 6-bit components, 4 workers
+guest/natural: 2^14 cycles, 2^18 words, 3-bit components, 4 workers
+guest/natural: 2^14 cycles, 2^18 words, 6-bit components, 4 workers
+guest/permuted: 2^14 cycles, 2^18 words, 3-bit components, 4 workers
+guest/permuted: 2^14 cycles, 2^18 words, 6-bit components, 4 workers

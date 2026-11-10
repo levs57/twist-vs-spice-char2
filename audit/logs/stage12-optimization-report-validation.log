@@ -1,0 +1,9 @@
+stage12-preopt-a16-n18: 7 cases, 49 measured verified proofs + 7 verified warmups
+stage12-optimized-a16-n18: 7 cases, 49 measured verified proofs + 7 verified warmups
+stage12-preopt-a18-n14: 1 cases, 7 measured verified proofs + 1 verified warmups
+stage12-optimized-a18-n14: 1 cases, 7 measured verified proofs + 1 verified warmups
+stage12-preopt-pointer-control: 1 cases, 9 measured verified proofs + 2 verified warmups
+stage12-optimized-pointer-control: 1 cases, 9 measured verified proofs + 2 verified warmups
+All workload metadata, exact useful-access counts, commitment summaries and dimensions match in 9 before/after case pairs.
+All optimized artifacts record current patch 97e4c597f23a127fdaa6076189e06b4fa68ee422c1a5a2663f9fee47764ae4a9.
+150 benchmark proofs verified including warmups.

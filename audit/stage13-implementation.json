@@ -1,0 +1,18 @@
+{
+  "implementation": "gf128-indexed-rom-lookup-v1",
+  "captured_on": "2026-11-10",
+  "files_sha256": {
+    "Cargo.toml": "1ff2f968f94fa3f34d193b9811b55fd6e35cb2d7b932ab2fed6c7c52ffaeab03",
+    "Cargo.lock": "cfd95579a7fadcbc9258f15d7ab2eedb232ea416449faae39a6ca650829955ee",
+    "crates/lookup-argument/Cargo.toml": "c01ac85733aedf27ce8e2b3701703a38eb30e8f6061a3a19f1350ba83a150593",
+    "crates/lookup-argument/src/lib.rs": "0032590b0fa3eeb17e85c499322a671ebdecf4abbe463ef8245c8cef1f9ae814",
+    "crates/lookup-argument/src/logup.rs": "67e27530c28ce903683993ab2cd5d2acd6fa58b2aeee7e1197cb75540114e061",
+    "crates/lookup-argument/src/shout.rs": "1c2a5d5df30c11a21c96354fd3b657a7de48d138ffdf81aaa8321df717b97711",
+    "crates/lookup-bench/Cargo.toml": "06577fae0014b32626637c39550343ed41deee267c7a1803324b873b78c467d5",
+    "crates/lookup-bench/src/main.rs": "3c71fca4999f808b6c5ad078fad15566d6e1bbe3a0ff46bdb80320c710d64f4f"
+  },
+  "source_sha256": "c355968e482bd3902b7b199e5f023030ab72265af51746b10babdafd06ef42cd",
+  "open_magnetar_patch_sha256": "1937c963851345b4af60ffc40b72af312b36ebe7b7bb099211827673e9608688",
+  "bitz_logup_source_sha256": "822e0395bb2e1e26e0a2b382f1df7c96e0583aef3c2724aeb181f6adbde6ee88",
+  "adapter_note": "Parallel branchless address packing and complete per-proof phase reporting. OneHot/virtualization share only explicit source aliases; content-based merging is disabled. Local product pruning is retained. Stage 1.4 adds parallel workspace crates and exports the shared Eq-factor kernel; lookup algorithms are unchanged. The workspace now includes the pinned Flock Boolean ordering dependency; lookup kernels remain unchanged."
+}

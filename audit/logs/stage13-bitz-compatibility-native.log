@@ -1,0 +1,10 @@
+RUSTFLAGS='-C target-cpu=native'
+     Locking 9 packages to latest Rust 1.96.0 compatible versions
+   Compiling memarg-bitz-compatibility v0.0.0 (/tmp/memarg-bitz-compatibility-lkoukpvf)
+    Finished `release` profile [optimized] target(s) in 0.23s
+     Running `target/release/memarg-bitz-compatibility`
+BitZ revision cdfb9b73b5857f4dc83761866e475186c6a75ab3
+Exact donor portable kernels: compiled unchanged by path.
+Native donor field selected: true
+PASS: 103716 exact field/basis/endian/equality/MLE conformance assertions.
+No full donor crate build or protocol/security/performance claim is made by this probe.

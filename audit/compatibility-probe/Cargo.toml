@@ -1,0 +1,15 @@
+[package]
+name = "stage11-compatibility-probe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+om-field = { path = "../../sources/open-magnetar/crates/om-field" }
+om-sumcheck = { path = "../../sources/open-magnetar/crates/om-sumcheck" }
+flock-field = { path = "../../sources/flock/crates/flock-field" }
+flock-multilinear = { path = "../../sources/flock/crates/flock-multilinear" }
+flock-core = { path = "../../sources/flock/crates/flock-core" }
+om-pcs = { path = "../../sources/open-magnetar/crates/om-pcs" }
+
+[workspace]

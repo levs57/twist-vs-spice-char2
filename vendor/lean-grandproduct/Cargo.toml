@@ -1,0 +1,18 @@
+[package]
+name = "lean-grandproduct"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "leanVM batched radix-four grand products adapted to OM GF128"
+
+[dependencies]
+om-field = { path = "../open-magnetar/crates/om-field" }
+om-transcript = { path = "../open-magnetar/crates/om-transcript" }
+rayon = "1"
+
+[workspace]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

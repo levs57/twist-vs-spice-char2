@@ -1,0 +1,13 @@
+/sources/
+/audit/compatibility-probe/target/
+__pycache__/
+/target/
+/vendor/open-magnetar/target/
+/vendor/bitz-logup/target/
+
+# Build outputs from every standalone vendored workspace.
+target/
+
+# Keep the comparison guide; local project notes and generated reports stay local.
+*.md
+!/README.md

@@ -1,0 +1,30 @@
+Verified GF128 RAM proofs; times are medians in milliseconds.
+
+guest/natural: chunk=4 bits, d=2, samples=1
+  payload cycles      16 active + 0 idle (0.0% padding)
+  guest pattern       repeat-ram-pattern: 387 source cycles, 0 full copies + 16 tail cycles
+  prover total            1.645
+  commitment              0.241  (14.7% median share)
+  everything else         1.404
+  verifier                1.734
+  committed witness  2.0 KiB, 160 populated / 1024 padded bits per cycle
+    column area: address encoding 3.12%, values 6.25%, increments 6.25%, padding 84.38%
+    mosaic.batch                    0.738
+    pcs.commit                      0.241
+    pcs.ligerito_open               0.159
+    pcs.open                        0.000
+    pcs.ringswitch                  0.148
+    ram.claims                      0.008
+    ram.pack                        0.007
+    ram.statement                   0.020
+    ram.twist                       0.000
+    ram.witness                     0.008
+    twist.final                     0.025
+    twist.onehot                    0.042
+    twist.other                     0.024
+    twist.rw.address                0.079
+    twist.rw.cycles                 0.031
+    twist.rw.setup                  0.017
+    twist.val                       0.025
+    twist.virtualization            0.030
+    unattributed                    0.041

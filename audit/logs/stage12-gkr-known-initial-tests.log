@@ -1,0 +1,27 @@
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 4.43s
+     Running unittests src/lib.rs (target/release/deps/om_memcheck-f948c5b6c3e35441)
+
+running 19 tests
+test eq_factor::tests::recovery_handles_boolean_points_and_zero_prefixes_without_zero_inverse ... ok
+test twist::optimized_tests::affine_phi_matches_bitwise_definition ... ok
+test gkr_kernels::tests::quadratic_cofactor_matches_dense_wire_for_boolean_points_and_forced_challenges ... ok
+test virt_tree::tests::off_cube_internal_claim_uses_mle_of_pointwise_product ... ok
+test virt_tree::tests::tree_leaf_claims_match_direct_mles_with_aliases_and_arbitrary_bits ... ok
+test twist::optimized_tests::active_change_history_matches_dense_values_at_every_binding ... ok
+test onehot_kernels::tests::cubic_cofactor_matches_dense_wire_for_arbitrary_fields_and_edge_challenges ... ok
+test onehot::optimized_tests::alias_onehot_matches_unmerged_oracle_for_valid_and_invalid_bits ... ok
+test shout::optimized_tests::phi_affine_base_matches_bitwise_definition_with_arbitrary_rom ... ok
+test onehot::optimized_tests::alias_virtualization_preserves_terms_points_outputs_and_transcript ... ok
+test sumcheck_kernels::tests::specialized_rows_match_dense_proof_and_transcript ... ok
+test twist::optimized_tests::sparse_rw_messages_and_transcript_match_dense_reference ... ok
+test onehot_kernels::tests::parallel_cubic_cofactor_matches_dense_wire ... ok
+test gkr_kernels::tests::parallel_quadratic_cofactor_matches_dense_wire ... ok
+test onehot_kernels::tests::structurally_zero_initial_endpoints_preserve_full_reference_messages ... ok
+test sumcheck_kernels::tests::parallel_specialized_fusion_matches_dense ... ok
+test virt_tree::tests::parallel_tree_leaf_claims_match_direct_mles ... ok
+test gkr_kernels::tests::known_initial_claim_matches_dense_with_arbitrary_rows_and_zero_prefix ... ok
+test virt_tree::tests::tree_rejects_tampering_and_malformed_shapes_without_panics ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+

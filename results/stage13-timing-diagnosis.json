@@ -1,0 +1,138 @@
+{
+  "description": "Matching n20/a16/c4/thread8 before/after accounting and address-packing change; identical trace fingerprints and commitment/claim areas. Kernel/proof relations unchanged. Medians are not additive. Whole-prover differences also include run variation.",
+  "verified_proofs_including_warmups": 144,
+  "rows": [
+    {
+      "pattern": "random",
+      "method": "shout",
+      "virtualization": "flat",
+      "pack_before_ms": 54.916933,
+      "pack_after_ms": 4.555986,
+      "prove_before_ms": 284.299404,
+      "prove_after_ms": 233.353472,
+      "virtualization_before_ms": 29.200601,
+      "virtualization_after_ms": 28.88144
+    },
+    {
+      "pattern": "random",
+      "method": "shout",
+      "virtualization": "gkr",
+      "pack_before_ms": 56.940158999999994,
+      "pack_after_ms": 4.8580250000000005,
+      "prove_before_ms": 300.108044,
+      "prove_after_ms": 218.10358,
+      "virtualization_before_ms": 27.106722,
+      "virtualization_after_ms": 24.332670999999998
+    },
+    {
+      "pattern": "random",
+      "method": "logup-star",
+      "virtualization": null,
+      "pack_before_ms": 54.238475,
+      "pack_after_ms": 3.1348830000000003,
+      "prove_before_ms": 216.34323899999998,
+      "prove_after_ms": 164.505323,
+      "virtualization_before_ms": 0,
+      "virtualization_after_ms": 0.0
+    },
+    {
+      "pattern": "local",
+      "method": "shout",
+      "virtualization": "flat",
+      "pack_before_ms": 29.505737,
+      "pack_after_ms": 5.8102789999999995,
+      "prove_before_ms": 267.17984099999995,
+      "prove_after_ms": 255.8802,
+      "virtualization_before_ms": 25.423095999999997,
+      "virtualization_after_ms": 26.156336
+    },
+    {
+      "pattern": "local",
+      "method": "shout",
+      "virtualization": "gkr",
+      "pack_before_ms": 29.181140000000003,
+      "pack_after_ms": 5.294874,
+      "prove_before_ms": 271.129993,
+      "prove_after_ms": 231.84722699999998,
+      "virtualization_before_ms": 26.311533,
+      "virtualization_after_ms": 26.885775000000002
+    },
+    {
+      "pattern": "local",
+      "method": "logup-star",
+      "virtualization": null,
+      "pack_before_ms": 25.469196,
+      "pack_after_ms": 2.5503790000000004,
+      "prove_before_ms": 164.11244,
+      "prove_after_ms": 128.82665300000002,
+      "virtualization_before_ms": 0,
+      "virtualization_after_ms": 0.0
+    },
+    {
+      "pattern": "guest/erc20-mixed-block/memory",
+      "method": "shout",
+      "virtualization": "flat",
+      "pack_before_ms": 12.396804000000001,
+      "pack_after_ms": 4.4890490000000005,
+      "prove_before_ms": 222.246364,
+      "prove_after_ms": 199.82109,
+      "virtualization_before_ms": 17.594353,
+      "virtualization_after_ms": 15.000958
+    },
+    {
+      "pattern": "guest/erc20-mixed-block/memory",
+      "method": "shout",
+      "virtualization": "gkr",
+      "pack_before_ms": 13.105106,
+      "pack_after_ms": 4.555662,
+      "prove_before_ms": 220.666655,
+      "prove_after_ms": 207.660979,
+      "virtualization_before_ms": 23.93115,
+      "virtualization_after_ms": 23.650395000000003
+    },
+    {
+      "pattern": "guest/erc20-mixed-block/memory",
+      "method": "logup-star",
+      "virtualization": null,
+      "pack_before_ms": 10.734162,
+      "pack_after_ms": 2.632303,
+      "prove_before_ms": 151.482022,
+      "prove_after_ms": 137.95956800000002,
+      "virtualization_before_ms": 0,
+      "virtualization_after_ms": 0.0
+    },
+    {
+      "pattern": "guest/pointer-chase/memory",
+      "method": "shout",
+      "virtualization": "flat",
+      "pack_before_ms": 11.913564999999998,
+      "pack_after_ms": 4.423754000000001,
+      "prove_before_ms": 214.660201,
+      "prove_after_ms": 190.40655900000002,
+      "virtualization_before_ms": 15.852826,
+      "virtualization_after_ms": 13.902534
+    },
+    {
+      "pattern": "guest/pointer-chase/memory",
+      "method": "shout",
+      "virtualization": "gkr",
+      "pack_before_ms": 10.21069,
+      "pack_after_ms": 4.722182,
+      "prove_before_ms": 211.536262,
+      "prove_after_ms": 197.712038,
+      "virtualization_before_ms": 24.524071999999997,
+      "virtualization_after_ms": 22.754092999999997
+    },
+    {
+      "pattern": "guest/pointer-chase/memory",
+      "method": "logup-star",
+      "virtualization": null,
+      "pack_before_ms": 7.962688000000001,
+      "pack_after_ms": 2.521026,
+      "prove_before_ms": 130.51008,
+      "prove_after_ms": 121.67404599999999,
+      "virtualization_before_ms": 0,
+      "virtualization_after_ms": 0.0
+    }
+  ]
+}

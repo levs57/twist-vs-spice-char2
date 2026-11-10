@@ -1,0 +1,22 @@
+   Compiling om-elf v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-elf)
+   Compiling ram-payload v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-payload)
+    Finished `release` profile [optimized] target(s) in 5.56s
+     Running unittests src/lib.rs (target/release/deps/ram_payload-4114a069e2302691)
+
+running 4 tests
+test operations::tests::partial_source_store_stops_before_its_write_and_halt_reads_preserve_word_zero ... ok
+test operations::tests::unchanged_full_store_keeps_its_write_kind ... ok
+test tests::replay_preserves_reads_and_unwritten_byte_lanes ... ok
+test operations::tests::narrow_stores_preserve_other_lanes_and_read_current_memory_on_repetition ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/operations.rs (target/release/deps/operations-41546e31189b04c9)
+
+running 3 tests
+test random_operations_are_deterministic_independent_and_translate_without_expansion ... ok
+test repeat_prefixes_and_halt_are_valid_and_invalid_inputs_reject ... ok
+test all_guests_normalize_exact_original_memory_records_and_keep_stable_mapping ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

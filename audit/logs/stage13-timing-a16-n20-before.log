@@ -1,0 +1,15 @@
+pattern=random method=shout chunk=4 virtualization=flat prove=284.299ms verify=13.676ms commit=43.174ms open=113.099ms remaining=133.910ms main_bits=268435456 aux_bits=0
+pattern=random method=shout chunk=4 virtualization=gkr prove=300.108ms verify=12.185ms commit=44.054ms open=116.170ms remaining=128.634ms main_bits=268435456 aux_bits=0
+pattern=random method=logup-star chunk=- virtualization=- prove=216.343ms verify=22.108ms commit=19.909ms open=65.879ms remaining=129.102ms main_bits=134217728 aux_bits=8388608
+pattern=local method=shout chunk=4 virtualization=flat prove=267.180ms verify=13.514ms commit=51.198ms open=118.903ms remaining=100.596ms main_bits=268435456 aux_bits=0
+pattern=local method=shout chunk=4 virtualization=gkr prove=271.130ms verify=13.621ms commit=47.569ms open=123.102ms remaining=96.383ms main_bits=268435456 aux_bits=0
+pattern=local method=logup-star chunk=- virtualization=- prove=164.112ms verify=18.838ms commit=16.808ms open=60.089ms remaining=88.398ms main_bits=134217728 aux_bits=8388608
+pattern=guest/erc20-mixed-block/memory method=shout chunk=4 virtualization=flat prove=222.246ms verify=13.687ms commit=39.173ms open=108.810ms remaining=70.085ms main_bits=268435456 aux_bits=0
+pattern=guest/erc20-mixed-block/memory method=shout chunk=4 virtualization=gkr prove=220.667ms verify=12.968ms commit=40.585ms open=106.673ms remaining=75.453ms main_bits=268435456 aux_bits=0
+pattern=guest/erc20-mixed-block/memory method=logup-star chunk=- virtualization=- prove=151.482ms verify=17.940ms commit=16.610ms open=59.298ms remaining=72.609ms main_bits=134217728 aux_bits=8388608
+pattern=guest/pointer-chase/memory method=shout chunk=4 virtualization=flat prove=214.660ms verify=13.716ms commit=40.275ms open=112.733ms remaining=59.020ms main_bits=268435456 aux_bits=0
+pattern=guest/pointer-chase/memory method=shout chunk=4 virtualization=gkr prove=211.536ms verify=13.230ms commit=37.641ms open=105.540ms remaining=68.103ms main_bits=268435456 aux_bits=0
+pattern=guest/pointer-chase/memory method=logup-star chunk=- virtualization=- prove=130.510ms verify=18.755ms commit=15.438ms open=51.592ms remaining=62.698ms main_bits=134217728 aux_bits=8388608
+JSON: results/stage13-timing-a16-n20-before.json
+CSV: results/stage13-timing-a16-n20-before.csv
+All 12 cases verified (5 measured proofs/case plus 1 warmups).

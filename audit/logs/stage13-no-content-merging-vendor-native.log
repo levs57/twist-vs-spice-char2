@@ -1,0 +1,531 @@
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 8.73s
+     Running unittests src/lib.rs (vendor/open-magnetar/target/release/deps/om_elf-d5b086bbca9210f5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/abi.rs (vendor/open-magnetar/target/release/deps/abi-6a5b6d3fd9ec45a2)
+
+running 10 tests
+test digest_known_answers ... ok
+test decode_region_edges ... ok
+test input_and_output_via_ram ... ok
+test memory_map_alignment ... ok
+test digest_sensitivity ... ok
+test roundtrip ... ok
+test noncanonical_rejected ... ok
+test output_via_dense_ram ... ok
+test validate_edges ... ok
+test output_mle ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/elf.rs (vendor/open-magnetar/target/release/deps/elf-e13436501a9976f0)
+
+running 8 tests
+test code_too_large ... ok
+test deterministic_digest ... ok
+test errors ... ok
+test invalid_params_rejected ... ok
+test ok ... ok
+test unaligned_data_packing ... ok
+test zero_memsz_load_skipped_and_note_ignored ... ok
+test truncated_files ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (vendor/open-magnetar/target/release/deps/om_field-29c31eb0ff9c0348)
+
+running 7 tests
+test tests::portable_matches_operator ... ok
+test tests::reduce_matches_python_fold ... ok
+test tests::mul_x_and_mul_t_match_mul ... ok
+test tests::clmul_unreduced_sum_matches_reduced ... ok
+test tests::pclmulqdq_matches_portable ... ok
+test tests::packed_products_folds_and_specialized_squares_match_portable ... ok
+test tests::packed_butterflies_match_portable_on_tails_and_unaligned_slices ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/field.rs (vendor/open-magnetar/target/release/deps/field-a10dc1c102bf47ed)
+
+running 16 tests
+test commutativity_and_char2 ... ok
+test byte_slice_lengths ... ok
+test frobenius_on_bits ... ok
+test hex_kats ... ok
+test encoding ... ok
+test division_and_bit_products ... ok
+test modulus ... ok
+test inverse_of_zero_panics - should panic ... ok
+test fermat ... ok
+test pack_too_many_bits_panics - should panic ... ok
+test multiplication_kats ... ok
+test pow_basics ... ok
+test axioms ... ok
+test small_integer_points ... ok
+test inverse_and_square_kats ... ok
+test pack_unpack ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (vendor/open-magnetar/target/release/deps/om_isa-cf18af68a96c4e46)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/isa.rs (vendor/open-magnetar/target/release/deps/isa-a917a33c1aedaacb)
+
+running 21 tests
+test decoder_illegal ... ok
+test alu_ops ... ok
+test decoder_random_regs ... ok
+test decoder_roundtrip_many ... ok
+test jalr_clears_low_bit ... ok
+test load_into_x0_preserves_access_checks_and_discards_value ... ok
+test max_cycles_trap ... ok
+test fibonacci ... ok
+test jal_jalr_lui_auipc ... ok
+test branches ... ok
+test ram_initial_words_visible_to_both ... ok
+test shift_and_store_apply_semantics ... ok
+test loads_stores_all_widths ... ok
+test rom_shape_and_wellformedness ... ok
+test shift_expansion_cycle_counts_and_stages ... ok
+test trace_fields ... ok
+test signext_values ... ok
+test traps ... ok
+test x0_and_fence ... ok
+test random_programs_vm_vs_machine ... ok
+test shifts_all ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (vendor/open-magnetar/target/release/deps/om_memcheck-f948c5b6c3e35441)
+
+running 44 tests
+test eq_factor::tests::recovery_handles_boolean_points_and_zero_prefixes_without_zero_inverse ... ok
+test onehot::optimized_tests::structural_tests::explicit_shared_stream_reuses_same_chunk_but_equal_clones_do_not ... ok
+test onehot::optimized_tests::structural_tests::four_declared_chunks_stay_four_regardless_of_their_contents ... ok
+test gkr_kernels::tests::quadratic_cofactor_matches_dense_wire_for_boolean_points_and_forced_challenges ... ok
+test twist::optimized_tests::affine_phi_matches_bitwise_definition ... ok
+test virt_claim_reduction::tests::empty_terms_groups_zero_weights_and_duplicate_cancellation ... ok
+test onehot::optimized_tests::structural_tests::invalid_bits_keep_distinct_components_and_match_unmerged_oracle ... ok
+test onehot::optimized_tests::alias_onehot_matches_unmerged_oracle_for_valid_and_invalid_bits ... ok
+test onehot::optimized_tests::alias_virtualization_preserves_terms_points_outputs_and_transcript ... ok
+test onehot_kernels::tests::cubic_cofactor_matches_dense_wire_for_arbitrary_fields_and_edge_challenges ... ok
+test virt_claim_reduction::tests::bad_claims_produce_a_proof_but_verification_rejects ... ok
+test shout::optimized_tests::phi_affine_base_matches_bitwise_definition_with_arbitrary_rom ... ok
+test sumcheck_kernels::tests::specialized_rows_match_dense_proof_and_transcript ... ok
+test virt_claim_reduction::tests::malformed_shapes_reject_before_transcript_use ... ok
+test virt_claim_reduction::tests::prefix_transition_preserves_boolean_and_random_binding_points ... ok
+test virt_flat::tests::empty_groups_and_zero_cycle_variables_compose ... ok
+test virt_claim_reduction::tests::messages_evaluations_and_statement_replays_reject ... ok
+test virt_selectors::tests::arbitrary_and_mixed_bits_keep_exact_dense_fallback ... ok
+test twist::optimized_tests::active_change_history_matches_dense_values_at_every_binding ... ok
+test virt_tree::tests::tree_leaf_claims_match_direct_mles_with_aliases_and_arbitrary_bits ... ok
+test twist::optimized_tests::sparse_rw_messages_and_transcript_match_dense_reference ... ok
+test virt_selectors::tests::empty_columns_preserve_logical_lengths_without_selector_storage ... ok
+test virt_claim_reduction::tests::sqrt_reduction_matches_dense_original_terms_and_challenges ... ok
+test virt_product::tests::product_tree_reuses_coefficients_and_prunes_constant_zero_lines ... ok
+test onehot::optimized_tests::structural_tests::structural_selection_preserves_full_dense_proofs_and_transcripts ... ok
+test virt_tree::tests::off_cube_internal_claim_uses_mle_of_pointwise_product ... ok
+test virt_product::tests::cached_small_point_and_prefix_mass_are_exact ... ok
+test virt_product::tests::product_is_formed_before_off_cube_cycle_evaluation ... ok
+test virt_claim_reduction::tests::split_address_tables_cover_wide_points_without_dense_address_domain ... ok
+test gkr_kernels::tests::parallel_quadratic_cofactor_matches_dense_wire ... ok
+test virt_flat::tests::composition_matches_dense_openings_for_aliases_and_arbitrary_bit_rows ... ok
+test virt_tree::tests::tree_rejects_tampering_and_malformed_shapes_without_panics ... ok
+test virt_product::tests::raw_coefficient_karatsuba_matches_schoolbook_in_characteristic_two ... ok
+test virt_selectors::tests::lazy_dense_and_constant_tail_match_independent_bit_grid_folding ... ok
+test onehot_kernels::tests::parallel_cubic_cofactor_matches_dense_wire ... ok
+test virt_product::tests::flat_product_handles_zero_one_and_annihilated_equality_challenges ... ok
+test sumcheck_kernels::tests::parallel_specialized_fusion_matches_dense ... ok
+test onehot_kernels::tests::structurally_zero_initial_endpoints_preserve_full_reference_messages ... ok
+test virt_product::tests::flat_product_matches_dense_messages_for_shapes_bits_and_lazy_tails ... ok
+test virt_tree::tests::parallel_tree_leaf_claims_match_direct_mles ... ok
+test gkr_kernels::tests::known_initial_claim_matches_dense_with_arbitrary_rows_and_zero_prefix ... ok
+test virt_claim_reduction::tests::parallel_passes_match_dense_in_one_and_four_worker_pools ... ok
+test virt_product::tests::parallel_flat_product_matches_dense_with_lazy_dense_transition ... ok
+test virt_selectors::tests::fourth_bind_transition_and_paired_caches_preserve_parallel_rows ... ok
+
+test result: ok. 44 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/onehot.rs (vendor/open-magnetar/target/release/deps/onehot-986b1973e34f7cda)
+
+running 9 tests
+test chunks_low_first ... ok
+test full_table_is_product ... ok
+test eq_cubed ... ok
+test delta_star_formula ... ok
+test hamming_weight_zero_accepted_here ... ok
+test zero_c_detected ... ok
+test virt_d2_d3 ... ok
+test hamming_weight_two_rejected ... ok
+test onehot_honest ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/shout.rs (vendor/open-magnetar/target/release/deps/shout-48a581c2a04ea740)
+
+running 14 tests
+test current_shout_preserves_cheating_bits_rejection ... ok
+test hamming_zero ... ok
+test wrong_value ... ok
+test hamming_zero_d1 ... ok
+test multi_point_groups ... ok
+test shout_d1 ... ok
+test hamming_two ... ok
+test current_shout_rejects_mode_confusion_and_malformed_shapes_without_panics ... ok
+test shout_d3 ... ok
+test wrong_address_bit ... ok
+test flat_single_cycle_skips_reduction_and_authenticates_dense_leaf_values ... ok
+test current_virtualization_modes_preserve_selector_openings_and_transcript ... ok
+test shout_d2 ... ok
+test shout_parallel_cycles ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/twist.rs (vendor/open-magnetar/target/release/deps/twist-5f755d089151cee3)
+
+running 22 tests
+test hamming_zero_write ... ok
+test lt_brute_force ... ok
+test ram_shared_write_address ... ok
+test ram_like_p1_d1 ... ok
+test ram_like_p1_d2_final ... ok
+test reg_like_p2_d2 ... ok
+test twist_d3 ... ok
+test reg_like_p2_d1 ... ok
+test wrong_increment ... ok
+test wrong_final_memory ... ok
+test wrong_address_bit ... ok
+test wrong_final_region ... ok
+test hamming_two_read ... ok
+test wrong_read_trace ... ok
+test wrong_read_value ... ok
+test lt_is_mle ... ok
+test hamming_zero_read ... ok
+test final_untouched_region_equals_m0 ... ok
+test real_register_shape ... ok
+test wrong_write_value ... ok
+test parallel_threshold_case ... ok
+test parallel_cycles_case ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+
+     Running tests/vectors.rs (vendor/open-magnetar/target/release/deps/vectors-84566cca6c652133)
+
+running 8 tests
+test lt_vectors ... ok
+test onehot_vector ... ok
+test twist_ram_p1_d1_final_vector ... ok
+test twist_reg_p2_d1_vector ... ok
+test twist_reg_p2_d2_vector ... ok
+test twist_ram_p1_d2_final_vector ... ok
+test shout_d1_vector ... ok
+test shout_d2_vector ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (vendor/open-magnetar/target/release/deps/om_mosaic-e3ff4942c7386b80)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mosaic.rs (vendor/open-magnetar/target/release/deps/mosaic-8d408ec118afc808)
+
+running 18 tests
+test batching_packed_matches_bool ... ok
+test batching_negative ... ok
+test claim_cap_300_verify_rejected ... ok
+test batching_completeness ... ok
+test claim_cap_300_prove_rejected - should panic ... ok
+test false_claim_not_provable - should panic ... ok
+test layout_ell_min_and_order_independence ... ok
+test layout_duplicates_rejected - should panic ... ok
+test layout_id_at_2_pow_32_rejected - should panic ... ok
+test layout_negative_id_rejected - should panic ... ok
+test layout_empty_rejected - should panic ... ok
+test duplicate_point_with_inconsistent_value_keeps_original_claim_check ... ok
+test layout_order_alignment_disjoint ... ok
+test layout_single ... ok
+test lifting_eq4 ... ok
+test claim_cap_at_256_accepted ... ok
+test duplicate_internal_basis_terms_preserve_public_slots_and_transcript ... ok
+test batching_split_matches_dense_definition ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/vectors.rs (vendor/open-magnetar/target/release/deps/vectors-8b665e7fcd4328c7)
+
+running 2 tests
+test layout_vectors ... ok
+test batch_vector_replay ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (vendor/open-magnetar/target/release/deps/om_pcs-3ae22a5cb8c2c978)
+
+running 2 tests
+test ligerito::tests::cheating_prover_inconsistent_fold ... ok
+test ligerito::tests::cheating_in_each_repetition ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/commit_encoding.rs (vendor/open-magnetar/target/release/deps/commit_encoding-e22647b391f13f84)
+
+running 3 tests
+test four_stream_merkle_batches_preserve_mixed_lengths_short_tails_and_profiles ... ok
+test column_major_cosets_match_defining_generator_matrix ... ok
+test stripped_commitment_matches_retained_columns_roots_and_authentication ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/ligerito.rs (vendor/open-magnetar/target/release/deps/ligerito-ba3367490a2f6d58)
+
+running 16 tests
+test conjectured100_profile_shape ... ok
+test gap_params_encoding_and_shape ... ok
+test params_and_queries ... ok
+test bitpcs_packed_matches_bool ... ok
+test gap_wrong_value ... ok
+test wrong_commitment ... ok
+test completeness ... ok
+test wrong_value ... ok
+test wrong_point ... ok
+test bitpcs_end_to_end_and_negative ... ok
+test gap_tamper_each_repetition_in_final ... ok
+test provable120_profile_end_to_end ... ok
+test tamper_everything ... ok
+test gap_completeness ... ok
+test provable120_two_levels_bitpcs ... ok
+test bitpcs_packed_matches_bool_multilevel ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/merkle.rs (vendor/open-magnetar/target/release/deps/merkle-a781028ae1b2ea7a)
+
+running 9 tests
+test dedup_full_set_needs_no_auth ... ok
+test domain_separation ... ok
+test sha384_profile_48_byte_digests ... ok
+test multi_open_all_sizes ... ok
+test sha3_profile ... ok
+test two_leaves_formula ... ok
+test tamper ... ok
+test single_leaf ... ok
+test large_tree_matches_sequential_root ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/ntt.rs (vendor/open-magnetar/target/release/deps/ntt-4d69c421f6bacdea)
+
+running 7 tests
+test degree_bound_is_rs ... ok
+test linear ... ok
+test monomials ... ok
+test fast_equals_naive ... ok
+test normalisation ... ok
+test minimum_distance ... ok
+test large_encode_matches_definition_at_samples ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/ring_switch.rs (vendor/open-magnetar/target/release/deps/ring_switch-9d3810b0483c2e68)
+
+running 8 tests
+test a_eval_matches_table ... ok
+test pack_matches_convention ... ok
+test dishonest_prover_flipped_bit_caught_by_pcs_claim ... ok
+test malformed ... ok
+test wrong_value_rejected ... ok
+test tampered_s_rejected_or_output_wrong ... ok
+test tampered_sumcheck_rejected ... ok
+test completeness_and_output_claim ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vectors.rs (vendor/open-magnetar/target/release/deps/vectors-42196ca01de4432a)
+
+running 4 tests
+test ntt_vectors ... ok
+test merkle_vectors ... ok
+test ring_switch_vector ... ok
+test ligerito_vectors ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (vendor/open-magnetar/target/release/deps/om_sumcheck-6e1d6bc76e65eb45)
+
+running 1 test
+test products::tests::equality_cofactor_recovery_survives_zero_prefixes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fused.rs (vendor/open-magnetar/target/release/deps/fused-a36b2074d2352d7c)
+
+running 6 tests
+test generic_quadratic_is_never_guessed_to_be_multiplication ... ok
+test interpolation_cache_can_initialize_concurrently ... ok
+test cached_interpolation_matches_original_for_empty_nodes_and_arbitrary_lengths ... ok
+test large_parallel_in_place_binding_matches_direct_even_length_reference ... ok
+test pipelined_full_and_partial_proofs_preserve_messages_points_and_final_tables ... ok
+test fused_round_and_bound_tables_match_separate_reference_across_threads ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+     Running tests/mle.rs (vendor/open-magnetar/target/release/deps/mle-1d3fcae2d4619782)
+
+running 9 tests
+test test_bind_low_in_place_matches ... ok
+test test_boolean_point_and_low_order ... ok
+test test_eq_table ... ok
+test test_mle_eval_bruteforce ... ok
+test test_eq_eval_length_mismatch_panics - should panic ... ok
+test test_mle_eval_wrong_length_panics - should panic ... ok
+test test_bind_low_odd_panics - should panic ... ok
+test test_packing_identity ... ok
+test test_packed_bits_roundtrip ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/products.rs (vendor/open-magnetar/target/release/deps/products-0d81ae793429661b)
+
+running 4 tests
+test equality_product_checks_the_original_initial_claim - should panic ... ok
+test delayed_dot_matches_reduced_arithmetic_on_empty_and_parallel_domains ... ok
+test equality_product_matches_dense_partial_rounds_and_transcript ... ok
+test weighted_product_matches_generic_with_zero_weights_and_unscaled_terminals ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/sumcheck.rs (vendor/open-magnetar/target/release/deps/sumcheck-2441a65fba92e522)
+
+running 14 tests
+test test_batch_claims_256_ok_and_coeffs_are_powers ... ok
+test test_batch_claims_257_rejected - should panic ... ok
+test test_interpolate ... ok
+test test_completeness ... ok
+test test_bit_tables ... ok
+test test_prove_degree_zero_panics - should panic ... ok
+test test_wrong_claim_prove_panics - should panic ... ok
+test test_wrong_claim_verify_mismatch ... ok
+test test_batching ... ok
+test test_verify_degree_zero_panics - should panic ... ok
+test test_tampered_message ... ok
+test test_eq_sumcheck ... ok
+test test_univariate_skip_completeness_and_tamper ... ok
+test test_parallel_large_tables_match_sequential ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/vectors.rs (vendor/open-magnetar/target/release/deps/vectors-e3a00e3013e050c3)
+
+running 2 tests
+test mle_vectors ... ok
+test sumcheck_vectors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (vendor/open-magnetar/target/release/deps/om_transcript-87128117f68d8d6c)
+
+running 6 tests
+test sha256::tests::digest_slices_matches_concatenated ... ok
+test sha256::tests::x86_sha_ni_compression_matches_portable_states ... ok
+test transcript::tests::label_validation ... ok
+test transcript::tests::nonzero_retry_consumes_until_nonzero ... ok
+test sha256::tests::dispatched_sha256_matches_portable_padding_slices_and_merkle_nodes ... ok
+test sha256::tests::four_stream_prefixed_hashes_match_portable_at_all_padding_boundaries ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/hashing.rs (vendor/open-magnetar/target/release/deps/hashing-bd2fecc780402662)
+
+running 5 tests
+test boundary_lengths ... ok
+test profiles ... ok
+test sha256_kats ... ok
+test sha3_256_kats ... ok
+test sha384_kats ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/transcript.rs (vendor/open-magnetar/target/release/deps/transcript-5e7f625290263563)
+
+running 20 tests
+test absorb_ks_matches_concatenated_bytes ... ok
+test absorb_resets_counter_and_challenge_ks_zero ... ok
+test boundary_labels_accepted ... ok
+test clone_is_independent ... ok
+test control_in_label_rejected - should panic ... ok
+test empty_protocol_label_rejected - should panic ... ok
+test enc_and_u64le ... ok
+test deterministic_and_sensitive ... ok
+test index_bits_65_rejected - should panic ... ok
+test framing_unambiguous ... ok
+test index_range ... ok
+test index_rejected_call_consumes_nothing ... ok
+test json_vector_conformance ... ok
+test known_answer_manual ... ok
+test nonzero_is_nonzero_and_consumes_one ... ok
+test sha384_state_width ... ok
+test non_ascii_label_rejected - should panic ... ok
+test overlong_label_rejected - should panic ... ok
+test space_in_label_rejected - should panic ... ok
+test spec_28_known_answers ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_elf
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_field
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_isa
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_memcheck
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_mosaic
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_pcs
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_sumcheck
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_transcript
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,1112 @@
+{
+  "schema_version": 1,
+  "implementation": "gf128-indexed-rom-lookup-v1",
+  "options": {
+    "methods": [
+      "shout",
+      "logup"
+    ],
+    "patterns": [
+      "random",
+      "local"
+    ],
+    "table_bits": 8,
+    "log_lookups": 8,
+    "chunk_bits": [
+      2
+    ],
+    "virtualization": [
+      "flat",
+      "gkr"
+    ],
+    "threads": 2,
+    "warmup": 0,
+    "repeat": 1,
+    "seed": 1,
+    "profile": "provable-120",
+    "log_rate": 2,
+    "guest_program": [
+      "binary-search"
+    ],
+    "guest_rows": [
+      "memory"
+    ],
+    "guest_size": 64,
+    "guest_operations": 256,
+    "guest_keys": 64,
+    "guest_queries": 16,
+    "output": "results/stage13-no-content-merging-smoke.json",
+    "csv": "results/stage13-no-content-merging-smoke.csv"
+  },
+  "environment": {
+    "compiled_arch": "x86_64",
+    "compiled_avx2": "true",
+    "compiled_avx512f": "false",
+    "compiled_pclmulqdq": "true",
+    "compiled_sha": "true",
+    "compiled_vpclmulqdq": "true",
+    "cpu_model": "13th Gen Intel(R) Core(TM) i9-13980HX",
+    "executable_sha256": "286ad79b66c8992ab0674f3f5fbb001e8f92442940f8042ca1f98e8cf9b1367f",
+    "rustc_on_path": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "provenance": {
+    "open_magnetar": {
+      "added_files": [
+        "LICENSE-FLOCK-MIT",
+        "LICENSE-JOLT-MIT",
+        "crates/om-memcheck/src/eq_factor.rs",
+        "crates/om-memcheck/src/gkr_kernels.rs",
+        "crates/om-memcheck/src/onehot_kernels.rs",
+        "crates/om-memcheck/src/onehot_structural_tests.rs",
+        "crates/om-memcheck/src/sumcheck_kernels.rs",
+        "crates/om-memcheck/src/virt_claim_reduction.rs",
+        "crates/om-memcheck/src/virt_flat.rs",
+        "crates/om-memcheck/src/virt_product.rs",
+        "crates/om-memcheck/src/virt_selectors.rs",
+        "crates/om-memcheck/src/virt_single.rs",
+        "crates/om-memcheck/src/virt_tree.rs",
+        "crates/om-pcs/tests/commit_encoding.rs",
+        "crates/om-sumcheck/src/products.rs",
+        "crates/om-sumcheck/tests/fused.rs",
+        "crates/om-sumcheck/tests/products.rs",
+        "crates/om-transcript/src/profiling.rs"
+      ],
+      "baseline_sha256": {
+        "LICENSE-APACHE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "LICENSE-MIT": "c7726423122f844a48acca817af8fa6538a3d51bd82c6a71a1ab6802d2b7bc20",
+        "crates/om-elf/Cargo.toml": "32820e4a1e9aaa27d3ee6c72679407e49c47cf71868d94bb822957f9bddbd326",
+        "crates/om-elf/src/abi.rs": "b399e2105b7267563d972f5623ab713c9db8e7e507c8e693b10d5fb5710fd2d0",
+        "crates/om-elf/src/elf.rs": "5e54ce57b9d4c3ca36530754e47e3235b92c6fb5d16e01c7465bdc1a1b7fc50c",
+        "crates/om-elf/src/lib.rs": "4375ab508dad76e562642308f9111dfbc05c12f08a53e6ed44ed5eefc4c3b523",
+        "crates/om-elf/tests/abi.rs": "034daf3f6e18c2b742e2a94f4db1ab15f276e08375cf89620d05c0b52699e551",
+        "crates/om-elf/tests/elf.rs": "39ec5ca9ba148a22ab74fb5124e1d7ba60dfca83e80fef2a1395c25170919df2",
+        "crates/om-field/Cargo.toml": "a6ac79410e37f6405884a2e167ce123f5b6e66ddfba533d98f65e6c6dec4cd20",
+        "crates/om-field/src/lib.rs": "688ef6fb3d747fc3039ae4513938968e130ac1b50b799ec15f165bcf90d0e7a2",
+        "crates/om-field/tests/field.rs": "7b7cc8e1cc0e3c6aa1647d26e2e4d977eeddc1e72223c8a097d4205c4629c7b9",
+        "crates/om-isa/Cargo.toml": "c752350573a620069808ea5aadc62a645dc648ef32ddc05967b2bbfd75c29814",
+        "crates/om-isa/src/bytecode.rs": "955e90c6a188af7a28514b0deedee355407d3056f80c161ad3b62b6e5c4c1634",
+        "crates/om-isa/src/lib.rs": "b7ad215197df048efb8cdc84768eae6d48eb577bef2b042946046aaf05362b3d",
+        "crates/om-isa/src/riscv.rs": "747a27df13ce366ccdf01c8528db147ff52c42ae7d7ef3dd714f3bfadfb8fcd5",
+        "crates/om-isa/tests/common/mod.rs": "896ed28d2ef5013f1be0783e08e27f9a17b38d9db060ce319e89b370f2e5d8f7",
+        "crates/om-isa/tests/isa.rs": "6ec7fc0b2c2d00348496923322de8a39403255adeee43006a1b8aac7a2d7ef5f",
+        "crates/om-memcheck/Cargo.toml": "4890bccf1b0ff45c95a097374f11aeff42e25ad12bfad55b1fc2c10e08ca8d7a",
+        "crates/om-memcheck/src/lazy.rs": "91f7c5da2d9aa766b8f51cbe208d0aab6e85796d1992efa22680a372dd3059fb",
+        "crates/om-memcheck/src/lib.rs": "040e7c94945cdc86dcd965e848584f6d4d6830ffd9ce09705f9545cb72096017",
+        "crates/om-memcheck/src/onehot.rs": "e55a63461010151eb5a5dc9853a7c91495b8a14a45ac507a3f34966b3d12c47b",
+        "crates/om-memcheck/src/shout.rs": "3a582c98f9afdd46e50914f618cf89555d0fdc0a3cd554e50af3b2fed2226438",
+        "crates/om-memcheck/src/twist.rs": "ce903713a40023e38f40611100461f87beee9f205efb3cb36f4a14e6928197cd",
+        "crates/om-memcheck/tests/common/mod.rs": "d8ff5cd00cb217f43bbf1e49ed515fa11f65c5328398a027f13406e142fd8b75",
+        "crates/om-memcheck/tests/onehot.rs": "0f1db98ee4f3a77b38888da4f5eab51d510fbf614f0e7f4a3a914aabe77da625",
+        "crates/om-memcheck/tests/shout.rs": "9dbd1a4d91bac47b5f347747b5e8991b4685cbdb78d7c59aa52e21f9ffd76f6f",
+        "crates/om-memcheck/tests/twist.rs": "3e99d9046d018db8ffd7910e6203e78ad695fbe5662292837a9a4f10350962dc",
+        "crates/om-memcheck/tests/vectors.rs": "4478197a8f27f6d8c63f3654f8b3e71670c65eb4e1dbd4dc9a2f32f084577a52",
+        "crates/om-mosaic/Cargo.toml": "6ec4450dc4eddfa480d002f2bd98332065710b76d747632877e9722d59a72168",
+        "crates/om-mosaic/src/lib.rs": "4a07c0cfc7c43f3c1f8ca226a28477bc4239ad09f8a2e3f4fdd55ba888225676",
+        "crates/om-mosaic/src/mosaic.rs": "a303f1981fdb9a2b4598576a55bc7ad5c46497339e4f9964d43e139b9b9b0a63",
+        "crates/om-mosaic/tests/mosaic.rs": "fe0ad48481921056f6140d5a9be02c53c5aa7a32d3bf39ca434da395a3cb7d51",
+        "crates/om-mosaic/tests/vectors.rs": "61932986e208c68b58c1b00d9a32552f59b17af20a445cbbb576a4936d4a5869",
+        "crates/om-pcs/Cargo.toml": "5ef41d8eec46298058bd247a349d573d4c04f5ad02c405af7484ecdf5e69bc0e",
+        "crates/om-pcs/src/lib.rs": "36c1c28fe8dedb292771b6414a70a96fe67e06fec9d690d655cf2953cb7829ad",
+        "crates/om-pcs/src/ligerito.rs": "e223ef910f4a8dc17003796e47ac9f19da3aac4b3b2318cccd47e34ca2bd126e",
+        "crates/om-pcs/src/merkle.rs": "ab85eb09686649102389f5b5c7bd8b82b35f9caac6f7cc1f7675b0438bcdc59e",
+        "crates/om-pcs/src/ntt.rs": "2c3d610ba96a6517c205d5c362affb5fe9641bb66f16915d64e05b55253dc558",
+        "crates/om-pcs/src/pcs.rs": "d85a0852f46bb495da826e4eae3c8dbb62ee2c0a2b2fec39f293ba26e1644f08",
+        "crates/om-pcs/src/ring_switch.rs": "5e9330280c66070b50f507a4cfbcdb0a0adb3bbeac1bcd5f4450548bf4b6727a",
+        "crates/om-pcs/tests/common/mod.rs": "50aea1be8d17baed7b6f95530a307f586f3ca1a6a26af4fc696911a79579360f",
+        "crates/om-pcs/tests/ligerito.rs": "d249b6b23c53d2c9780a3b588ed6c7ec531857bac73ccc8fb898111dcaed9e0f",
+        "crates/om-pcs/tests/merkle.rs": "de81392e8600f422410f895d2a9af4dd508e8bb4addb4cd06ae02babb8acd7f8",
+        "crates/om-pcs/tests/ntt.rs": "b32181682060dcc868a15268902fe9089258b6be4b40fd4719c7aed469ebf4bc",
+        "crates/om-pcs/tests/ring_switch.rs": "10fc027e93f9ef9d1c29e04203bfa5e4ef5a71ee1bc693381804df02c807a4a6",
+        "crates/om-pcs/tests/vectors.rs": "d2fb13154e8a546b3316cdde9fe09f57444d1d6a802b457e4167a3df0eaa89bb",
+        "crates/om-sumcheck/Cargo.toml": "adff3f7112eb4dfbe3530683540044af1df85a873819aca92450c5f05ee9ee20",
+        "crates/om-sumcheck/src/lib.rs": "b8aa9dc265728a796f11423c7f89c469112bc605a667c7d752fb6d74026fa37b",
+        "crates/om-sumcheck/src/mle.rs": "01ad6781197e7ff75b523b262bc38d431b9e656bb8344b92b15cf533409682c3",
+        "crates/om-sumcheck/src/sumcheck.rs": "c2bcacfefaebf0d97a773986f2ccb1b01c4563f524e8a54b55aa9ca0fe4c6407",
+        "crates/om-sumcheck/tests/mle.rs": "211ef4257a32ced8c4e2c97ffbb81d594d1f6a155175aa4c6246c6b3dbeaff9a",
+        "crates/om-sumcheck/tests/sumcheck.rs": "8ba5e28557d6b1ddfd61e4ad7113a81bf8e8eb73cce39fcdd8ea479986e888db",
+        "crates/om-sumcheck/tests/vectors.rs": "61374dfb6e743a0ed6d32c20ba61f912c4561363b80f5e1abfc4d8d4a7a3bece",
+        "crates/om-transcript/Cargo.toml": "9f6046d99133415bdd977fda0cd3e95697fc0acf96bedbfb435021f1a063dae3",
+        "crates/om-transcript/src/hashing.rs": "454f14a7e6ac686aa4114616f61a22e01446f0d29db4b677cd038cb5c82f866e",
+        "crates/om-transcript/src/keccak.rs": "e8d76367282dcc9db4c7cc1f27ca06d019b893b81cfececd39dfcea01edca40c",
+        "crates/om-transcript/src/lib.rs": "41e26e75c344e91d706e32cdfcabc2140ac070ad11aaeb8d24706f59103ff926",
+        "crates/om-transcript/src/sha256.rs": "463e02e41f058a277f1e3e0861595ba6311848b7ac09b1cd7d4560ec09995c26",
+        "crates/om-transcript/src/sha512.rs": "34ecee5a4d566fb265728cd723d2c862a69b19f86b079b3038cc61fcac6b1c10",
+        "crates/om-transcript/src/transcript.rs": "5b4906c7c3f07499b9b86acb054803fcb7e920bf799cefaf03ebf0ffeb344d01",
+        "crates/om-transcript/tests/hashing.rs": "b938b8cecb363b17dc1d14d3a8654bd0a56e406e246a0ec89983afa4663f36a8",
+        "crates/om-transcript/tests/transcript.rs": "793f1c14d1cbc77347dcb52e524ae50c50f318ff4afba5c3c94a814f4b663d6d",
+        "reference/vectors/02-transcript/transcript.json": "c75413492ef4845a4cd11d531ded865ab825842abc4d3075e16768b6665b765e",
+        "reference/vectors/03-sumcheck/mle.json": "49de249eaf33167aff496f2bc167f26a9b1ea93ba43dfc6405b13660fbc42ce7",
+        "reference/vectors/03-sumcheck/sumcheck.json": "f8092d4282e2bfb4b399eff3a0c6e7cc7634589026ab7f390752fffaa4ef02cd",
+        "reference/vectors/04-pcs/ligerito.json": "da89404a85219b941f66a235269213aef6ffa00dad5f429d11b6fb3a23c9a0a6",
+        "reference/vectors/04-pcs/merkle.json": "7cc66610147ce287f618e6b0a938e33ef5658487d1e43bf1a3393f4693282735",
+        "reference/vectors/04-pcs/ntt.json": "f2a87c61cd2e66800e5bf46ccaa4ad927fda4b14dba4cdd1c36de2cf70b93441",
+        "reference/vectors/04-pcs/ring_switch.json": "97ff528aa47f01442322910cc51016f586a3c025c05ded803c7b7115aa415d0b",
+        "reference/vectors/05-mosaic/batch.json": "309c1f1576c4cf4f8279bdebae2ab34a595821d75019f0927dd5dfcfb1bc6a09",
+        "reference/vectors/05-mosaic/layout.json": "15df106e679dea9958f2d25003d1e811faca412675c6f8439b7d82d2a1b2d379",
+        "reference/vectors/06-spartan/next_mle.json": "420e396b142dc24f0e48bd5c94a3f2e881bc22f1309ff668a9f5077a3a7bc001",
+        "reference/vectors/06-spartan/simd_spartan_bin.json": "d864e17d2a69337bfd31fcfc04d3293018ec316aecc32563b04a9bf1973c4f3d",
+        "reference/vectors/06-spartan/virtual_spartan_toy.json": "4d22352c4e20b11669fbf52ffccfd0629811086ae6d8c6e770aa63dd81c9174f",
+        "reference/vectors/07-twist-shout/lt.json": "221bcf98b6c4ea239e8b976ad796c91d6aea1afa0676645fadc4401354fe79af",
+        "reference/vectors/07-twist-shout/onehot.json": "b5a19fc8a161cbfefcf17af144cd829322f0911c31d12d4e7999a2cc91ce8122",
+        "reference/vectors/07-twist-shout/shout_d1.json": "3136c4e0d1699d5b36a247c88be74b1d49d89bc4fddab40f8925b05de3224564",
+        "reference/vectors/07-twist-shout/shout_d2.json": "01aa35ad8ba2baf6ab4530e9d16caa42a6f9bdca65392264351a5c38c017a825",
+        "reference/vectors/07-twist-shout/twist_ram_p1_d1_final.json": "cdda423873eb73e6fb76bd1749885e6f3fa786a42dab091ca93dbb9b4a738074",
+        "reference/vectors/07-twist-shout/twist_ram_p1_d2_final.json": "f6e965f57c20055e79500e7ac2707687d6580ce08c8c15cc4674363449fb3b28",
+        "reference/vectors/07-twist-shout/twist_reg_p2_d1.json": "c0168fe6606d17313c05abeea9ccd5c0ea4e2b32d928ff2dd4d13c01bc73181f",
+        "reference/vectors/07-twist-shout/twist_reg_p2_d2.json": "02ae72f894c2923e1c00022e256c7394451fbf8786adfda6f49536596fe798e8",
+        "reference/vectors/08-router/R_eval_wb6.json": "e1955ee6baadedef128de6ae17660ea33ad926f740b5d6bd0a932b36041a91bb",
+        "reference/vectors/08-router/shift_wb3.json": "310056bf1491e22a3214f8e0fc00561b37f142e3862de972fb21672cbee2000e",
+        "reference/vectors/08-router/shift_wb6.json": "b7ef882420e33187c635dc73a70d1f4afd7c1018bc561369cb901a391957fae9",
+        "reference/vectors/08-router/store_wb4.json": "c22e15f30a51b25e90eaf650a4acdbb8a615ed59d16b2f35be57109727bd0cd0",
+        "reference/vectors/08-router/store_wb6.json": "fd95d7caae2a69170b2704b581c48e906f55f8fe4bca1b63ad66d10ff8fa3619",
+        "reference/vectors/10-cpu/cpu.json": "57bdbb2a3030adf526590fbfa372b95bb57571c8445a0f5b294cf7083ba8c7a3",
+        "reference/vectors/11-12/fib_ligerito_test.json": "a7374951b4d5ed0bc4a0201116c6281afadad1f889e43b2f22ec222abf9c67f3"
+      },
+      "implementation": "gf128-jolt-flat-structural-sharing-v1",
+      "license": "MIT OR Apache-2.0",
+      "local_patch_sha256": "0a983c510a5e937867c352db23202eef28e99f2f64185be902fdb4bfef162883",
+      "local_sha256": {
+        "LICENSE-FLOCK-MIT": "ed21a0d573a473913534aa8462b410c4c03d899900096bf3bdeb8fea650a01b5",
+        "LICENSE-JOLT-MIT": "452532d531b7503f55729a3b1fe136de15814f14ae5ac18a0e33c6476b70997b",
+        "crates/om-field/src/lib.rs": "5caadb799ad0bd7bd89ef1ca73a4a7bc3c27fccd97791c9b620057acf63240f4",
+        "crates/om-memcheck/src/eq_factor.rs": "bd5dceb5561217270094c63406c7b2351eec276a0aaa2cf5ebd72549d32cf01b",
+        "crates/om-memcheck/src/gkr_kernels.rs": "13f02fe3924d82b2df1041f25d1fc92aabb7e77bf137e32f8929f57d75df2e3c",
+        "crates/om-memcheck/src/lazy.rs": "5c9831fea1c02f2fee9d8668d897254bda4f786d61987d4ff56e798151348497",
+        "crates/om-memcheck/src/lib.rs": "d083f65ad67e6ca8101ff9c6c30adc976b0ac72a46f95f01f4bcc41c2311e30a",
+        "crates/om-memcheck/src/onehot.rs": "bc343c1f13c4385ad0e6f5e3cf76690f128369d0b396234b2dbf341b4f20b241",
+        "crates/om-memcheck/src/onehot_kernels.rs": "c97b100a7b818deee8e7035a2af6276c7f05e50e65e5b9348cb53765e54996b9",
+        "crates/om-memcheck/src/onehot_structural_tests.rs": "386b6a87a85bfcb38777239647aada7cf0e208f39176630e6f42f69a6f51f897",
+        "crates/om-memcheck/src/shout.rs": "0df00508882bd182a8aa5bfaa9519c1a9376141cc085223e026b74f86c59f414",
+        "crates/om-memcheck/src/sumcheck_kernels.rs": "cece6c60798b3c34e511f906f82f779086a6499a7411fe58b9826d90b938fea5",
+        "crates/om-memcheck/src/twist.rs": "a5c0c3b6e77b229913359a913e22f2df14e10f6db91ea1080c9af21d28d49e04",
+        "crates/om-memcheck/src/virt_claim_reduction.rs": "0b8e8a629cdae377e21e92f3bb7a8ef68b0a8c6bddd6afa2c1204c66a09be871",
+        "crates/om-memcheck/src/virt_flat.rs": "7b864a06896dddd6413ad3b3f00bfcbc9c8c1b195f128235e8f35b7abaa44465",
+        "crates/om-memcheck/src/virt_product.rs": "6f200436886d3eb4ec99be488427767e19a9bcbc53ca4c100cc231eb019832df",
+        "crates/om-memcheck/src/virt_selectors.rs": "6fbf4e299615ed1a742826e545c9478d99df415220ad207b01d26beaa958976b",
+        "crates/om-memcheck/src/virt_single.rs": "f2ace8ac77d6d80c96f86da6f4645d61901ea4e052b18089a454b9913115128f",
+        "crates/om-memcheck/src/virt_tree.rs": "f63ea7e04d069df0b9429ad48db8322a375858a82da8687d678a385eded60ce7",
+        "crates/om-memcheck/tests/shout.rs": "6e2173e85c18f15482b8fe3bfd4770be6a78681be8ae8e1653a566048448ba14",
+        "crates/om-memcheck/tests/vectors.rs": "1b577d1072b73cc1fec31ed1c94a56d4d2eda1ff735686eaa4436a486880e80e",
+        "crates/om-mosaic/src/mosaic.rs": "6bc9c41a2fb82c78102b9b633919c75431e2ef0e9fb680b7098ac86531680477",
+        "crates/om-mosaic/tests/mosaic.rs": "c6e8b0e20d22ecfbf4eeb1e6f18bb3a551bfefb6459aa6586615253d943d86a3",
+        "crates/om-pcs/src/ligerito.rs": "e35f275686551470de555f4acb7ad65d8636290cfe5c058bbc3e9d3af1ea85bf",
+        "crates/om-pcs/src/merkle.rs": "9f21c5880a0c9520d035950b2e7ed07a0bdcaa67a7fef6fd4d268f19c72f6662",
+        "crates/om-pcs/src/ntt.rs": "1a04646a1a8ed8c9623c60fa13c6946411c8adef7b910646f7b0bb6418a77be9",
+        "crates/om-pcs/src/pcs.rs": "8cfc7e0e6f50bff22093b149f81497c719f27fef4a341b5b9803f208824a9209",
+        "crates/om-pcs/src/ring_switch.rs": "7a0ceca62d8d79a57bf6c8dfae95c3de6788f90fdc4a5891734448c5122189a2",
+        "crates/om-pcs/tests/commit_encoding.rs": "4e8d708a22b97bdaf60fe2e164f50780a2658dbee033edb9b09fbfa52f267f77",
+        "crates/om-sumcheck/src/lib.rs": "7f658bcc7831882fb0e028d7b8b8a07e2829caa9b1042d7ba6c16c2f2ab02c5e",
+        "crates/om-sumcheck/src/mle.rs": "26e3dbd3b398d6cb737899d997d2eee68cdb1e2fc2a2873e44ac1577b67de05f",
+        "crates/om-sumcheck/src/products.rs": "0ceb2a7b28baed40fb4c876f6fde75bf92d1595ffc47a44a4c1758f19d426298",
+        "crates/om-sumcheck/src/sumcheck.rs": "50804674bed4b12db8f63e34aa995150fae4e1f5be24d7434a634511e252bdb4",
+        "crates/om-sumcheck/tests/fused.rs": "49d17063e8b254edbccf125bb3bedc8733722ee618c990571974e733cb0553ec",
+        "crates/om-sumcheck/tests/products.rs": "82fa16f2ac41acfdbe80af316f27ede1ab8542a4b80cf68b07e033d2a8275bc4",
+        "crates/om-transcript/Cargo.toml": "e4472a209420a12dd0becf7348557e2d6b06ddb7a30cecf5a9b88e9803ac695c",
+        "crates/om-transcript/src/hashing.rs": "40f32fdb4b01a56def19adce4eeb3c6cf5c1cba0384b5ab97de2b6c7992d8da4",
+        "crates/om-transcript/src/lib.rs": "1e09ca3943e2d92c02ed30a35e742f670f3b5040e99e91d19c9d17f5ad442444",
+        "crates/om-transcript/src/profiling.rs": "76a1f8915a2ce2b7e2959afe36c82108c308f6b13c4c1f4b0128afc8d7e11585",
+        "crates/om-transcript/src/sha256.rs": "45f95805d38ca47d16750285fb3e5d676fed9fd6cd607ac88b0406cb32570bf1"
+      },
+      "optimization_sources": {
+        "flock": {
+          "license_notice": "LICENSE-FLOCK-MIT",
+          "repository": "https://github.com/succinctlabs/flock",
+          "revision": "daa0cf426563b01f9e744f6265ebae37c97afcb7"
+        },
+        "jolt": {
+          "license_notice": "LICENSE-JOLT-MIT",
+          "repository": "https://github.com/a16z/jolt",
+          "revision": "e21affaeaf0d2c0a4630b958a883a4ac877acbfd",
+          "use": "Two-pass common-cycle claim reduction, shared-Eq flat virtualization, compact lazy selectors and per-row arithmetic product tree; adapted to GF128 coefficient arithmetic."
+        },
+        "leanVM": {
+          "repository": "https://github.com/leanEthereum/leanVM",
+          "revision": "e5d75f858e91161921c0afe3d9f56300e9a3a03c",
+          "use": "Algorithm/scheduling reference; GF192 representation and protocols are not substituted."
+        }
+      },
+      "permitted_modified_files": [
+        "crates/om-field/src/lib.rs",
+        "crates/om-memcheck/src/lazy.rs",
+        "crates/om-memcheck/src/lib.rs",
+        "crates/om-memcheck/src/onehot.rs",
+        "crates/om-memcheck/src/shout.rs",
+        "crates/om-memcheck/src/twist.rs",
+        "crates/om-memcheck/tests/shout.rs",
+        "crates/om-memcheck/tests/vectors.rs",
+        "crates/om-mosaic/src/mosaic.rs",
+        "crates/om-mosaic/tests/mosaic.rs",
+        "crates/om-pcs/src/ligerito.rs",
+        "crates/om-pcs/src/merkle.rs",
+        "crates/om-pcs/src/ntt.rs",
+        "crates/om-pcs/src/pcs.rs",
+        "crates/om-pcs/src/ring_switch.rs",
+        "crates/om-sumcheck/src/lib.rs",
+        "crates/om-sumcheck/src/mle.rs",
+        "crates/om-sumcheck/src/sumcheck.rs",
+        "crates/om-transcript/Cargo.toml",
+        "crates/om-transcript/src/hashing.rs",
+        "crates/om-transcript/src/lib.rs",
+        "crates/om-transcript/src/sha256.rs"
+      ],
+      "repository": "https://github.com/Lulzx/open-magnetar",
+      "revision": "febfc0e66f5809e034dd1afac78202bd4882de27",
+      "sharing_policy": {
+        "local_product_pruning": "Retained.",
+        "onehot": "Explicit source identity and matching chunk index only; no witness-content comparisons.",
+        "shared_ram": "Adapter supplies a declared shared-address alias; read and write references are canonicalized.",
+        "virtualization": "Explicit source identity and matching address point only; no witness-content comparisons."
+      },
+      "workspace_note": "Cargo.toml selects eight upstream crates. Cargo.lock is resolved for this subset; neither workspace file is a prover kernel."
+    },
+    "bitz_logup": {
+      "commit_date": "2026-09-23T21:55:28+03:00",
+      "copyright": "Copyright (c) 2026 World Foundation",
+      "donor_sources": [
+        {
+          "function_ranges": [
+            {
+              "lines": [
+                24,
+                253
+              ],
+              "role": "Retained fraction witness levels, 3-multiply recurrence, reusable buffers, sqrt-Eq evaluation and folded layer prover",
+              "symbol": "FractionTreeWitness"
+            },
+            {
+              "lines": [
+                255,
+                272
+              ],
+              "role": "Rational root equality and sequential left/right fraction reductions",
+              "symbol": "prove_rational"
+            },
+            {
+              "lines": [
+                274,
+                327
+              ],
+              "role": "Rational root and layer verification",
+              "symbol": "verify_rational"
+            },
+            {
+              "lines": [
+                329,
+                439
+              ],
+              "role": "Square-root Eq evaluation with virtual constant padding and deferred reductions",
+              "symbol": "mle_eval"
+            }
+          ],
+          "path": "crates/gkr/src/logup_cut/fraction.rs",
+          "sha256": "9852712859e81ab3f9f314ab842f4b5da4d80cb6dad3eeb4f3d79a240fc59512"
+        },
+        {
+          "function_ranges": [
+            {
+              "lines": [
+                56,
+                159
+              ],
+              "role": "Equality-factored two-statistic product sumcheck with in-place folds",
+              "symbol": "prove_product_relation_inner"
+            },
+            {
+              "lines": [
+                173,
+                192
+              ],
+              "role": "Point reversal at low-first public boundary",
+              "symbol": "prove_product_relation_into"
+            },
+            {
+              "lines": [
+                194,
+                242
+              ],
+              "role": "Chunked Rayon wide-product reduction",
+              "symbol": "reduce_sumcheck_round"
+            },
+            {
+              "lines": [
+                244,
+                250
+              ],
+              "role": "Characteristic-two equality factor 1+r+z",
+              "symbol": "eq_factor"
+            },
+            {
+              "lines": [
+                252,
+                307
+              ],
+              "role": "Retained suffix equality-table layout; unused alloc helpers omitted",
+              "symbol": "SuffixTable"
+            },
+            {
+              "lines": [
+                354,
+                392
+              ],
+              "role": "Endpoint recovery and equality-product relation check",
+              "symbol": "verify_product_relation_inner"
+            },
+            {
+              "lines": [
+                394,
+                408
+              ],
+              "role": "Verifier low-first public point boundary",
+              "symbol": "verify_product_relation"
+            }
+          ],
+          "path": "crates/gkr/src/lib.rs",
+          "sha256": "9b280041bf08df797cfa5ed3bea1b609ce8a22cd43d40671ac17d1bc45151de9"
+        },
+        {
+          "function_ranges": [
+            {
+              "lines": [
+                14,
+                47
+              ],
+              "role": "Quadratic IP proving and terminal committed evaluation",
+              "symbol": "prove_inner_product"
+            },
+            {
+              "lines": [
+                49,
+                70
+              ],
+              "role": "Transparent public-polynomial terminal check",
+              "symbol": "verify_inner_product"
+            },
+            {
+              "lines": [
+                72,
+                95
+              ],
+              "role": "Two-coefficient Rayon U256 round accumulation",
+              "symbol": "round"
+            },
+            {
+              "lines": [
+                97,
+                103
+              ],
+              "role": "Low-first adjacent-pair in-place fold",
+              "symbol": "fold"
+            }
+          ],
+          "path": "crates/gkr/src/logup_cut/inner_product.rs",
+          "sha256": "eaedc5790762c4a0f6116c7ac3ba4c0c518ebafea25e5f70f64bcf23aba6ac0e"
+        },
+        {
+          "function_ranges": [
+            {
+              "lines": [
+                1,
+                9
+              ],
+              "role": "Same modulus and monomial basis",
+              "symbol": "GHASH field"
+            },
+            {
+              "lines": [
+                138,
+                153
+              ],
+              "role": "Canonical 16-byte LE encoding",
+              "symbol": "to_bytes"
+            },
+            {
+              "lines": [
+                205,
+                210
+              ],
+              "role": "Index encoding injects bits as polynomial coefficients",
+              "symbol": "impl From<u128>"
+            }
+          ],
+          "path": "crates/field/src/gf128.rs",
+          "sha256": "264f954fd2fdd26b0713d1582da3a7c97d6040bf7ac4a036a399c56d09fe6af7"
+        }
+      ],
+      "fingerprint_algorithm": "SHA256 over sorted UTF-8 relative path + NUL + raw 32-byte file SHA256 for each local_sha256 entry.",
+      "fingerprint_scope": "Cargo.toml, LICENSE, and every src file (including tests); excludes Cargo.lock, provenance/docs and target outputs.",
+      "implementation": "gf128-weighted-logup-bitz-v1",
+      "license": "MIT",
+      "license_note": "The donor retained LICENSE grants MIT permission; copied verbatim. Its workspace declares MIT OR Apache-2.0.",
+      "license_notice": "LICENSE",
+      "local_adaptations": [
+        "K/U256 static field shim replaces F128/Wide256 without changing field basis or arithmetic formulas.",
+        "Typed proof structs and checked dimensions/round/layer counts replace donor stream deserialization.",
+        "Result errors replace invalid-input root/shape/denominator and zero-gamma assertions; terminal IP validation adds no full-table scan.",
+        "OM hash-chain transcript uses explicit label/domain/dimension and canonical field-message framing; this is a new wire format, not original-proof-byte compatibility.",
+        "Donor product loop retains high-variable-first scheduling and boundary reversals; every public point is OM low-variable-first.",
+        "Unused upstream grand-product orchestration, tracing attributes and standalone allocation helpers omitted.",
+        "Independent dense algebra/proof/transcript oracles added for native/default regression coverage."
+      ],
+      "local_sha256": {
+        "Cargo.toml": "4a7109c364f2dd9f6d55c8dcbbe1e329f795f3bee1dbfcc358e54534b3fec3ea",
+        "LICENSE": "408b9b4599bf389f97538c1f066bbc74912522d02350ae44528e09f8ccf3c3fc",
+        "src/fraction.rs": "f4adce0573b2bcc87c526528814f652682d69000354d140ebd79e5ab7c41995c",
+        "src/inner_product.rs": "de14e8307efd93b655887cfbf71befa5c6308d5219828e8c8116749382106e89",
+        "src/lib.rs": "a07e7a705e1b1d28cc8046057aa13d55621178c083705bc4d7f79b5fe8825c85",
+        "src/product.rs": "5c0f4a54e925fa631a3af8666a16e8e087f3dee6a9ceabc70cdd0b0a83f0ae51",
+        "src/tests.rs": "7ea433284521ca863481bfdafdf1b69fcc694d784bc5339b97c29c720e264867"
+      },
+      "local_source_sha256": "822e0395bb2e1e26e0a2b382f1df7c96e0583aef3c2724aeb181f6adbde6ee88",
+      "ported_on": "2026-11-10",
+      "protocol_scope": "Weighted rational pushforward and public-table inner-product reductions only. Caller must commit weighted pushforward before tau and authenticate every returned nonpublic evaluation.",
+      "reference_directory": "sources/bitz-reference",
+      "reference_manifest": "audit/bitz-reference.json",
+      "reference_manifest_sha256": "530c5693daac36215818dca2d0460066de7f522a4359e672306781c3b70e9be2",
+      "repository": "https://github.com/worldfnd/BitZ",
+      "revision": "cdfb9b73b5857f4dc83761866e475186c6a75ab3",
+      "shared_dependencies": "om-field and om-transcript provenance is recorded separately in vendor/open-magnetar/UPSTREAM.json; rayon is resolved by the caller Cargo lockfile."
+    },
+    "adapter": {
+      "adapter_note": "Parallel branchless address packing and complete per-proof phase reporting. OneHot/virtualization share only explicit source aliases; content-based merging is disabled. Local product pruning is retained.",
+      "bitz_logup_source_sha256": "822e0395bb2e1e26e0a2b382f1df7c96e0583aef3c2724aeb181f6adbde6ee88",
+      "captured_on": "2026-11-10",
+      "files_sha256": {
+        "Cargo.lock": "4c2472353fbf88e162ffcaefe78a978f1022c7ed0999a3de5b271a7fb263a1c6",
+        "Cargo.toml": "daba3cbbfa657b7f2b56a2487417793a85f2976c5aa66ea3e47dea64d730c32c",
+        "crates/lookup-argument/Cargo.toml": "c01ac85733aedf27ce8e2b3701703a38eb30e8f6061a3a19f1350ba83a150593",
+        "crates/lookup-argument/src/lib.rs": "0032590b0fa3eeb17e85c499322a671ebdecf4abbe463ef8245c8cef1f9ae814",
+        "crates/lookup-argument/src/logup.rs": "67e27530c28ce903683993ab2cd5d2acd6fa58b2aeee7e1197cb75540114e061",
+        "crates/lookup-argument/src/shout.rs": "1c2a5d5df30c11a21c96354fd3b657a7de48d138ffdf81aaa8321df717b97711",
+        "crates/lookup-bench/Cargo.toml": "06577fae0014b32626637c39550343ed41deee267c7a1803324b873b78c467d5",
+        "crates/lookup-bench/src/main.rs": "3c71fca4999f808b6c5ad078fad15566d6e1bbe3a0ff46bdb80320c710d64f4f"
+      },
+      "implementation": "gf128-indexed-rom-lookup-v1",
+      "open_magnetar_patch_sha256": "0a983c510a5e937867c352db23202eef28e99f2f64185be902fdb4bfef162883",
+      "source_sha256": "e7ea1f0641779c01182401227a3eb2d83e010e36ae58b3dce546923342c5606e"
+    }
+  },
+  "notes": [
+    "All warmup and measured proofs independently verified. Payload generation and ProveResult destruction excluded from prover time.",
+    "Inclusive main/aux commit/open durations are disjoint; remaining_ms includes IOP, witness/setup and statement preparation. Exclusive stage spans are separate diagnostics and must not be added to inclusive timings.",
+    "prep_ms sums lookup.witness/pack/statement/claims exclusive spans; argument_ms sums shout.*, virt.* and lookup.logup* exclusive spans. virtualization_ms sums shout.virtualization and all virt.* children, including GKR build/layers. These overlapping phase diagnostics are computed per sample before taking medians; named stage medians need not sum to a phase median.",
+    "Both methods share identical public u64 ROM values and address traces with recorded SHA256 fingerprints, read_values=None. Guest-derived cases retain only addresses and discard RAM values/stores.",
+    "Shout chunk/virtualization choices are swept; LogupStar has one canonical case per pattern, unused chunk_bits=0 and Flat config. Ratios above1 indicate smaller/faster LogupStar values.",
+    "PCS profile names are not composed security guarantees. The conservative extra LogupStar term (T+N)/2^128 excludes other errors; equal overall security is not claimed."
+  ],
+  "cases": [
+    {
+      "method": "shout",
+      "pattern": "random",
+      "chunk_bits": 2,
+      "virtualization": "flat",
+      "trace_sha256": "e2b7745bd62dc2338bd7fb5fb8d04a2faf241bbc4cd851266ecd2694b2c84b34",
+      "source_metadata": {
+        "distribution": "Uniform full ROM",
+        "seed": 1
+      },
+      "areas": {
+        "lookups": 256,
+        "table_rows": 256,
+        "core_bits": 18432,
+        "argument_bits": 4096,
+        "main_committed_bits": 32768,
+        "main_padding_bits": 10240,
+        "auxiliary_bits": 0,
+        "auxiliary_committed_bits": 0,
+        "auxiliary_padding_bits": 0,
+        "total_committed_bits": 32768,
+        "main_claims": 21,
+        "auxiliary_claims": 0
+      },
+      "logup_extra_bound": null,
+      "samples": [
+        {
+          "iteration": 0,
+          "prove_ms": 5.417732,
+          "verify_ms": 3.677805,
+          "main_commit_ms": 0.235385,
+          "auxiliary_commit_ms": 0.0,
+          "main_open_ms": 3.792854,
+          "auxiliary_open_ms": 0.0,
+          "commit_ms": 0.235385,
+          "opening_ms": 3.792854,
+          "remaining_ms": 1.3894929999999999,
+          "prep_ms": 0.20375500000000002,
+          "argument_ms": 0.863313,
+          "virtualization_ms": 0.36266899999999996,
+          "exclusive_stage_ms": {
+            "lookup.claims": 0.12419300000000001,
+            "lookup.main.commit": 0.235818,
+            "lookup.main.open": 0.00841,
+            "lookup.mosaic": 1.865245,
+            "lookup.pack": 0.030868000000000003,
+            "lookup.statement": 0.016523,
+            "lookup.witness": 0.032171,
+            "pcs.ligerito_open": 1.523441,
+            "pcs.ringswitch": 0.39660999999999996,
+            "shout.onehot": 0.345441,
+            "shout.read": 0.155203,
+            "shout.virtualization": 0.36266899999999996
+          },
+          "exclusive_stages_total_ms": 5.096592,
+          "unattributed_prove_ms": 0.32113999999999976
+        }
+      ],
+      "median": {
+        "prove_ms": 5.417732,
+        "verify_ms": 3.677805,
+        "main_commit_ms": 0.235385,
+        "auxiliary_commit_ms": 0.0,
+        "main_open_ms": 3.792854,
+        "auxiliary_open_ms": 0.0,
+        "commit_ms": 0.235385,
+        "opening_ms": 3.792854,
+        "remaining_ms": 1.3894929999999999,
+        "prep_ms": 0.20375500000000002,
+        "argument_ms": 0.863313,
+        "virtualization_ms": 0.36266899999999996,
+        "unattributed_prove_ms": 0.32113999999999976,
+        "exclusive_stage_ms": {
+          "lookup.claims": 0.12419300000000001,
+          "lookup.main.commit": 0.235818,
+          "lookup.main.open": 0.00841,
+          "lookup.mosaic": 1.865245,
+          "lookup.pack": 0.030868000000000003,
+          "lookup.statement": 0.016523,
+          "lookup.witness": 0.032171,
+          "pcs.ligerito_open": 1.523441,
+          "pcs.ringswitch": 0.39660999999999996,
+          "shout.onehot": 0.345441,
+          "shout.read": 0.155203,
+          "shout.virtualization": 0.36266899999999996
+        }
+      }
+    },
+    {
+      "method": "shout",
+      "pattern": "random",
+      "chunk_bits": 2,
+      "virtualization": "gkr",
+      "trace_sha256": "e2b7745bd62dc2338bd7fb5fb8d04a2faf241bbc4cd851266ecd2694b2c84b34",
+      "source_metadata": {
+        "distribution": "Uniform full ROM",
+        "seed": 1
+      },
+      "areas": {
+        "lookups": 256,
+        "table_rows": 256,
+        "core_bits": 18432,
+        "argument_bits": 4096,
+        "main_committed_bits": 32768,
+        "main_padding_bits": 10240,
+        "auxiliary_bits": 0,
+        "auxiliary_committed_bits": 0,
+        "auxiliary_padding_bits": 0,
+        "total_committed_bits": 32768,
+        "main_claims": 21,
+        "auxiliary_claims": 0
+      },
+      "logup_extra_bound": null,
+      "samples": [
+        {
+          "iteration": 0,
+          "prove_ms": 2.500458,
+          "verify_ms": 2.02916,
+          "main_commit_ms": 0.084369,
+          "auxiliary_commit_ms": 0.0,
+          "main_open_ms": 1.632748,
+          "auxiliary_open_ms": 0.0,
+          "commit_ms": 0.084369,
+          "opening_ms": 1.632748,
+          "remaining_ms": 0.7833409999999998,
+          "prep_ms": 0.059614,
+          "argument_ms": 0.5762349999999999,
+          "virtualization_ms": 0.289294,
+          "exclusive_stage_ms": {
+            "lookup.claims": 0.013996,
+            "lookup.main.commit": 0.084381,
+            "lookup.main.open": 0.0029739999999999996,
+            "lookup.mosaic": 0.684975,
+            "lookup.pack": 0.006297,
+            "lookup.statement": 0.03898,
+            "lookup.witness": 0.000341,
+            "pcs.ligerito_open": 0.775523,
+            "pcs.ringswitch": 0.169564,
+            "shout.onehot": 0.190549,
+            "shout.read": 0.09639199999999999,
+            "shout.virtualization": 0.05732,
+            "virt.tree.build": 0.005967,
+            "virt.tree.layers": 0.22600699999999999
+          },
+          "exclusive_stages_total_ms": 2.353266,
+          "unattributed_prove_ms": 0.147192
+        }
+      ],
+      "median": {
+        "prove_ms": 2.500458,
+        "verify_ms": 2.02916,
+        "main_commit_ms": 0.084369,
+        "auxiliary_commit_ms": 0.0,
+        "main_open_ms": 1.632748,
+        "auxiliary_open_ms": 0.0,
+        "commit_ms": 0.084369,
+        "opening_ms": 1.632748,
+        "remaining_ms": 0.7833409999999998,
+        "prep_ms": 0.059614,
+        "argument_ms": 0.5762349999999999,
+        "virtualization_ms": 0.289294,
+        "unattributed_prove_ms": 0.147192,
+        "exclusive_stage_ms": {
+          "lookup.claims": 0.013996,
+          "lookup.main.commit": 0.084381,
+          "lookup.main.open": 0.0029739999999999996,
+          "lookup.mosaic": 0.684975,
+          "lookup.pack": 0.006297,
+          "lookup.statement": 0.03898,
+          "lookup.witness": 0.000341,
+          "pcs.ligerito_open": 0.775523,
+          "pcs.ringswitch": 0.169564,
+          "shout.onehot": 0.190549,
+          "shout.read": 0.09639199999999999,
+          "shout.virtualization": 0.05732,
+          "virt.tree.build": 0.005967,
+          "virt.tree.layers": 0.22600699999999999
+        }
+      }
+    },
+    {
+      "method": "logup-star",
+      "pattern": "random",
+      "chunk_bits": null,
+      "virtualization": null,
+      "trace_sha256": "e2b7745bd62dc2338bd7fb5fb8d04a2faf241bbc4cd851266ecd2694b2c84b34",
+      "source_metadata": {
+        "distribution": "Uniform full ROM",
+        "seed": 1
+      },
+      "areas": {
+        "lookups": 256,
+        "table_rows": 256,
+        "core_bits": 18432,
+        "argument_bits": 0,
+        "main_committed_bits": 32768,
+        "main_padding_bits": 14336,
+        "auxiliary_bits": 32768,
+        "auxiliary_committed_bits": 32768,
+        "auxiliary_padding_bits": 0,
+        "total_committed_bits": 65536,
+        "main_claims": 9,
+        "auxiliary_claims": 2
+      },
+      "logup_extra_bound": {
+        "conservative_degree_numerator": 512,
+        "field_bits": 128,
+        "probability_bound": 1.504632769052528e-36,
+        "negative_log2_bound": 119.0,
+        "scope": "Conservative extra rational-identity term only, conditional on a nonzero defect; excludes poles, batching, other sumchecks and PCS. Valid indexed addresses can give a tighter N-1 rational degree."
+      },
+      "samples": [
+        {
+          "iteration": 0,
+          "prove_ms": 2.7849340000000002,
+          "verify_ms": 3.6913869999999998,
+          "main_commit_ms": 0.039919,
+          "auxiliary_commit_ms": 0.035797999999999996,
+          "main_open_ms": 0.9995869999999999,
+          "auxiliary_open_ms": 0.964701,
+          "commit_ms": 0.075717,
+          "opening_ms": 1.9642879999999998,
+          "remaining_ms": 0.7449290000000004,
+          "prep_ms": 0.024329,
+          "argument_ms": 0.686858,
+          "virtualization_ms": 0.0,
+          "exclusive_stage_ms": {
+            "lookup.aux.commit": 0.035808,
+            "lookup.aux.open": 0.000537,
+            "lookup.claims": 0.003993,
+            "lookup.logup": 0.014835,
+            "lookup.logup.fraction_witness": 0.013373000000000001,
+            "lookup.logup.pack_aux": 0.000589,
+            "lookup.logup.pushforward": 0.0013260000000000001,
+            "lookup.logup.rational": 0.590761,
+            "lookup.logup.source_claims": 0.00433,
+            "lookup.logup.table_product": 0.061644,
+            "lookup.main.commit": 0.039938,
+            "lookup.main.open": 0.0013349999999999998,
+            "lookup.mosaic": 0.525239,
+            "lookup.pack": 0.0015990000000000002,
+            "lookup.statement": 0.018547,
+            "lookup.witness": 0.00019,
+            "pcs.ligerito_open": 1.178124,
+            "pcs.ringswitch": 0.25917399999999996
+          },
+          "exclusive_stages_total_ms": 2.7513419999999997,
+          "unattributed_prove_ms": 0.03359200000000051
+        }
+      ],
+      "median": {
+        "prove_ms": 2.7849340000000002,
+        "verify_ms": 3.6913869999999998,
+        "main_commit_ms": 0.039919,
+        "auxiliary_commit_ms": 0.035797999999999996,
+        "main_open_ms": 0.9995869999999999,
+        "auxiliary_open_ms": 0.964701,
+        "commit_ms": 0.075717,
+        "opening_ms": 1.9642879999999998,
+        "remaining_ms": 0.7449290000000004,
+        "prep_ms": 0.024329,
+        "argument_ms": 0.686858,
+        "virtualization_ms": 0.0,
+        "unattributed_prove_ms": 0.03359200000000051,
+        "exclusive_stage_ms": {
+          "lookup.aux.commit": 0.035808,
+          "lookup.aux.open": 0.000537,
+          "lookup.claims": 0.003993,
+          "lookup.logup": 0.014835,
+          "lookup.logup.fraction_witness": 0.013373000000000001,
+          "lookup.logup.pack_aux": 0.000589,
+          "lookup.logup.pushforward": 0.0013260000000000001,
+          "lookup.logup.rational": 0.590761,
+          "lookup.logup.source_claims": 0.00433,
+          "lookup.logup.table_product": 0.061644,
+          "lookup.main.commit": 0.039938,
+          "lookup.main.open": 0.0013349999999999998,
+          "lookup.mosaic": 0.525239,
+          "lookup.pack": 0.0015990000000000002,
+          "lookup.statement": 0.018547,
+          "lookup.witness": 0.00019,
+          "pcs.ligerito_open": 1.178124,
+          "pcs.ringswitch": 0.25917399999999996
+        }
+      }
+    },
+    {
+      "method": "shout",
+      "pattern": "local",
+      "chunk_bits": 2,
+      "virtualization": "flat",
+      "trace_sha256": "bc25fb1ea60b830a7181b90915cd1965432948bf5c2054cdf6809f7dcabbf0b6",
+      "source_metadata": {
+        "distribution": "15/16 first min(N,64) rows; 1/16 uniform full ROM",
+        "seed": 1
+      },
+      "areas": {
+        "lookups": 256,
+        "table_rows": 256,
+        "core_bits": 18432,
+        "argument_bits": 4096,
+        "main_committed_bits": 32768,
+        "main_padding_bits": 10240,
+        "auxiliary_bits": 0,
+        "auxiliary_committed_bits": 0,
+        "auxiliary_padding_bits": 0,
+        "total_committed_bits": 32768,
+        "main_claims": 21,
+        "auxiliary_claims": 0
+      },
+      "logup_extra_bound": null,
+      "samples": [
+        {
+          "iteration": 0,
+          "prove_ms": 1.7558070000000001,
+          "verify_ms": 4.585697,
+          "main_commit_ms": 0.052986,
+          "auxiliary_commit_ms": 0.0,
+          "main_open_ms": 1.252406,
+          "auxiliary_open_ms": 0.0,
+          "commit_ms": 0.052986,
+          "opening_ms": 1.252406,
+          "remaining_ms": 0.45041500000000023,
+          "prep_ms": 0.037099999999999994,
+          "argument_ms": 0.303743,
+          "virtualization_ms": 0.11427999999999999,
+          "exclusive_stage_ms": {
+            "lookup.claims": 0.009094,
+            "lookup.main.commit": 0.052999,
+            "lookup.main.open": 0.002309,
+            "lookup.mosaic": 0.536741,
+            "lookup.pack": 0.003832,
+            "lookup.statement": 0.023967,
+            "lookup.witness": 0.000207,
+            "pcs.ligerito_open": 0.5857800000000001,
+            "pcs.ringswitch": 0.127911,
+            "shout.onehot": 0.12548299999999998,
+            "shout.read": 0.06398,
+            "shout.virtualization": 0.11427999999999999
+          },
+          "exclusive_stages_total_ms": 1.6465829999999997,
+          "unattributed_prove_ms": 0.10922400000000043
+        }
+      ],
+      "median": {
+        "prove_ms": 1.7558070000000001,
+        "verify_ms": 4.585697,
+        "main_commit_ms": 0.052986,
+        "auxiliary_commit_ms": 0.0,
+        "main_open_ms": 1.252406,
+        "auxiliary_open_ms": 0.0,
+        "commit_ms": 0.052986,
+        "opening_ms": 1.252406,
+        "remaining_ms": 0.45041500000000023,
+        "prep_ms": 0.037099999999999994,
+        "argument_ms": 0.303743,
+        "virtualization_ms": 0.11427999999999999,
+        "unattributed_prove_ms": 0.10922400000000043,
+        "exclusive_stage_ms": {
+          "lookup.claims": 0.009094,
+          "lookup.main.commit": 0.052999,
+          "lookup.main.open": 0.002309,
+          "lookup.mosaic": 0.536741,
+          "lookup.pack": 0.003832,
+          "lookup.statement": 0.023967,
+          "lookup.witness": 0.000207,
+          "pcs.ligerito_open": 0.5857800000000001,
+          "pcs.ringswitch": 0.127911,
+          "shout.onehot": 0.12548299999999998,
+          "shout.read": 0.06398,
+          "shout.virtualization": 0.11427999999999999
+        }
+      }
+    },
+    {
+      "method": "shout",
+      "pattern": "local",
+      "chunk_bits": 2,
+      "virtualization": "gkr",
+      "trace_sha256": "bc25fb1ea60b830a7181b90915cd1965432948bf5c2054cdf6809f7dcabbf0b6",
+      "source_metadata": {
+        "distribution": "15/16 first min(N,64) rows; 1/16 uniform full ROM",
+        "seed": 1
+      },
+      "areas": {
+        "lookups": 256,
+        "table_rows": 256,
+        "core_bits": 18432,
+        "argument_bits": 4096,
+        "main_committed_bits": 32768,
+        "main_padding_bits": 10240,
+        "auxiliary_bits": 0,
+        "auxiliary_committed_bits": 0,
+        "auxiliary_padding_bits": 0,
+        "total_committed_bits": 32768,
+        "main_claims": 21,
+        "auxiliary_claims": 0
+      },
+      "logup_extra_bound": null,
+      "samples": [
+        {
+          "iteration": 0,
+          "prove_ms": 1.835363,
+          "verify_ms": 1.835556,
+          "main_commit_ms": 0.045831000000000004,
+          "auxiliary_commit_ms": 0.0,
+          "main_open_ms": 1.218955,
+          "auxiliary_open_ms": 0.0,
+          "commit_ms": 0.045831000000000004,
+          "opening_ms": 1.218955,
+          "remaining_ms": 0.5705770000000001,
+          "prep_ms": 0.034561999999999996,
+          "argument_ms": 0.44186100000000006,
+          "virtualization_ms": 0.22450900000000001,
+          "exclusive_stage_ms": {
+            "lookup.claims": 0.008960000000000001,
+            "lookup.main.commit": 0.045853000000000005,
+            "lookup.main.open": 0.002277,
+            "lookup.mosaic": 0.5077149999999999,
+            "lookup.pack": 0.004636,
+            "lookup.statement": 0.020731,
+            "lookup.witness": 0.000235,
+            "pcs.ligerito_open": 0.577573,
+            "pcs.ringswitch": 0.131765,
+            "shout.onehot": 0.143969,
+            "shout.read": 0.073383,
+            "shout.virtualization": 0.041205000000000006,
+            "virt.tree.build": 0.005575,
+            "virt.tree.layers": 0.177729
+          },
+          "exclusive_stages_total_ms": 1.741606,
+          "unattributed_prove_ms": 0.09375700000000009
+        }
+      ],
+      "median": {
+        "prove_ms": 1.835363,
+        "verify_ms": 1.835556,
+        "main_commit_ms": 0.045831000000000004,
+        "auxiliary_commit_ms": 0.0,
+        "main_open_ms": 1.218955,
+        "auxiliary_open_ms": 0.0,
+        "commit_ms": 0.045831000000000004,
+        "opening_ms": 1.218955,
+        "remaining_ms": 0.5705770000000001,
+        "prep_ms": 0.034561999999999996,
+        "argument_ms": 0.44186100000000006,
+        "virtualization_ms": 0.22450900000000001,
+        "unattributed_prove_ms": 0.09375700000000009,
+        "exclusive_stage_ms": {
+          "lookup.claims": 0.008960000000000001,
+          "lookup.main.commit": 0.045853000000000005,
+          "lookup.main.open": 0.002277,
+          "lookup.mosaic": 0.5077149999999999,
+          "lookup.pack": 0.004636,
+          "lookup.statement": 0.020731,
+          "lookup.witness": 0.000235,
+          "pcs.ligerito_open": 0.577573,
+          "pcs.ringswitch": 0.131765,
+          "shout.onehot": 0.143969,
+          "shout.read": 0.073383,
+          "shout.virtualization": 0.041205000000000006,
+          "virt.tree.build": 0.005575,
+          "virt.tree.layers": 0.177729
+        }
+      }
+    },
+    {
+      "method": "logup-star",
+      "pattern": "local",
+      "chunk_bits": null,
+      "virtualization": null,
+      "trace_sha256": "bc25fb1ea60b830a7181b90915cd1965432948bf5c2054cdf6809f7dcabbf0b6",
+      "source_metadata": {
+        "distribution": "15/16 first min(N,64) rows; 1/16 uniform full ROM",
+        "seed": 1
+      },
+      "areas": {
+        "lookups": 256,
+        "table_rows": 256,
+        "core_bits": 18432,
+        "argument_bits": 0,
+        "main_committed_bits": 32768,
+        "main_padding_bits": 14336,
+        "auxiliary_bits": 32768,
+        "auxiliary_committed_bits": 32768,
+        "auxiliary_padding_bits": 0,
+        "total_committed_bits": 65536,
+        "main_claims": 9,
+        "auxiliary_claims": 2
+      },
+      "logup_extra_bound": {
+        "conservative_degree_numerator": 512,
+        "field_bits": 128,
+        "probability_bound": 1.504632769052528e-36,
+        "negative_log2_bound": 119.0,
+        "scope": "Conservative extra rational-identity term only, conditional on a nonzero defect; excludes poles, batching, other sumchecks and PCS. Valid indexed addresses can give a tighter N-1 rational degree."
+      },
+      "samples": [
+        {
+          "iteration": 0,
+          "prove_ms": 3.046367,
+          "verify_ms": 3.777131,
+          "main_commit_ms": 0.040723999999999996,
+          "auxiliary_commit_ms": 0.03519,
+          "main_open_ms": 1.0528460000000002,
+          "auxiliary_open_ms": 1.169651,
+          "commit_ms": 0.075914,
+          "opening_ms": 2.222497,
+          "remaining_ms": 0.7479559999999998,
+          "prep_ms": 0.023759,
+          "argument_ms": 0.690897,
+          "virtualization_ms": 0.0,
+          "exclusive_stage_ms": {
+            "lookup.aux.commit": 0.035202,
+            "lookup.aux.open": 0.00098,
+            "lookup.claims": 0.003859,
+            "lookup.logup": 0.014623,
+            "lookup.logup.fraction_witness": 0.012171,
+            "lookup.logup.pack_aux": 0.000536,
+            "lookup.logup.pushforward": 0.001271,
+            "lookup.logup.rational": 0.599167,
+            "lookup.logup.source_claims": 0.003682,
+            "lookup.logup.table_product": 0.059447,
+            "lookup.main.commit": 0.040739,
+            "lookup.main.open": 0.001305,
+            "lookup.mosaic": 0.719323,
+            "lookup.pack": 0.001477,
+            "lookup.statement": 0.018219,
+            "lookup.witness": 0.000204,
+            "pcs.ligerito_open": 1.2545060000000001,
+            "pcs.ringswitch": 0.24652300000000002
+          },
+          "exclusive_stages_total_ms": 3.0132339999999997,
+          "unattributed_prove_ms": 0.0331330000000003
+        }
+      ],
+      "median": {
+        "prove_ms": 3.046367,
+        "verify_ms": 3.777131,
+        "main_commit_ms": 0.040723999999999996,
+        "auxiliary_commit_ms": 0.03519,
+        "main_open_ms": 1.0528460000000002,
+        "auxiliary_open_ms": 1.169651,
+        "commit_ms": 0.075914,
+        "opening_ms": 2.222497,
+        "remaining_ms": 0.7479559999999998,
+        "prep_ms": 0.023759,
+        "argument_ms": 0.690897,
+        "virtualization_ms": 0.0,
+        "unattributed_prove_ms": 0.0331330000000003,
+        "exclusive_stage_ms": {
+          "lookup.aux.commit": 0.035202,
+          "lookup.aux.open": 0.00098,
+          "lookup.claims": 0.003859,
+          "lookup.logup": 0.014623,
+          "lookup.logup.fraction_witness": 0.012171,
+          "lookup.logup.pack_aux": 0.000536,
+          "lookup.logup.pushforward": 0.001271,
+          "lookup.logup.rational": 0.599167,
+          "lookup.logup.source_claims": 0.003682,
+          "lookup.logup.table_product": 0.059447,
+          "lookup.main.commit": 0.040739,
+          "lookup.main.open": 0.001305,
+          "lookup.mosaic": 0.719323,
+          "lookup.pack": 0.001477,
+          "lookup.statement": 0.018219,
+          "lookup.witness": 0.000204,
+          "pcs.ligerito_open": 1.2545060000000001,
+          "pcs.ringswitch": 0.24652300000000002
+        }
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "shout_case": 0,
+      "logup_case": 2,
+      "trace_sha256": "e2b7745bd62dc2338bd7fb5fb8d04a2faf241bbc4cd851266ecd2694b2c84b34",
+      "logup_prover_speedup": 1.9453717754172988,
+      "logup_verifier_speedup": 0.99632062419898,
+      "shout_to_logup_commit_ratio": 3.1087470449172576,
+      "shout_to_logup_opening_ratio": 1.9309052440375345,
+      "shout_to_logup_committed_area_ratio": 0.5
+    },
+    {
+      "shout_case": 1,
+      "logup_case": 2,
+      "trace_sha256": "e2b7745bd62dc2338bd7fb5fb8d04a2faf241bbc4cd851266ecd2694b2c84b34",
+      "logup_prover_speedup": 0.8978517982831908,
+      "logup_verifier_speedup": 0.5497012369605246,
+      "shout_to_logup_commit_ratio": 1.114267601727485,
+      "shout_to_logup_opening_ratio": 0.8312161964029716,
+      "shout_to_logup_committed_area_ratio": 0.5
+    },
+    {
+      "shout_case": 3,
+      "logup_case": 5,
+      "trace_sha256": "bc25fb1ea60b830a7181b90915cd1965432948bf5c2054cdf6809f7dcabbf0b6",
+      "logup_prover_speedup": 0.5763609571663559,
+      "logup_verifier_speedup": 1.2140688263128814,
+      "shout_to_logup_commit_ratio": 0.6979740232368207,
+      "shout_to_logup_opening_ratio": 0.5635130216148773,
+      "shout_to_logup_committed_area_ratio": 0.5
+    },
+    {
+      "shout_case": 4,
+      "logup_case": 5,
+      "trace_sha256": "bc25fb1ea60b830a7181b90915cd1965432948bf5c2054cdf6809f7dcabbf0b6",
+      "logup_prover_speedup": 0.6024759984598047,
+      "logup_verifier_speedup": 0.48596567076969266,
+      "shout_to_logup_commit_ratio": 0.6037226335063361,
+      "shout_to_logup_opening_ratio": 0.5484619326820238,
+      "shout_to_logup_committed_area_ratio": 0.5
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+   Compiling ram-compare v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-compare)
+    Finished `release` profile [optimized] target(s) in 7.11s
+     Running `target/release/ram-compare --methods spice,twist --patterns random --address-bits 4 --log-cycles 4 --chunk-bits 2,1 --threads 8 --warmup 1 --repeat 1 --output /tmp/stage14-ram-compare-smoke.json --csv /tmp/stage14-ram-compare-smoke.csv`
+random/spice/chunk=None: T=2^4 N=2^4 threads=8
+random spice chunk=None: prove=1.927ms verify=1.738ms commit=0.047ms open=0.851ms IOP+prep=1.029ms bits=2336/16384 populated/padded
+  preparation=0.050ms argument=0.838ms unattributed=0.141ms (independent medians)
+    mosaic.batch                                0.699ms
+    pcs.commit                                  0.047ms
+    pcs.ligerito_open                           0.685ms
+    pcs.open                                    0.000ms
+    pcs.ringswitch                              0.166ms
+    spice.pack                                  0.026ms
+    spice.permutation.claims                    0.020ms
+    spice.permutation.gkr                       0.093ms
+    spice.permutation.leaves                    0.024ms
+    spice.statement                             0.024ms
+    spice.witness                               0.000ms
+  fingerprint_bound_bits≈123.000 (GP term only; excludes other checks)
+random/twist/chunk=Some(2): T=2^4 N=2^4 threads=8
+random twist chunk=Some(2): prove=1.771ms verify=2.002ms commit=0.044ms open=0.785ms IOP+prep=0.942ms bits=2176/16384 populated/padded
+  preparation=0.026ms argument=0.882ms unattributed=0.035ms (independent medians)
+    mosaic.batch                                0.314ms
+    pcs.commit                                  0.044ms
+    pcs.ligerito_open                           0.638ms
+    pcs.open                                    0.000ms
+    pcs.ringswitch                              0.147ms
+    ram.claims                                  0.005ms
+    ram.pack                                    0.001ms
+    ram.statement                               0.018ms
+    ram.twist                                   0.000ms
+    ram.witness                                 0.001ms
+    twist.final                                 0.071ms
+    twist.onehot                                0.070ms
+    twist.other                                 0.068ms
+    twist.rw.address                            0.031ms
+    twist.rw.cycles                             0.038ms
+    twist.rw.setup                              0.004ms
+    twist.val                                   0.038ms
+    twist.virtualization                        0.096ms
+    virt.claim_reduction                        0.116ms
+    virt.flat.claims                            0.000ms
+    virt.flat.product                           0.035ms
+random/twist/chunk=Some(1): T=2^4 N=2^4 threads=8
+random twist chunk=Some(1): prove=2.613ms verify=2.657ms commit=0.071ms open=0.949ms IOP+prep=1.593ms bits=2176/16384 populated/padded
+  preparation=0.041ms argument=1.494ms unattributed=0.058ms (independent medians)
+    mosaic.batch                                0.581ms
+    pcs.commit                                  0.071ms
+    pcs.ligerito_open                           0.756ms
+    pcs.open                                    0.000ms
+    pcs.ringswitch                              0.193ms
+    ram.claims                                  0.008ms
+    ram.pack                                    0.002ms
+    ram.statement                               0.030ms
+    ram.twist                                   0.000ms
+    ram.witness                                 0.001ms
+    twist.final                                 0.081ms
+    twist.onehot                                0.101ms
+    twist.other                                 0.077ms
+    twist.rw.address                            0.033ms
+    twist.rw.cycles                             0.047ms
+    twist.rw.setup                              0.005ms
+    twist.val                                   0.229ms
+    twist.virtualization                        0.135ms
+    virt.claim_reduction                        0.155ms
+    virt.flat.claims                            0.000ms
+    virt.flat.product                           0.049ms
+JSON: /tmp/stage14-ram-compare-smoke.json
+CSV: /tmp/stage14-ram-compare-smoke.csv
+random Twist(Some(2))/Spice ratios: prover=0.919× verifier=1.152× populated=0.932× committed=1.000×
+random Twist(Some(1))/Spice ratios: prover=1.356× verifier=1.528× populated=0.932× committed=1.000×
+Verified 6 proofs across 3 cases, including warmups.

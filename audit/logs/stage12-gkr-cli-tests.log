@@ -1,0 +1,15 @@
+    Blocking waiting for file lock on build directory
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+   Compiling ram-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-argument)
+   Compiling ram-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-bench)
+    Finished `release` profile [optimized] target(s) in 10.24s
+     Running unittests src/main.rs (target/release/deps/ram_bench-f1cbe10ec74591e1)
+
+running 4 tests
+test tests::mode_and_dummy_comparisons_keep_the_other_dimension_fixed ... ok
+test tests::dummy_comparisons_use_exact_work_counts_and_match_programs ... ok
+test tests::no_useful_rows_have_no_normalized_cost_or_comparison ... ok
+test tests::virtualization_total_includes_exclusive_tree_children ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

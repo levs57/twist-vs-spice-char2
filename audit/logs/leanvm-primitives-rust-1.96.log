@@ -1,0 +1,70 @@
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded tikv-jemallocator v0.7.0
+  Downloaded ansi_term v0.12.1
+  Downloaded quote v1.0.46
+  Downloaded thiserror v2.0.18
+  Downloaded log v0.4.33
+  Downloaded tracing-forest v0.3.1
+  Downloaded thiserror-impl v2.0.18
+  Downloaded smallvec v1.15.2
+  Downloaded rand v0.9.4
+  Downloaded aho-corasick v1.1.4
+  Downloaded syn v2.0.118
+  Downloaded regex-automata v0.4.16
+  Downloaded tikv-jemalloc-sys v0.7.1+5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8
+   Compiling proc-macro2 v1.0.106
+   Compiling cfg-if v1.0.4
+   Compiling libc v0.2.186
+   Compiling quote v1.0.46
+   Compiling unicode-ident v1.0.24
+   Compiling zerocopy v0.8.52
+   Compiling getrandom v0.3.4
+   Compiling find-msvc-tools v0.1.11
+   Compiling shlex v2.0.1
+   Compiling once_cell v1.21.4
+   Compiling cc v1.4.4
+   Compiling tracing-core v0.1.36
+   Compiling syn v2.0.118
+   Compiling regex-syntax v0.8.11
+   Compiling typenum v1.20.1
+   Compiling hybrid-array v0.4.14
+   Compiling regex-automata v0.4.16
+   Compiling ppv-lite86 v0.2.21
+   Compiling tikv-jemalloc-sys v0.7.1+5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8
+   Compiling rand_core v0.9.5
+   Compiling thiserror v2.0.18
+   Compiling lazy_static v1.5.0
+   Compiling pin-project-lite v0.2.17
+   Compiling tracing-attributes v0.1.31
+   Compiling log v0.4.33
+   Compiling tracing-log v0.2.0
+   Compiling thiserror-impl v2.0.18
+   Compiling sharded-slab v0.1.7
+   Compiling rand_chacha v0.9.0
+   Compiling tracing v0.1.44
+   Compiling matchers v0.2.0
+   Compiling thread_local v1.1.10
+   Compiling nu-ansi-term v0.50.3
+   Compiling smallvec v1.15.2
+   Compiling tracing-subscriber v0.3.23
+   Compiling rand v0.9.4
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling const-oid v0.10.2
+   Compiling ansi_term v0.12.1
+   Compiling parallel v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/parallel)
+   Compiling tracing-forest v0.3.1
+   Compiling primitives v0.1.0 (/home/user/Programming/memarg-exploration/sources/leanVM/crates/primitives)
+error[E0658]: use of unstable library feature `isolate_most_least_significant_one`
+  --> crates/primitives/src/bit_fold.rs:93:29
+   |
+93 |                 let low = v.isolate_lowest_one();
+   |                             ^^^^^^^^^^^^^^^^^^
+   |
+   = note: see issue #136909 <https://github.com/rust-lang/rust/issues/136909> for more information
+
+   Compiling digest v0.11.3
+For more information about this error, try `rustc --explain E0658`.
+error: could not compile `primitives` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

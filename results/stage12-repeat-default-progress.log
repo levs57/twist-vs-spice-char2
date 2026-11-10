@@ -1,0 +1,2 @@
+random/natural/shared: 2^12 cycles, 2^12 words, 4-bit components, 4 workers
+guest/natural/shared: 2^12 cycles, 2^12 words, 4-bit components, 4 workers

@@ -1,0 +1,15 @@
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 7.05s
+     Running unittests src/lib.rs (target/release/deps/om_memcheck-f948c5b6c3e35441)
+
+running 7 tests
+test virt_product::tests::product_is_formed_before_off_cube_cycle_evaluation ... ok
+test virt_product::tests::cached_small_point_and_prefix_mass_are_exact ... ok
+test virt_product::tests::product_tree_reuses_coefficients_and_prunes_constant_zero_lines ... ok
+test virt_product::tests::raw_coefficient_karatsuba_matches_schoolbook_in_characteristic_two ... ok
+test virt_product::tests::flat_product_handles_zero_one_and_annihilated_equality_challenges ... ok
+test virt_product::tests::flat_product_matches_dense_messages_for_shapes_bits_and_lazy_tails ... ok
+test virt_product::tests::parallel_flat_product_matches_dense_with_lazy_dense_transition ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 33 filtered out; finished in 0.06s
+

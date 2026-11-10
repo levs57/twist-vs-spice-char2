@@ -1,0 +1,27 @@
+Verified GF128 RAM proofs; times are medians in milliseconds.
+
+random/natural: chunk=4 bits, d=2, samples=3
+  payload cycles      2048 real + 0 idle (0.0% padding)
+  prover total           13.567
+  commitment              2.973  (21.7% median share)
+  everything else        10.593
+  verifier                9.962
+    mosaic.batch                    2.613
+    pcs.commit                      2.973
+    pcs.ligerito_open               2.613
+    pcs.open                        0.001
+    pcs.ringswitch                  0.496
+    ram.claims                      0.120
+    ram.pack                        0.026
+    ram.statement                   0.021
+    ram.twist                       0.000
+    ram.witness                     0.022
+    twist.final                     0.108
+    twist.onehot                    1.185
+    twist.other                     0.023
+    twist.rw.address                0.086
+    twist.rw.cycles                 2.216
+    twist.rw.setup                  0.043
+    twist.val                       0.197
+    twist.virtualization            0.682
+    unattributed                    0.028

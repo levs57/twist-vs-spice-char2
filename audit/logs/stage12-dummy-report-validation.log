@@ -1,0 +1,5 @@
+stage12-dummies-a16-n18 : 4 cases, 20 measured proofs, 2 paired comparisons; all report invariants passed
+stage12-dummies-reversed-a16-n18 : 4 cases, 20 measured proofs, 2 paired comparisons; all report invariants passed
+stage12-dummies-prefix-smoke : 14 cases, 14 measured proofs, 0 paired comparisons; all report invariants passed
+Successfully verified benchmark proofs including warmups: 62
+Zero-useful-row cases: 6

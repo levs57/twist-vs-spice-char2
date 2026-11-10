@@ -1,0 +1,7 @@
+COMMAND ['/home/user/Programming/memarg-exploration/target/stage14-grandproduct/release/examples/benchmark', '18', '8', '5', '1']
+backend,field_bits,trees,log_size,logical_leaves_per_tree,active_leaves_per_tree,threads,sample,prepare_ms,prove_ms,total_ms,total_ms_per_tree,quartic_pair_upper_bound_per_tree,fold_row_upper_bound_per_tree,proof_fields,root0,leaf0
+ported-radix4,128,2,18,262144,139264,8,0,0.885031,2.531414,3.423147,1.711574,87372,87372,362,ec0f90a39bbd197f6d30f7b3464d221d,1e66d23a8adebef16f9c7c3419ce15eb
+ported-radix4,128,2,18,262144,139264,8,1,0.914127,3.850112,4.769223,2.384612,87372,87372,362,ec0f90a39bbd197f6d30f7b3464d221d,1e66d23a8adebef16f9c7c3419ce15eb
+ported-radix4,128,2,18,262144,139264,8,2,0.822394,2.368813,3.196678,1.598339,87372,87372,362,ec0f90a39bbd197f6d30f7b3464d221d,1e66d23a8adebef16f9c7c3419ce15eb
+ported-radix4,128,2,18,262144,139264,8,3,0.722424,2.623567,3.351375,1.675687,87372,87372,362,ec0f90a39bbd197f6d30f7b3464d221d,1e66d23a8adebef16f9c7c3419ce15eb
+ported-radix4,128,2,18,262144,139264,8,4,0.838151,2.815203,3.663628,1.831814,87372,87372,362,ec0f90a39bbd197f6d30f7b3464d221d,1e66d23a8adebef16f9c7c3419ce15eb

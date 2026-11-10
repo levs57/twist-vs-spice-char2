@@ -1,0 +1,24 @@
+Audit-only Spice protocol probe; production code unchanged.
+probe_sha256=1f5b820013d82fdb1b48969f5c968d68bbd11df734d2c7dff211fcdacc417bea
+rustc 1.96.0 (ac68faa20 2026-05-25)
+     Locking 1 package to latest Rust 1.96.0 compatible version
+
+Target=native RUSTFLAGS='-C target-cpu=native'
+   Compiling memarg-spice-protocol-probe v0.0.0 (/tmp/memarg-spice-protocol-76nkkq5c)
+    Finished `release` profile [optimized] target(s) in 0.43s
+     Running `target/release/memarg-spice-protocol-probe`
+GF32: generator_integer=0x92e341fcad251f6b0530a4883c2fd05e polynomial=0x13f4d23d5 order=4294967295
+GF32: exact order/minimal polynomial/basis/random products/32 opening weights PASS; low32 polynomial injection is not a subfield
+CHRONOLOGY: exact tuple permutation + nonzero GF32 counters + acyclic links PASS, but chronological reads/final memory FAIL as expected
+ZERO CYCLE: exact tuple permutation with unchanged public boundary PASS, but access counters violate GF32* membership as expected
+PASS 11436 assertions; audit-only arithmetic/multiset probe, not a full proof or implementation
+
+Target=default RUSTFLAGS=''
+   Compiling memarg-spice-protocol-probe v0.0.0 (/tmp/memarg-spice-protocol-76nkkq5c)
+    Finished `release` profile [optimized] target(s) in 0.41s
+     Running `target/release/memarg-spice-protocol-probe`
+GF32: generator_integer=0x92e341fcad251f6b0530a4883c2fd05e polynomial=0x13f4d23d5 order=4294967295
+GF32: exact order/minimal polynomial/basis/random products/32 opening weights PASS; low32 polynomial injection is not a subfield
+CHRONOLOGY: exact tuple permutation + nonzero GF32 counters + acyclic links PASS, but chronological reads/final memory FAIL as expected
+ZERO CYCLE: exact tuple permutation with unchanged public boundary PASS, but access counters violate GF32* membership as expected
+PASS 11436 assertions; audit-only arithmetic/multiset probe, not a full proof or implementation

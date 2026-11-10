@@ -1,0 +1,204 @@
+{
+  "schema": "memarg-stage-1.2/v2",
+  "upstream_revision": "febfc0e66f5809e034dd1afac78202bd4882de27",
+  "field": "GF(2^128), X^128+X^7+X^2+X+1",
+  "options": {
+    "payload": "random",
+    "log_cycles": 11,
+    "address_bits": 8,
+    "chunk_bits": [
+      4
+    ],
+    "memory_model": "independent",
+    "reads": 2,
+    "layout": "natural",
+    "threads": 1,
+    "repeat": 3,
+    "warmup": 1,
+    "seed": 1,
+    "profile": "provable-120",
+    "log_rate": 2,
+    "guest_keys": 64,
+    "guest_queries": 16,
+    "output": "results/stage12-two-ports.json",
+    "csv": null
+  },
+  "environment": {
+    "architecture": "x86_64",
+    "compiled_avx2": "true",
+    "compiled_avx512f": "false",
+    "compiled_pclmulqdq": "true",
+    "cpu_model": "13th Gen Intel(R) Core(TM) i9-13980HX",
+    "os": "linux",
+    "rustc_on_path": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "cases": [
+    {
+      "payload": "random",
+      "layout": "natural",
+      "chunk_bits": 4,
+      "address_components": 2,
+      "payload_generation_ms": 0.032183,
+      "source_payload_metadata": {
+        "address_bits": 8,
+        "cycles": 2048,
+        "guest": null,
+        "kind": "uniform-random",
+        "memory_model": "independent-ports",
+        "padding_cycles": 0,
+        "read_ports": 2,
+        "real_cycles": 2048,
+        "seed": 1
+      },
+      "address_relabeling": "Identity; source compact_to_original mapping applies directly.",
+      "proof_summary": {
+        "cycles": 2048,
+        "memory_cells": 256,
+        "address_components": 2,
+        "chunk_bits": 4,
+        "committed_bits": 1048576,
+        "packed_field_elements": 8192,
+        "mosaic_claims": 26,
+        "commitment_components": [
+          {
+            "name": "ram/ra0/1",
+            "log_size": 15
+          },
+          {
+            "name": "ram/ra0/2",
+            "log_size": 15
+          },
+          {
+            "name": "ram/ra1/1",
+            "log_size": 15
+          },
+          {
+            "name": "ram/ra1/2",
+            "log_size": 15
+          },
+          {
+            "name": "ram/wa/1",
+            "log_size": 15
+          },
+          {
+            "name": "ram/wa/2",
+            "log_size": 15
+          },
+          {
+            "name": "ram/inc",
+            "log_size": 17
+          },
+          {
+            "name": "input/rv0",
+            "log_size": 17
+          },
+          {
+            "name": "input/rv1",
+            "log_size": 17
+          },
+          {
+            "name": "input/wv",
+            "log_size": 17
+          }
+        ],
+        "commitment_footprint": {
+          "address_encoding_bits": 196608,
+          "read_write_value_bits": 393216,
+          "increment_bits": 131072,
+          "raw_binary_address_bits": 0,
+          "other_bits": 0,
+          "populated_bits": 720896,
+          "padding_bits": 327680,
+          "populated_bits_per_cycle": 352,
+          "padded_bits_per_cycle": 512
+        }
+      },
+      "samples": [
+        {
+          "prover_ms": 12.963014,
+          "commitment_ms": 3.0199010000000004,
+          "everything_else_ms": 9.943112999999999,
+          "commitment_fraction": 0.23296287422045525,
+          "verifier_ms": 10.076568,
+          "unattributed_ms": 0.02517599999999831,
+          "stages_ms": {
+            "mosaic.batch": 2.051852,
+            "pcs.commit": 3.0199010000000004,
+            "pcs.ligerito_open": 2.515387,
+            "pcs.open": 0.0007549999999999999,
+            "pcs.ringswitch": 0.48966600000000005,
+            "ram.claims": 0.11627900000000001,
+            "ram.pack": 0.025249,
+            "ram.statement": 0.019794,
+            "ram.twist": 0.00025899999999999995,
+            "ram.witness": 0.020631,
+            "twist.final": 0.112493,
+            "twist.onehot": 1.236844,
+            "twist.other": 0.023348,
+            "twist.rw.address": 0.092408,
+            "twist.rw.cycles": 2.247452,
+            "twist.rw.setup": 0.044360000000000004,
+            "twist.val": 0.19789600000000002,
+            "twist.virtualization": 0.723264
+          }
+        },
+        {
+          "prover_ms": 12.605606,
+          "commitment_ms": 3.037774,
+          "everything_else_ms": 9.567832,
+          "commitment_fraction": 0.24098595497907838,
+          "verifier_ms": 17.998268000000003,
+          "unattributed_ms": 0.03513700000000064,
+          "stages_ms": {
+            "mosaic.batch": 1.768662,
+            "pcs.commit": 3.037774,
+            "pcs.ligerito_open": 2.449481,
+            "pcs.open": 0.0008759999999999999,
+            "pcs.ringswitch": 0.487377,
+            "ram.claims": 0.117919,
+            "ram.pack": 0.021294999999999998,
+            "ram.statement": 0.021147,
+            "ram.twist": 0.000246,
+            "ram.witness": 0.022514000000000003,
+            "twist.final": 0.112438,
+            "twist.onehot": 1.2118980000000001,
+            "twist.other": 0.024253,
+            "twist.rw.address": 0.089012,
+            "twist.rw.cycles": 2.250013,
+            "twist.rw.setup": 0.04435,
+            "twist.val": 0.19839700000000002,
+            "twist.virtualization": 0.712817
+          }
+        },
+        {
+          "prover_ms": 15.230408,
+          "commitment_ms": 5.17378,
+          "everything_else_ms": 10.056628,
+          "commitment_fraction": 0.3397006830020574,
+          "verifier_ms": 19.538032,
+          "unattributed_ms": 0.03207300000000046,
+          "stages_ms": {
+            "mosaic.batch": 1.749166,
+            "pcs.commit": 5.17378,
+            "pcs.ligerito_open": 3.351115,
+            "pcs.open": 0.001017,
+            "pcs.ringswitch": 0.548872,
+            "ram.claims": 0.132518,
+            "ram.pack": 0.024907000000000002,
+            "ram.statement": 0.020651,
+            "ram.twist": 0.000391,
+            "ram.witness": 0.032524000000000004,
+            "twist.final": 0.09795,
+            "twist.onehot": 1.08214,
+            "twist.other": 0.023412,
+            "twist.rw.address": 0.08178500000000001,
+            "twist.rw.cycles": 2.0181169999999997,
+            "twist.rw.setup": 0.047692,
+            "twist.val": 0.182177,
+            "twist.virtualization": 0.6301209999999999
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,203 @@
+{
+  "schema": "memarg-stage-1.2/v1",
+  "upstream_revision": "febfc0e66f5809e034dd1afac78202bd4882de27",
+  "field": "GF(2^128), X^128+X^7+X^2+X+1",
+  "options": {
+    "payload": "random",
+    "log_cycles": 11,
+    "address_bits": 8,
+    "chunk_bits": [
+      4
+    ],
+    "reads": 2,
+    "layout": "natural",
+    "threads": 1,
+    "repeat": 3,
+    "warmup": 1,
+    "seed": 1,
+    "profile": "provable-120",
+    "log_rate": 2,
+    "guest_keys": 64,
+    "guest_queries": 16,
+    "output": "results/stage12-two-ports.json",
+    "csv": null
+  },
+  "environment": {
+    "architecture": "x86_64",
+    "compiled_avx2": "true",
+    "compiled_avx512f": "false",
+    "compiled_pclmulqdq": "true",
+    "cpu_model": "13th Gen Intel(R) Core(TM) i9-13980HX",
+    "os": "linux",
+    "rustc_on_path": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+  },
+  "cases": [
+    {
+      "payload": "random",
+      "layout": "natural",
+      "chunk_bits": 4,
+      "address_components": 2,
+      "payload_generation_ms": 0.028065,
+      "source_payload_metadata": {
+        "address_bits": 8,
+        "cycles": 2048,
+        "guest": null,
+        "kind": "uniform-random",
+        "padding_cycles": 0,
+        "read_ports": 2,
+        "real_cycles": 2048,
+        "seed": 1
+      },
+      "address_relabeling": "Identity; source compact_to_original mapping applies directly.",
+      "proof_summary": {
+        "cycles": 2048,
+        "memory_cells": 256,
+        "address_components": 2,
+        "chunk_bits": 4,
+        "committed_bits": 1048576,
+        "packed_field_elements": 8192,
+        "mosaic_claims": 50,
+        "commitment_components": [
+          {
+            "name": "ram/ra0/1",
+            "log_size": 15
+          },
+          {
+            "name": "ram/ra0/2",
+            "log_size": 15
+          },
+          {
+            "name": "ram/ra1/1",
+            "log_size": 15
+          },
+          {
+            "name": "ram/ra1/2",
+            "log_size": 15
+          },
+          {
+            "name": "ram/wa/1",
+            "log_size": 15
+          },
+          {
+            "name": "ram/wa/2",
+            "log_size": 15
+          },
+          {
+            "name": "ram/inc",
+            "log_size": 17
+          },
+          {
+            "name": "input/rv0",
+            "log_size": 17
+          },
+          {
+            "name": "input/rv1",
+            "log_size": 17
+          },
+          {
+            "name": "input/wv",
+            "log_size": 17
+          },
+          {
+            "name": "input/address0",
+            "log_size": 14
+          },
+          {
+            "name": "input/address1",
+            "log_size": 14
+          },
+          {
+            "name": "input/address2",
+            "log_size": 14
+          }
+        ]
+      },
+      "samples": [
+        {
+          "prover_ms": 13.33155,
+          "commitment_ms": 2.8728,
+          "everything_else_ms": 10.45875,
+          "commitment_fraction": 0.215488821629893,
+          "verifier_ms": 10.597996,
+          "unattributed_ms": 0.026763999999998234,
+          "stages_ms": {
+            "mosaic.batch": 2.333488,
+            "pcs.commit": 2.8728,
+            "pcs.ligerito_open": 2.612977,
+            "pcs.open": 0.00067,
+            "pcs.ringswitch": 0.49609899999999996,
+            "ram.claims": 0.127149,
+            "ram.pack": 0.028994,
+            "ram.statement": 0.019508,
+            "ram.twist": 0.000164,
+            "ram.witness": 0.024013,
+            "twist.final": 0.110109,
+            "twist.onehot": 1.12602,
+            "twist.other": 0.023334,
+            "twist.rw.address": 0.09905900000000001,
+            "twist.rw.cycles": 2.476591,
+            "twist.rw.setup": 0.05434,
+            "twist.val": 0.197282,
+            "twist.virtualization": 0.702189
+          }
+        },
+        {
+          "prover_ms": 13.566507,
+          "commitment_ms": 2.973394,
+          "everything_else_ms": 10.593112999999999,
+          "commitment_fraction": 0.21917167034963383,
+          "verifier_ms": 9.961607,
+          "unattributed_ms": 0.029211000000001874,
+          "stages_ms": {
+            "mosaic.batch": 2.613184,
+            "pcs.commit": 2.973394,
+            "pcs.ligerito_open": 2.763528,
+            "pcs.open": 0.001216,
+            "pcs.ringswitch": 0.48092700000000005,
+            "ram.claims": 0.120348,
+            "ram.pack": 0.025024,
+            "ram.statement": 0.022107,
+            "ram.twist": 0.000248,
+            "ram.witness": 0.022317,
+            "twist.final": 0.107982,
+            "twist.onehot": 1.185356,
+            "twist.other": 0.023245,
+            "twist.rw.address": 0.084777,
+            "twist.rw.cycles": 2.197542,
+            "twist.rw.setup": 0.04314,
+            "twist.val": 0.190826,
+            "twist.virtualization": 0.6821349999999999
+          }
+        },
+        {
+          "prover_ms": 13.690019,
+          "commitment_ms": 2.9774749999999996,
+          "everything_else_ms": 10.712544,
+          "commitment_fraction": 0.2174923935459841,
+          "verifier_ms": 9.856458,
+          "unattributed_ms": 0.027572000000002816,
+          "stages_ms": {
+            "mosaic.batch": 2.764374,
+            "pcs.commit": 2.9774749999999996,
+            "pcs.ligerito_open": 2.61058,
+            "pcs.open": 0.000808,
+            "pcs.ringswitch": 0.529783,
+            "ram.claims": 0.114084,
+            "ram.pack": 0.025716,
+            "ram.statement": 0.020558,
+            "ram.twist": 0.00031800000000000003,
+            "ram.witness": 0.022072,
+            "twist.final": 0.10763,
+            "twist.onehot": 1.248071,
+            "twist.other": 0.022667000000000003,
+            "twist.rw.address": 0.085669,
+            "twist.rw.cycles": 2.21563,
+            "twist.rw.setup": 0.042738000000000005,
+            "twist.val": 0.198781,
+            "twist.virtualization": 0.675493
+          }
+        }
+      ]
+    }
+  ]
+}

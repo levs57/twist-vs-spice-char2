@@ -1,0 +1,204 @@
+random/operations/spice-typed/chunk=None: T=2^20 N=2^16 threads=8
+random/operations spice-typed chunk=None: prove=171.256ms verify=14.008ms commit=14.734ms open=36.040ms IOP+prep=120.384ms bits=130416640/134217728 populated/padded
+  preparation=26.248ms argument=87.817ms ordering(total)=29.361ms mask(total)=11.496ms unattributed=0.734ms (independent medians)
+    mosaic.batch                               36.928ms
+    pcs.commit                                 14.734ms
+    pcs.ligerito_open                          23.017ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             15.228ms
+    spice.claims                               12.231ms
+    spice.mask                                  0.027ms
+    spice.masked.claims                         1.900ms
+    spice.masked.sumcheck                       9.674ms
+    spice.order                                 0.038ms
+    spice.order.claims                         10.636ms
+    spice.order.pack                            1.864ms
+    spice.order.zerocheck                      15.453ms
+    spice.pack                                  5.099ms
+    spice.permutation.gkr                       9.094ms
+    spice.permutation.leaves                    2.254ms
+    spice.statement                             0.614ms
+    spice.witness                               7.172ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+random/operations/spice/chunk=None: T=2^20 N=2^16 threads=8
+random/operations spice chunk=None: prove=233.715ms verify=13.512ms commit=35.586ms open=80.388ms IOP+prep=114.138ms bits=195362816/268435456 populated/padded
+  preparation=16.148ms argument=95.329ms ordering(total)=27.579ms mask(total)=-0.000ms unattributed=3.274ms (independent medians)
+    mosaic.batch                               49.332ms
+    pcs.commit                                 35.586ms
+    pcs.ligerito_open                          48.929ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             32.416ms
+    spice.order                                 0.044ms
+    spice.order.claims                          9.217ms
+    spice.order.pack                            2.456ms
+    spice.order.zerocheck                      15.510ms
+    spice.pack                                 11.573ms
+    spice.permutation.claims                    8.644ms
+    spice.permutation.gkr                       7.406ms
+    spice.permutation.leaves                    2.515ms
+    spice.statement                             0.570ms
+    spice.witness                               3.922ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+random/operations/twist/chunk=Some(4): T=2^20 N=2^16 threads=8
+random/operations twist chunk=Some(4): prove=1315.163ms verify=41.804ms commit=37.212ms open=81.025ms IOP+prep=1200.190ms bits=201326592/268435456 populated/padded
+  preparation=29.932ms argument=1167.453ms ordering(total)=-0.000ms mask(total)=-0.000ms unattributed=3.100ms (independent medians)
+    mosaic.batch                               32.840ms
+    pcs.commit                                 37.212ms
+    pcs.ligerito_open                          49.921ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             30.704ms
+    ram.claims                                  4.908ms
+    ram.pack                                   10.660ms
+    ram.statement                               0.642ms
+    ram.twist                                   0.001ms
+    ram.witness                                13.451ms
+    twist.final                                 6.137ms
+    twist.onehot                               28.871ms
+    twist.other                                 0.219ms
+    twist.rw.address                            5.938ms
+    twist.rw.cycles                           997.580ms
+    twist.rw.setup                             32.687ms
+    twist.val                                  11.989ms
+    twist.virtualization                        1.504ms
+    virt.claim_reduction                        5.104ms
+    virt.flat.claims                            0.001ms
+    virt.flat.product                          46.955ms
+guest/erc20-mixed-block/memory/operations/spice-typed/chunk=None: T=2^20 N=2^16 threads=8
+guest/erc20-mixed-block/memory/operations spice-typed chunk=None: prove=141.821ms verify=14.536ms commit=13.346ms open=28.881ms IOP+prep=99.868ms bits=130416640/134217728 populated/padded
+  preparation=24.509ms argument=74.451ms ordering(total)=26.124ms mask(total)=9.926ms unattributed=0.722ms (independent medians)
+    mosaic.batch                               21.764ms
+    pcs.commit                                 13.346ms
+    pcs.ligerito_open                          21.572ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                              7.897ms
+    spice.claims                               15.211ms
+    spice.mask                                  0.028ms
+    spice.masked.claims                         1.658ms
+    spice.masked.sumcheck                       8.381ms
+    spice.order                                 0.013ms
+    spice.order.claims                         12.082ms
+    spice.order.pack                            1.826ms
+    spice.order.zerocheck                      12.274ms
+    spice.pack                                  4.941ms
+    spice.permutation.gkr                      12.495ms
+    spice.permutation.leaves                    2.328ms
+    spice.statement                             0.631ms
+    spice.witness                               3.375ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+guest/erc20-mixed-block/memory/operations/spice/chunk=None: T=2^20 N=2^16 threads=8
+guest/erc20-mixed-block/memory/operations spice chunk=None: prove=201.618ms verify=14.310ms commit=36.695ms open=80.257ms IOP+prep=89.721ms bits=195362816/268435456 populated/padded
+  preparation=15.744ms argument=71.015ms ordering(total)=23.473ms mask(total)=-0.000ms unattributed=3.306ms (independent medians)
+    mosaic.batch                               29.488ms
+    pcs.commit                                 36.695ms
+    pcs.ligerito_open                          52.683ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             26.871ms
+    spice.order                                 0.060ms
+    spice.order.claims                          9.466ms
+    spice.order.pack                            2.383ms
+    spice.order.zerocheck                      11.884ms
+    spice.pack                                 11.801ms
+    spice.permutation.claims                    8.006ms
+    spice.permutation.gkr                       7.441ms
+    spice.permutation.leaves                    2.338ms
+    spice.statement                             0.614ms
+    spice.witness                               3.329ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+guest/erc20-mixed-block/memory/operations/twist/chunk=Some(4): T=2^20 N=2^16 threads=8
+guest/erc20-mixed-block/memory/operations twist chunk=Some(4): prove=343.665ms verify=38.547ms commit=39.688ms open=75.415ms IOP+prep=227.850ms bits=201326592/268435456 populated/padded
+  preparation=26.733ms argument=198.367ms ordering(total)=-0.000ms mask(total)=-0.000ms unattributed=2.936ms (independent medians)
+    mosaic.batch                               11.663ms
+    pcs.commit                                 39.688ms
+    pcs.ligerito_open                          51.225ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             24.600ms
+    ram.claims                                  3.586ms
+    ram.pack                                   10.437ms
+    ram.statement                               0.559ms
+    ram.twist                                   0.001ms
+    ram.witness                                12.138ms
+    twist.final                                 5.185ms
+    twist.onehot                               29.881ms
+    twist.other                                 0.207ms
+    twist.rw.address                            4.445ms
+    twist.rw.cycles                            82.991ms
+    twist.rw.setup                             19.967ms
+    twist.val                                  10.362ms
+    twist.virtualization                        1.615ms
+    virt.claim_reduction                        4.605ms
+    virt.flat.claims                            0.001ms
+    virt.flat.product                          28.315ms
+guest/pointer-chase/memory/operations/spice-typed/chunk=None: T=2^20 N=2^16 threads=8
+guest/pointer-chase/memory/operations spice-typed chunk=None: prove=135.243ms verify=14.686ms commit=13.368ms open=29.299ms IOP+prep=92.657ms bits=130416640/134217728 populated/padded
+  preparation=21.913ms argument=69.791ms ordering(total)=26.003ms mask(total)=9.550ms unattributed=0.682ms (independent medians)
+    mosaic.batch                               20.487ms
+    pcs.commit                                 13.368ms
+    pcs.ligerito_open                          22.055ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                              6.950ms
+    spice.claims                               13.721ms
+    spice.mask                                  0.028ms
+    spice.masked.claims                         1.678ms
+    spice.masked.sumcheck                       7.806ms
+    spice.order                                 0.014ms
+    spice.order.claims                         12.695ms
+    spice.order.pack                            1.910ms
+    spice.order.zerocheck                      11.473ms
+    spice.pack                                  4.638ms
+    spice.permutation.gkr                      11.766ms
+    spice.permutation.leaves                    2.567ms
+    spice.statement                             0.561ms
+    spice.witness                               2.964ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+guest/pointer-chase/memory/operations/spice/chunk=None: T=2^20 N=2^16 threads=8
+guest/pointer-chase/memory/operations spice chunk=None: prove=204.867ms verify=14.204ms commit=39.532ms open=79.470ms IOP+prep=85.566ms bits=195362816/268435456 populated/padded
+  preparation=15.501ms argument=66.089ms ordering(total)=24.721ms mask(total)=-0.000ms unattributed=3.304ms (independent medians)
+    mosaic.batch                               23.927ms
+    pcs.commit                                 39.532ms
+    pcs.ligerito_open                          54.029ms
+    pcs.open                                    0.001ms
+    pcs.ringswitch                             25.155ms
+    spice.order                                 0.043ms
+    spice.order.claims                          9.700ms
+    spice.order.pack                            2.552ms
+    spice.order.zerocheck                      12.441ms
+    spice.pack                                 11.647ms
+    spice.permutation.claims                    7.944ms
+    spice.permutation.gkr                       7.638ms
+    spice.permutation.leaves                    2.318ms
+    spice.statement                             0.570ms
+    spice.witness                               3.281ms
+  fingerprint_bound_bits≈107.913 (GP term only; excludes other checks)
+guest/pointer-chase/memory/operations/twist/chunk=Some(4): T=2^20 N=2^16 threads=8
+guest/pointer-chase/memory/operations twist chunk=Some(4): prove=332.079ms verify=41.704ms commit=39.093ms open=78.458ms IOP+prep=216.905ms bits=201326592/268435456 populated/padded
+  preparation=27.532ms argument=185.930ms ordering(total)=-0.000ms mask(total)=-0.000ms unattributed=3.035ms (independent medians)
+    mosaic.batch                               11.054ms
+    pcs.commit                                 39.093ms
+    pcs.ligerito_open                          51.863ms
+    pcs.open                                    0.002ms
+    pcs.ringswitch                             25.864ms
+    ram.claims                                  3.217ms
+    ram.pack                                   11.111ms
+    ram.statement                               0.620ms
+    ram.twist                                   0.002ms
+    ram.witness                                12.238ms
+    twist.final                                 6.041ms
+    twist.onehot                               31.363ms
+    twist.other                                 0.213ms
+    twist.rw.address                            5.061ms
+    twist.rw.cycles                            63.663ms
+    twist.rw.setup                             20.226ms
+    twist.val                                  12.019ms
+    twist.virtualization                        1.665ms
+    virt.claim_reduction                        4.893ms
+    virt.flat.claims                            0.001ms
+    virt.flat.product                          29.434ms
+JSON: results/stage15-n20-primary.json
+CSV: results/stage15-n20-primary.csv
+random/operations Twist(Some(4))/spice-typed ratios: prover=7.680× verifier=2.984× populated=1.544× committed=2.000×
+random/operations Twist(Some(4))/spice ratios: prover=5.627× verifier=3.094× populated=1.031× committed=1.000×
+guest/erc20-mixed-block/memory/operations Twist(Some(4))/spice-typed ratios: prover=2.423× verifier=2.652× populated=1.544× committed=2.000×
+guest/erc20-mixed-block/memory/operations Twist(Some(4))/spice ratios: prover=1.705× verifier=2.694× populated=1.031× committed=1.000×
+guest/pointer-chase/memory/operations Twist(Some(4))/spice-typed ratios: prover=2.455× verifier=2.840× populated=1.544× committed=2.000×
+guest/pointer-chase/memory/operations Twist(Some(4))/spice ratios: prover=1.621× verifier=2.936× populated=1.031× committed=1.000×
+Verified 54 proofs across 9 cases, including warmups.

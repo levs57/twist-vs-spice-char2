@@ -1,0 +1,14 @@
+random/natural/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+random/permuted/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/binary-search/all/natural/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/binary-search/all/permuted/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/binary-search/memory/natural/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/binary-search/memory/permuted/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/erc20-mixed-block/all/natural/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/erc20-mixed-block/all/permuted/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/erc20-mixed-block/memory/natural/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/erc20-mixed-block/memory/permuted/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/pointer-chase/all/natural/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/pointer-chase/all/permuted/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/pointer-chase/memory/natural/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers
+guest/pointer-chase/memory/permuted/shared: 2^2 cycles, 2^12 words, 4-bit components, 2 workers

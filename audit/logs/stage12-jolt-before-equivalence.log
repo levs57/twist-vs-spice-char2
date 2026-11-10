@@ -1,0 +1,31 @@
+Execution summary of the completed native reference gate.
+The command's full compiler/stdout stream was returned through the execution
+tool rather than redirected to disk. This file records its command, reference,
+coverage, and exact successful completion lines; it is not a raw stdout capture.
+
+Command:
+CARGO_BUILD_JOBS=4 RUSTFLAGS='-C target-cpu=native' python3 scripts/check_sumcheck_optimizations.py --extracted-reference /tmp/memarg-before-jolt-flat/vendor/open-magnetar
+
+Reference kernels: bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3
+Exit status: 0
+
+Comparison:
+- Current FlatLegacy and GkrTree versus the preserved pre-Jolt-flat backend.
+- Original baseline/local source hashes checked before copying the reference.
+- Copied reference only API-renames Flat to FlatLegacy, including qualified
+  enum dispatch names; every original mathematical function body is retained.
+- Copied current adapter excludes the new Flat v4 branches.
+- Complete proof Debug values compared after checking and removing precisely
+  one virt_flat: None field from the current proof. Every saved GKR field is
+  retained in the comparison, including the optional virt_tree field.
+- Both versions independently verified for every fixture.
+- Sixty FlatLegacy and forty-eight GKR fixtures under 1/4 workers. GKR only
+  runs configurations with a power-of-two component count.
+- Includes independent two-port accesses, direct d=1, degree9/17 products,
+  n=16 parallel dense/sparse work, and a16/c4/n14.
+
+Captured completion lines:
+    Finished `release` profile [optimized] target(s) in 13.02s
+completed workers=1
+completed workers=4
+Matched 108 complete proof values; independently verified both versions for every case.

@@ -1,0 +1,289 @@
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded either v1.19.0
+  Downloaded serde_json v1.0.154
+   Compiling crossbeam-utils v0.8.23
+   Compiling crossbeam-epoch v0.9.21
+   Compiling crossbeam-deque v0.8.8
+   Compiling om-field v0.1.0 (/home/user/Programming/memarg-exploration/sources/open-magnetar/crates/om-field)
+   Compiling rayon-core v1.13.0
+   Compiling either v1.19.0
+   Compiling om-transcript v0.1.0 (/home/user/Programming/memarg-exploration/sources/open-magnetar/crates/om-transcript)
+   Compiling zmij v1.0.23
+   Compiling serde_core v1.0.229
+   Compiling serde_json v1.0.154
+   Compiling memchr v2.8.3
+   Compiling itoa v1.0.18
+   Compiling rayon v1.12.0
+   Compiling om-sumcheck v0.1.0 (/home/user/Programming/memarg-exploration/sources/open-magnetar/crates/om-sumcheck)
+   Compiling om-mosaic v0.1.0 (/home/user/Programming/memarg-exploration/sources/open-magnetar/crates/om-mosaic)
+   Compiling om-pcs v0.1.0 (/home/user/Programming/memarg-exploration/sources/open-magnetar/crates/om-pcs)
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/sources/open-magnetar/crates/om-memcheck)
+    Finished `release` profile [optimized] target(s) in 58.04s
+     Running unittests src/lib.rs (target/release/deps/om_field-e8f6f66f51fa8e29)
+
+running 5 tests
+test tests::clmul_unreduced_sum_matches_reduced ... ok
+test tests::reduce_matches_python_fold ... ok
+test tests::mul_x_and_mul_t_match_mul ... ok
+test tests::portable_matches_operator ... ok
+test tests::pclmulqdq_matches_portable ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/field.rs (target/release/deps/field-57bc78a41669bf3b)
+
+running 16 tests
+test byte_slice_lengths ... ok
+test commutativity_and_char2 ... ok
+test encoding ... ok
+test division_and_bit_products ... ok
+test frobenius_on_bits ... ok
+test hex_kats ... ok
+test inverse_and_square_kats ... ok
+test modulus ... ok
+test inverse_of_zero_panics - should panic ... ok
+test multiplication_kats ... ok
+test fermat ... ok
+test pack_too_many_bits_panics - should panic ... ok
+test pow_basics ... ok
+test small_integer_points ... ok
+test pack_unpack ... ok
+test axioms ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/om_memcheck-b54571a3a1def68a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/onehot.rs (target/release/deps/onehot-fee644d09f615ca7)
+
+running 9 tests
+test chunks_low_first ... ok
+test full_table_is_product ... ok
+test eq_cubed ... ok
+test hamming_weight_two_rejected ... ok
+test delta_star_formula ... ok
+test hamming_weight_zero_accepted_here ... ok
+test zero_c_detected ... ok
+test onehot_honest ... ok
+test virt_d2_d3 ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/shout.rs (target/release/deps/shout-22061cdfa45a21d5)
+
+running 10 tests
+test hamming_zero_d1 ... ok
+test hamming_two ... ok
+test shout_d1 ... ok
+test shout_d2 ... ok
+test shout_d3 ... ok
+test wrong_address_bit ... ok
+test wrong_value ... ok
+test multi_point_groups ... ok
+test hamming_zero ... ok
+test shout_parallel_cycles ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/twist.rs (target/release/deps/twist-fb3c477a0588de5b)
+
+running 22 tests
+test lt_is_mle ... ok
+test lt_brute_force ... ok
+test hamming_zero_read ... ok
+test final_untouched_region_equals_m0 ... ok
+test hamming_two_read ... ok
+test hamming_zero_write ... ok
+test ram_shared_write_address ... ok
+test wrong_address_bit ... ok
+test reg_like_p2_d1 ... ok
+test ram_like_p1_d1 ... ok
+test wrong_increment ... ok
+test ram_like_p1_d2_final ... ok
+test wrong_write_value ... ok
+test wrong_read_trace ... ok
+test wrong_final_region ... ok
+test reg_like_p2_d2 ... ok
+test twist_d3 ... ok
+test real_register_shape ... ok
+test wrong_final_memory ... ok
+test wrong_read_value ... ok
+test parallel_threshold_case ... ok
+test parallel_cycles_case ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+     Running tests/vectors.rs (target/release/deps/vectors-39618b17f401a5f7)
+
+running 8 tests
+test lt_vectors ... ok
+test onehot_vector ... ok
+test shout_d1_vector ... ok
+test shout_d2_vector ... ok
+test twist_reg_p2_d2_vector ... ok
+test twist_reg_p2_d1_vector ... ok
+test twist_ram_p1_d1_final_vector ... ok
+test twist_ram_p1_d2_final_vector ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/om_pcs-9156f7f862ce83b2)
+
+running 2 tests
+test ligerito::tests::cheating_prover_inconsistent_fold ... ok
+test ligerito::tests::cheating_in_each_repetition ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/ligerito.rs (target/release/deps/ligerito-165a429ad1023f6c)
+
+running 16 tests
+test conjectured100_profile_shape ... ok
+test gap_params_encoding_and_shape ... ok
+test params_and_queries ... ok
+test bitpcs_packed_matches_bool ... ok
+test bitpcs_end_to_end_and_negative ... ok
+test wrong_value ... ok
+test wrong_commitment ... ok
+test wrong_point ... ok
+test gap_wrong_value ... ok
+test tamper_everything ... ok
+test gap_completeness ... ok
+test gap_tamper_each_repetition_in_final ... ok
+test completeness ... ok
+test provable120_profile_end_to_end ... ok
+test provable120_two_levels_bitpcs ... ok
+test bitpcs_packed_matches_bool_multilevel ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/merkle.rs (target/release/deps/merkle-61103aa88fd2393d)
+
+running 9 tests
+test dedup_full_set_needs_no_auth ... ok
+test domain_separation ... ok
+test sha384_profile_48_byte_digests ... ok
+test sha3_profile ... ok
+test single_leaf ... ok
+test multi_open_all_sizes ... ok
+test two_leaves_formula ... ok
+test tamper ... ok
+test large_tree_matches_sequential_root ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/ntt.rs (target/release/deps/ntt-ed17b6c05b265ba0)
+
+running 7 tests
+test degree_bound_is_rs ... ok
+test minimum_distance ... ok
+test monomials ... ok
+test linear ... ok
+test normalisation ... ok
+test large_encode_matches_definition_at_samples ... ok
+test fast_equals_naive ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/ring_switch.rs (target/release/deps/ring_switch-85a135b017334b71)
+
+running 8 tests
+test pack_matches_convention ... ok
+test a_eval_matches_table ... ok
+test wrong_value_rejected ... ok
+test dishonest_prover_flipped_bit_caught_by_pcs_claim ... ok
+test malformed ... ok
+test completeness_and_output_claim ... ok
+test tampered_s_rejected_or_output_wrong ... ok
+test tampered_sumcheck_rejected ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vectors.rs (target/release/deps/vectors-db9f388179b4071f)
+
+running 4 tests
+test merkle_vectors ... ok
+test ring_switch_vector ... ok
+test ntt_vectors ... ok
+test ligerito_vectors ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/release/deps/om_sumcheck-b95ebddee9d02d66)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/mle.rs (target/release/deps/mle-6cc5a21a0701a182)
+
+running 9 tests
+test test_bind_low_in_place_matches ... ok
+test test_eq_table ... ok
+test test_boolean_point_and_low_order ... ok
+test test_bind_low_odd_panics - should panic ... ok
+test test_eq_eval_length_mismatch_panics - should panic ... ok
+test test_mle_eval_bruteforce ... ok
+test test_mle_eval_wrong_length_panics - should panic ... ok
+test test_packed_bits_roundtrip ... ok
+test test_packing_identity ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/sumcheck.rs (target/release/deps/sumcheck-a24c26f784055191)
+
+running 14 tests
+test test_batch_claims_256_ok_and_coeffs_are_powers ... ok
+test test_bit_tables ... ok
+test test_interpolate ... ok
+test test_batch_claims_257_rejected - should panic ... ok
+test test_eq_sumcheck ... ok
+test test_prove_degree_zero_panics - should panic ... ok
+test test_completeness ... ok
+test test_batching ... ok
+test test_verify_degree_zero_panics - should panic ... ok
+test test_wrong_claim_prove_panics - should panic ... ok
+test test_wrong_claim_verify_mismatch ... ok
+test test_tampered_message ... ok
+test test_univariate_skip_completeness_and_tamper ... ok
+test test_parallel_large_tables_match_sequential ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/vectors.rs (target/release/deps/vectors-b72dc27423b0aca5)
+
+running 2 tests
+test mle_vectors ... ok
+test sumcheck_vectors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_field
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_memcheck
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_pcs
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests om_sumcheck
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

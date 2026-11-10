@@ -1,0 +1,4 @@
+    Checking om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+    Checking ram-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-argument)
+    Checking ram-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-bench)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.63s

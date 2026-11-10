@@ -1,0 +1,6 @@
+Validated 60 matched before/after pairs; 720 benchmark proofs verified.
+prover_ms: 1.188–2.316x; geometric mean 1.685x
+commitment_ms: 4.778–6.979x; geometric mean 5.886x
+everything_else_ms: 1.127–1.966x; geometric mean 1.496x
+virtualization_ms: 1.029–1.934x; geometric mean 1.429x
+verifier_ms: 1.157–1.596x; geometric mean 1.345x

@@ -1,0 +1,413 @@
+{
+  "repository": "https://github.com/a16z/jolt",
+  "revision": "e21affaeaf0d2c0a4630b958a883a4ac877acbfd",
+  "source_date": "2026-11-10",
+  "tree_truncated": false,
+  "metadata_bytes": 738089,
+  "files": {
+    "CLAUDE.md": {
+      "bytes": 22234,
+      "sha256": "c0300ac2fe830eaac79d72500e31559694f8a24f4bfefdf4b86276fa92f06b55",
+      "git_blob_sha": "3d4c7ee9889171bbd474bff9eaa1f8101172f65f"
+    },
+    "Cargo.toml": {
+      "bytes": 18156,
+      "sha256": "06c6ba73fe31d78a37046628e4958463528b03f3a9c022d123c37608678559b2",
+      "git_blob_sha": "370e9cb944697b501552fa426fd38f3381fc5dee"
+    },
+    "LICENSE-APACHE": {
+      "bytes": 10823,
+      "sha256": "64c2c3bffa37ff79fc724150c9015a974369cea4c63e25b0b1f41c389ab646a7",
+      "git_blob_sha": "33184a3137618e391290715a0618245cfa9416f2"
+    },
+    "LICENSE-MIT": {
+      "bytes": 1182,
+      "sha256": "452532d531b7503f55729a3b1fe136de15814f14ae5ac18a0e33c6476b70997b",
+      "git_blob_sha": "588c0ca49773022550a08cf31fea982fb7d07abf"
+    },
+    "crates/jolt-akita/Cargo.toml": {
+      "bytes": 2247,
+      "sha256": "f8febd3a96298ecff24b5426c95d3f1aa41b99218614ae4e3b1e4acce05a6776",
+      "git_blob_sha": "f81d8ad8ca005b79b6f7638b2ad57040e7571399"
+    },
+    "crates/jolt-akita/src/adapters.rs": {
+      "bytes": 60172,
+      "sha256": "28618b64442d72b40190ed77747870c11b0d83ce289192c414777c39805b8d55",
+      "git_blob_sha": "a90cce3f7b2a3702532f16447a1257db32de571d"
+    },
+    "crates/jolt-akita/src/adapters/setup_tests.rs": {
+      "bytes": 3372,
+      "sha256": "6f7034a1aa1d83bed3cd8545f95ec8af5bbb161929f549d86ddf6dd5f52a6e4e",
+      "git_blob_sha": "09c5ee9c21077656a0470f0552712786529572c1"
+    },
+    "crates/jolt-akita/src/bin/check_grouped_schedules.rs": {
+      "bytes": 9933,
+      "sha256": "7801810e2dcc5a5fbadfa9c9e6049e3d13f5e24f50c6c754790b95aea2dff100",
+      "git_blob_sha": "9c369d27947e67bec152c2cbd48cca2da4d21838"
+    },
+    "crates/jolt-akita/src/bin/gen_jolt_schedules.rs": {
+      "bytes": 4852,
+      "sha256": "b7ae150e318039308e8bccb9c52ff9b54c0046ce243e4adb21b38cd4d668ef1b",
+      "git_blob_sha": "1763f8bd78d5bc07d10d7f252a4e4ec3fc6a8fbe"
+    },
+    "crates/jolt-akita/src/configs.rs": {
+      "bytes": 6867,
+      "sha256": "bfb64c22885eff1f66c66fb1be8df73f7122e2486884d6e07a2c21cb8891a7d5",
+      "git_blob_sha": "ac25973355b1d59a000372ea723e31bcf73f1ba6"
+    },
+    "crates/jolt-akita/src/deferred.rs": {
+      "bytes": 4969,
+      "sha256": "1291f590f1f1dfd42dbaa92d9285c1ecae88ac04f82ca2337098256e14463b80",
+      "git_blob_sha": "27dbe75e6cf1e16c7c320677b71e5d7448dbfa79"
+    },
+    "crates/jolt-akita/src/family_contract.rs": {
+      "bytes": 2334,
+      "sha256": "6c671aabd07cd6ded668049768ed96a36048fde6b69daffb58fb326589fe7925",
+      "git_blob_sha": "3322a28d7f8e226f8d8ea9e91439905c2be0e47d"
+    },
+    "crates/jolt-akita/src/lib.rs": {
+      "bytes": 2901,
+      "sha256": "caaca4724f24ae0a79372a0b56fd68a39a98a19267169f0f15d0635d51782171",
+      "git_blob_sha": "d70e012fcc64ee194a98e22a1788bc5adf6f028c"
+    },
+    "crates/jolt-akita/src/native_batching.rs": {
+      "bytes": 37787,
+      "sha256": "ff0fa51970f6039adff20f72f08a53ddf0520bd74fb00117a86199bbd907a8d2",
+      "git_blob_sha": "44f6ed9ed9148da9e94377246a2a566a0a26aa9e"
+    },
+    "crates/jolt-akita/src/one_hot_family.rs": {
+      "bytes": 8262,
+      "sha256": "16d99f2e46447bbd9d268b011da9c9bfde98fee738ed331905e5688285fb6062",
+      "git_blob_sha": "3db61434275adce982baca525a600e066dcfcd0e"
+    },
+    "crates/jolt-akita/src/prepared.rs": {
+      "bytes": 19667,
+      "sha256": "512d03a99bedf859860f55af013594b7c3043c89e0fb304dd79d55361b49ef32",
+      "git_blob_sha": "acb8aa9e2ad9891b2d0047f303c82f46762398fc"
+    },
+    "crates/jolt-akita/src/schedule_artifacts.rs": {
+      "bytes": 10842,
+      "sha256": "0c30b509d62e757b02ef3608c59d39669c96986c4c27d08bac182c2a7f413050",
+      "git_blob_sha": "4f6f964a739572ea30f5f96343ef01cfe284bef6"
+    },
+    "crates/jolt-akita/src/schedule_artifacts/tests.rs": {
+      "bytes": 2949,
+      "sha256": "a9e1c0d1e7aeb31c2ebaeed10ade05c75d14c32cce28b541d28d678dc2973a06",
+      "git_blob_sha": "23388cc5feed10e05e08cf956e2ef1332b817ce4"
+    },
+    "crates/jolt-akita/src/schedule_registry.rs": {
+      "bytes": 26139,
+      "sha256": "a08982d599c6a2aa18a5b8f1fff5939f78eadf07043bf9053388ccc55c01a625",
+      "git_blob_sha": "09daeecc0faa2e562abe888b04418016ce8d9bce"
+    },
+    "crates/jolt-akita/src/schedules/mod.rs": {
+      "bytes": 12121,
+      "sha256": "84587e2d3685b62bf3a94c767210b4da4bdba6f1d16b6087363bac632a03ed1e",
+      "git_blob_sha": "11759be15d831efaf98feae12008e0a1f9608ea7"
+    },
+    "crates/jolt-akita/src/scheme.rs": {
+      "bytes": 62435,
+      "sha256": "5299b521dc26c91641f82cb6b4eef02b232c28d4978a9114b3d81d3462695bf8",
+      "git_blob_sha": "829c9bee14d4fdf50b479e9f172bfd22faacc8df"
+    },
+    "crates/jolt-akita/src/shape_guard.rs": {
+      "bytes": 9326,
+      "sha256": "bf9c054c527d05bf1cd2febb72ae296c652e7a564750759c44c2dbd1ba8b17de",
+      "git_blob_sha": "ffdb64f970f63a6251cc8046f97c07935306f0da"
+    },
+    "crates/jolt-akita/src/trace_onehot/commit.rs": {
+      "bytes": 16588,
+      "sha256": "e8d3ab3259cfd70d0ee6317f66ddfc9030350254c142cca3fbaf8c4f58bba417",
+      "git_blob_sha": "38a02c9153d4dfb4be4a3c3391b5c508af0d976d"
+    },
+    "crates/jolt-akita/src/trace_onehot/decomposition.rs": {
+      "bytes": 37918,
+      "sha256": "f95aba122b0f8c27ec8564bba2ec43e9e14c2dc9fa1b84e8ff9503790d192038",
+      "git_blob_sha": "615da950dbe7853a55b6d68ae75a79fda822b8d5"
+    },
+    "crates/jolt-akita/src/trace_onehot/digit_windows.rs": {
+      "bytes": 5720,
+      "sha256": "cea40155866fe285713877ff2f97bbb31d3a1cfb25093f1e804633392608c0fd",
+      "git_blob_sha": "682d14d0fc173ebd3754b748d2db10108b3de69e"
+    },
+    "crates/jolt-akita/src/trace_onehot/kernels.rs": {
+      "bytes": 6110,
+      "sha256": "06f2b715bd01f78a1e473294f601dffb87c4e45c756ba4004f51da2b9e618235",
+      "git_blob_sha": "b9284bfc8e3ebb5b542e468a01e7d022afc9af8e"
+    },
+    "crates/jolt-akita/src/trace_onehot/mod.rs": {
+      "bytes": 1225,
+      "sha256": "d01225c253d31dfefc5076e563ac407c0eeea21aa59b6cde5c2c44ff8b6d1218",
+      "git_blob_sha": "df97128128c4ea867032f32799cf5588bcbf18a3"
+    },
+    "crates/jolt-akita/src/trace_onehot/ntt_commit.rs": {
+      "bytes": 12837,
+      "sha256": "97d1e70264716c316ffa68f6eb67198285788e0147f9b98a7fab1a8565daafae",
+      "git_blob_sha": "ec1a41b1eee99560c488d14371573d314e46d5d4"
+    },
+    "crates/jolt-akita/src/trace_onehot/one_hot_ntt.rs": {
+      "bytes": 12083,
+      "sha256": "ebc26226ac80570dd9e9b988c31399878cae270efe53e1be46c23fd474653e52",
+      "git_blob_sha": "fabcffb43b97924ad9dda3cf6b55ea50e6f7b03b"
+    },
+    "crates/jolt-akita/src/trace_onehot/source.rs": {
+      "bytes": 12846,
+      "sha256": "411109c96cc5090535393a2cff4b0e6d60c98ca64a32f4c5bafec39f347ca825",
+      "git_blob_sha": "33e73d0bb74912b52491bf54842e53e8e460c0dd"
+    },
+    "crates/jolt-akita/src/trace_onehot/tests.rs": {
+      "bytes": 38970,
+      "sha256": "47fe261c01943716bdd4bbbd705610650ba8bdc8999a165dd8e323b003e7b40b",
+      "git_blob_sha": "805f94af7ea240a3d6f7fbdd2191badac2665caa"
+    },
+    "crates/jolt-akita/src/trace_onehot/tests/trace_reads.rs": {
+      "bytes": 6199,
+      "sha256": "46fc63e4722f7321a5f9b8b85f759503062af4abf0fd3c9b085437e8914a3a21",
+      "git_blob_sha": "b52927afd6a4db6db05775c3cd6c0d9fcf28fa1f"
+    },
+    "crates/jolt-akita/src/trace_onehot/traversal.rs": {
+      "bytes": 19943,
+      "sha256": "9fb62e96b8fc127d38df9e3fddea6132238d29a9d715922304b5baa61993fba7",
+      "git_blob_sha": "27fb96cf7477ca804cd47d813b6339747e887c83"
+    },
+    "crates/jolt-akita/src/verifier_resources.rs": {
+      "bytes": 18012,
+      "sha256": "a1baa6db351fccf4f70c332b9728285ef4ff6a560fbcc48320a30c7381746a7b",
+      "git_blob_sha": "fbd444dbd7236a8d6d2fc166ee93b65bb416578b"
+    },
+    "crates/jolt-akita/src/verifier_resources/tests.rs": {
+      "bytes": 13556,
+      "sha256": "3f08043f71e47a51c29a1418a69a06ae4f4e3c175356d2513f50ff814bce1cff",
+      "git_blob_sha": "6beda6ffc0ae56ea7815aac1edd7df92a8c4440d"
+    },
+    "crates/jolt-akita/src/verifier_setup.rs": {
+      "bytes": 4578,
+      "sha256": "9013f777f20cdd971e088824f3743ba88d77db0d70796a2bb24a9dec134cdb0f",
+      "git_blob_sha": "58775308bc31d6f39d11f8840c8ec36fedbfa996"
+    },
+    "crates/jolt-algebra/src/fp128_accumulators.rs": {
+      "bytes": 11881,
+      "sha256": "4928c38d2f25b3061f0ce927d4a3db06ba1ed1a8fa26ca4c23d8becd7dc7785d",
+      "git_blob_sha": "fc45829546d85421f016033b7719978d7f99c029"
+    },
+    "crates/jolt-algebra/src/lib.rs": {
+      "bytes": 8590,
+      "sha256": "69787413d9bc524d6ed1639e621646d9a958499fdc8a5d2d858f99ec752ce825",
+      "git_blob_sha": "91b9ecf8fa08012a9bfe0c53821065ab388b16dd"
+    },
+    "crates/jolt-algebra/src/solinas/fp128.rs": {
+      "bytes": 57268,
+      "sha256": "13306b50fabd22c3a22e9811c0232ada586583fce2288bb859923d9881a60d28",
+      "git_blob_sha": "52587b8be4630b7a00a86baf3f9ac62dc5030562"
+    },
+    "crates/jolt-algebra/src/solinas/mod.rs": {
+      "bytes": 11571,
+      "sha256": "642481dcef2e498ed8a1ff52d4179be031ea33c5fb3b26c9182daa1bb400cfba",
+      "git_blob_sha": "041cb1b0545907289062cfd366a7925a1cd3a063"
+    },
+    "crates/jolt-algebra/src/solinas/unreduced.rs": {
+      "bytes": 30462,
+      "sha256": "edc907a63c39f4eb5ad416129251b1d601ee3a3cd7bb7e8e21b61f73bd3f5455",
+      "git_blob_sha": "0a3f2258aeb573ebb8151d678e4c63a43a0c87a4"
+    },
+    "crates/jolt-claims/src/protocols/jolt/geometry/dimensions.rs": {
+      "bytes": 29781,
+      "sha256": "060d4411c205e7e91b38ed5c143ca3a0b048a125bfb27a571dc311db05b8756c",
+      "git_blob_sha": "e9f9c146178466f429c15f43eda2ba7227670b38"
+    },
+    "crates/jolt-claims/src/protocols/jolt/geometry/instruction.rs": {
+      "bytes": 19572,
+      "sha256": "cb03c2e906eafa3c06b6036c5c795100365ddbec90ed93ce528e758d51569ee9",
+      "git_blob_sha": "3cfe16ea6c45952418de67d0768b19fc64910b84"
+    },
+    "crates/jolt-claims/src/protocols/jolt/geometry/ram.rs": {
+      "bytes": 8104,
+      "sha256": "02369d0cb116f7cc5f57458275ebcc2b900015a9a1941c112fe6048277c1343c",
+      "git_blob_sha": "978fcc426887e8fa0430d87551fad79dc5293ec9"
+    },
+    "crates/jolt-claims/src/protocols/jolt/lattice/relations/digit_zero.rs": {
+      "bytes": 13016,
+      "sha256": "dc7189efa9457ebdb36eda3695c4f01ddfa16577163ec7baf14edb9d0e4eb066",
+      "git_blob_sha": "3a10c921b2e1e4698a94f569d3494c046c46d8ac"
+    },
+    "crates/jolt-claims/src/protocols/jolt/relations/instruction/ra_virtualization.rs": {
+      "bytes": 3423,
+      "sha256": "16d945dce400f6450ea2548b7cbe85f2f85efe7d725c794fadd94d0bdcb5cc66",
+      "git_blob_sha": "ea744bd00583424b579f110df2958369d1bdf931"
+    },
+    "crates/jolt-claims/src/protocols/jolt/relations/ram/ra_claim_reduction.rs": {
+      "bytes": 3575,
+      "sha256": "62e24c9bcb2d003d2b7195684f1d3dcbc16f69f46775a4a47df38e66de81aff0",
+      "git_blob_sha": "771eaf855965bec900197cba96056f8aa484377a"
+    },
+    "crates/jolt-claims/src/protocols/jolt/relations/ram/ra_virtualization.rs": {
+      "bytes": 2398,
+      "sha256": "9fc2ab7aa946423cfb6c3fdc699c8e18f45fb70be340fcf06962f4d202e300fe",
+      "git_blob_sha": "23437ba5c51390ab01cf110f29ba0f86faab6e90"
+    },
+    "crates/jolt-field/Cargo.toml": {
+      "bytes": 989,
+      "sha256": "f1c09ba075590ba2fff03283dd06dbba5b79575a9cfcd6fcaf8d28990ae5b84b",
+      "git_blob_sha": "df02f802620f08c031d178881feeb8e6284b5491"
+    },
+    "crates/jolt-field/src/lib.rs": {
+      "bytes": 307,
+      "sha256": "992dbb365959755d42e35b526b89a878a00b5af4f623eb16d31b6637c7346f97",
+      "git_blob_sha": "58787cd97da80a0d5434dd36410af16b8c10e7c8"
+    },
+    "crates/jolt-kernels/Cargo.toml": {
+      "bytes": 2461,
+      "sha256": "c3ee2678b0d1c573531496a88d6f61798a5a5dc02c82023373875bcf9907d593",
+      "git_blob_sha": "cb36891c8aebf991f91d1d8a6929dce75f5c8b1f"
+    },
+    "crates/jolt-kernels/src/optimized/commitment.rs": {
+      "bytes": 21037,
+      "sha256": "af5921e37f533acfa339f1bf4b657c5edd72fd095144f3e29a65f2fe636fcc76",
+      "git_blob_sha": "17ddfa8c3b4f21d3b97289a40298d1e1b6c58652"
+    },
+    "crates/jolt-kernels/src/optimized/constant_suffix.rs": {
+      "bytes": 1641,
+      "sha256": "667ab773b35cae1d04a631bf695a66dbeae2fa74b2b41af08b56ba3455f108c7",
+      "git_blob_sha": "56df1fb27fc8ce9a70904588a995fb5a93a2c883"
+    },
+    "crates/jolt-kernels/src/optimized/eq_prefix.rs": {
+      "bytes": 6609,
+      "sha256": "ab3357be6a48d8d4fbacb51ea3f80621ff85439027120496febba56de65ab9c0",
+      "git_blob_sha": "afd7c998ac8e303abccef9431cc54d3141d38df1"
+    },
+    "crates/jolt-kernels/src/optimized/instruction_ra_virtualization.rs": {
+      "bytes": 38069,
+      "sha256": "f313d3a14a99d28bef1e863a46042b38b7443da61984656f7afdc5a580c70c7e",
+      "git_blob_sha": "7478262518e4e519539c634868ba7d721033e552"
+    },
+    "crates/jolt-kernels/src/optimized/instruction_ra_virtualization/categorical.rs": {
+      "bytes": 5180,
+      "sha256": "e799abe98e6ace0ee7bc698c64af326ff7538096a04e371102935d73fb363cfb",
+      "git_blob_sha": "e16ddad7fd708c44000778ee02bd055bcfde0338"
+    },
+    "crates/jolt-kernels/src/optimized/instruction_read_raf.rs": {
+      "bytes": 104699,
+      "sha256": "f0b17786149a7b1914f1e15fa4730c59bdfd84754714f3699bacf1af40f45e71",
+      "git_blob_sha": "71d99d8abd56251612563bf15f70ef07765b6db7"
+    },
+    "crates/jolt-kernels/src/optimized/lazy_ra.rs": {
+      "bytes": 39517,
+      "sha256": "20ff5f8cfa4d8449e7d946212068eb55e9fd561c26e8a36e342dd4ecea2da4ac",
+      "git_blob_sha": "17fa552175446dae5ef7dbee1ac9fabef5dffffc"
+    },
+    "crates/jolt-kernels/src/optimized/lazy_ra/paired.rs": {
+      "bytes": 11348,
+      "sha256": "079dcadc725ddd5dc6fde51dceab45e73307229084f30b292b7773836ac5406f",
+      "git_blob_sha": "3e1ef40bb878b663dbb037607ffaf510062fc6b7"
+    },
+    "crates/jolt-kernels/src/optimized/one_hot_histograms.rs": {
+      "bytes": 19198,
+      "sha256": "dfe0069d929daeea1c85c12c8c19b5ed7b3d3fec7ca9d2df1cb50051c4d103fa",
+      "git_blob_sha": "717e7513d07dda3889098edc5b56658f1969a03f"
+    },
+    "crates/jolt-kernels/src/optimized/ram_ra_claim_reduction.rs": {
+      "bytes": 19935,
+      "sha256": "6dc2cee81cb029cd16dd203503286f5d705bd71d2b48bd3b15c256cd60625a78",
+      "git_blob_sha": "6db12aa110ae20a28680f5419c818594300488e6"
+    },
+    "crates/jolt-kernels/src/optimized/ram_ra_virtualization.rs": {
+      "bytes": 27054,
+      "sha256": "1af846831e4105bfb82122f426663c0f1713098c8ac4a97f53b81f4eb24e880e",
+      "git_blob_sha": "d35e9b8aa7ebbac25a4ef62c01b5a6bda778b063"
+    },
+    "crates/jolt-kernels/src/optimized/ram_trace.rs": {
+      "bytes": 20117,
+      "sha256": "2cf948b58102c4fec4a69de397a9d162a62614c9c8506cd1dc4cafdc7f295f53",
+      "git_blob_sha": "e2bcacebc7b71da06a6a00982b71384abbb2974e"
+    },
+    "crates/jolt-kernels/src/optimized/support.rs": {
+      "bytes": 53381,
+      "sha256": "d90ca29925358bfad414fa9a05a9bc122f2f7145107e52e77514e96df0b7f4e6",
+      "git_blob_sha": "d60ccac3d02652d68fd3394e9fd204c4de143c3a"
+    },
+    "crates/jolt-kernels/src/optimized/support/product_sum.rs": {
+      "bytes": 5961,
+      "sha256": "af30166f52a26b52d6a6b61e323b38705da641b3400ac1c203f74b9319dcf331",
+      "git_blob_sha": "2c4198dc5b55641e374959458f8a1afd23ae444d"
+    },
+    "crates/jolt-kernels/src/reference/akita/witness.rs": {
+      "bytes": 15083,
+      "sha256": "820a3c564c2d99c94a3fd766152345fc1daf5804609e7182111f9e2c85e1a27e",
+      "git_blob_sha": "a447325b2b4b4d62cd1240cbc772a26eac2bb91c"
+    },
+    "crates/jolt-kernels/src/reference/instruction_ra_virtualization.rs": {
+      "bytes": 2915,
+      "sha256": "bf27f94a64f4c2f41a38b024fbe397efe466537369cacbeb2c645eca91c2746e",
+      "git_blob_sha": "30953bd7e1e93d8e2eb3d24c022713098fce4611"
+    },
+    "crates/jolt-kernels/src/reference/ram_ra_virtualization.rs": {
+      "bytes": 2744,
+      "sha256": "c2c4847211b2d1e393d29a1ebbb130b47dff450ed30bd98e5e27c450e2944a4b",
+      "git_blob_sha": "bccac9c361efc0a9c186b9920a30376b3ae3a61a"
+    },
+    "crates/jolt-poly/src/compressed_univariate.rs": {
+      "bytes": 7308,
+      "sha256": "bafb4eb1e663ad22fdd25b4e03015da3208776fa53caa21fd72570fa41cb7411",
+      "git_blob_sha": "b322044f956e6ee7f48481973cb34c11402cb173"
+    },
+    "crates/jolt-poly/src/omitted_constant.rs": {
+      "bytes": 1866,
+      "sha256": "1d06ed26e9613e8e1850285a21ec234121c40c291821d950e9f146de7185a71d",
+      "git_blob_sha": "6d0ae87bb8b6bfee7fd442ed631e1e579d78efc7"
+    },
+    "crates/jolt-poly/src/one_hot.rs": {
+      "bytes": 11449,
+      "sha256": "bc6e0d3ed31433f1df7065034b0090e21fa7737700f4ba43d599dee5c7b2ef73",
+      "git_blob_sha": "7c8d6da266809c8df389165a229e9a4fc5dbf427"
+    },
+    "crates/jolt-poly/src/split_eq.rs": {
+      "bytes": 52186,
+      "sha256": "bf5683e454d40e6947978381dba0feea3cb64349990a48f17694f845a4cb7851",
+      "git_blob_sha": "5b8c4a89f925b72ecccd3ebf96d600cceb315b98"
+    },
+    "crates/jolt-prover/src/akita/witness.rs": {
+      "bytes": 5553,
+      "sha256": "e53a7790b860b336ce3a15221fdedf83970cf26f769b6f211c2f82486ed34b63",
+      "git_blob_sha": "14c43ed6e29d3db5b8604ec0d350c759f0173712"
+    },
+    "crates/jolt-prover/src/stages/stage6b.rs": {
+      "bytes": 25642,
+      "sha256": "904adaa74e4959ea6116909267011ae86efae17a43a8bb6903bdbbed769c2f23",
+      "git_blob_sha": "4437b37b6f522f3ab3daebc4688d0acbd8ef17f7"
+    },
+    "crates/jolt-sumcheck/src/proof.rs": {
+      "bytes": 7600,
+      "sha256": "b59557655e96123e333c7b37dd69b3e20660886ff0f387bca9ece569273e6277",
+      "git_blob_sha": "d99eaeeecc182f07c870ba975e524c5f22fdf918"
+    },
+    "crates/jolt-sumcheck/src/prover.rs": {
+      "bytes": 19348,
+      "sha256": "bf4727d44a783936697dfd897d1525b837a7648ce1ef058bd97d01e32ded1e80",
+      "git_blob_sha": "5a61ac901e759d06c335797e30f9fbd4ff0478bd"
+    },
+    "crates/jolt-verifier/src/stages/stage6b/instruction_ra_virtualization.rs": {
+      "bytes": 5806,
+      "sha256": "609ae3f4524ebce31aec297b9805bb88415ce24709ca62cc848b54d79740ec0f",
+      "git_blob_sha": "4e24bd1d4e2db7cf181edff3b4b0670133f0274c"
+    },
+    "crates/jolt-verifier/src/stages/stage6b/ram_ra_virtualization.rs": {
+      "bytes": 5231,
+      "sha256": "4fce6a6f2eb8be0b70560e76d54c6f4027898471f3536b51bc0b282b7207b81b",
+      "git_blob_sha": "49c58973efe1439affcd1606c37accf5c9b2c5ac"
+    },
+    "crates/jolt-witness/src/witnesses/one_hot.rs": {
+      "bytes": 4273,
+      "sha256": "4dbc24ceef9817de101707f0d13d864a46b032b59688186ad0f33b10466f1168",
+      "git_blob_sha": "e5212df80885c3e20fb23d5f860a094f3ff6f509"
+    },
+    "specs/digit-zero-virtualization.md": {
+      "bytes": 7137,
+      "sha256": "98b7c1fd27db7b20324490fe930e1ea8bf5903eb46a0a7c459c90f017c04a23a",
+      "git_blob_sha": "0fa654fe99d01e5469a5930ca0311c16160a39d2"
+    }
+  },
+  "selection_note": "Selective pinned source files only; no Git clone/history, submodules, Akita dependency checkout, guest assets or builds. Git-tree path metadata was consulted for discovery.",
+  "source_bytes": 1297440,
+  "commit_timestamp_utc": "2026-11-10T08:51:14Z",
+  "audit_date": "2026-11-10"
+}

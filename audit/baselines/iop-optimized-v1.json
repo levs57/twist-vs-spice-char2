@@ -1,0 +1,8 @@
+{
+  "archive": "audit/baselines/iop-optimized-v1.tar.gz",
+  "sha256": "95fb8f6cd1eec6aa5a306e9a8fc678d9f1de937d3b357a6e2b2480bcd53b8f56",
+  "bytes": 346868,
+  "implementation": "gf128-iop-optimized-v1",
+  "vendor_patch_sha256": "bd6e4e4e69c28aff4596749fd8ab985b4a58193d606bb445bb65d10bd90a64a3",
+  "note": "Pre-Jolt source checkpoint, captured before new Flat integration. Includes root/vendor Cargo files, project crates, extracted vendor source, original vectors and source hash manifest. No build artifacts."
+}

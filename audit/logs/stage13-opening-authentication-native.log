@@ -1,0 +1,10 @@
+   Compiling om-memcheck v0.1.0 (/home/user/Programming/memarg-exploration/vendor/open-magnetar/crates/om-memcheck)
+   Compiling lookup-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/lookup-argument)
+    Finished `release` profile [optimized] target(s) in 10.50s
+     Running tests/indexed_lookup.rs (target/release/deps/indexed_lookup-3cce415ee7c1ef4d)
+
+running 1 test
+test main_and_auxiliary_pcs_openings_are_required_with_roots_and_iop_unchanged ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.03s
+

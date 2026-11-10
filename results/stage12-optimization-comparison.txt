@@ -1,0 +1,10 @@
+Matched pre-optimization versus optimized prover medians (milliseconds).
+main: random, T=262144, N=65536: 555.346 -> 485.100 ms, 1.145x, 12.65% lower
+main: guest/binary-search/all, T=262144, N=65536: 225.246 -> 171.996 ms, 1.310x, 23.64% lower
+main: guest/binary-search/memory, T=262144, N=65536: 248.543 -> 180.236 ms, 1.379x, 27.48% lower
+main: guest/erc20-mixed-block/all, T=262144, N=65536: 243.919 -> 182.228 ms, 1.339x, 25.29% lower
+main: guest/erc20-mixed-block/memory, T=262144, N=65536: 274.210 -> 191.120 ms, 1.435x, 30.30% lower
+main: guest/pointer-chase/all, T=262144, N=65536: 243.387 -> 178.972 ms, 1.360x, 26.47% lower
+main: guest/pointer-chase/memory, T=262144, N=65536: 255.427 -> 170.435 ms, 1.499x, 33.27% lower
+large-memory: guest/pointer-chase/memory, T=16384, N=262144: 82.765 -> 50.317 ms, 1.645x, 39.20% lower
+single-case-control: guest/pointer-chase/memory, T=262144, N=65536: 285.244 -> 185.440 ms, 1.538x, 34.99% lower
