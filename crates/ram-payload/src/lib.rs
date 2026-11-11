@@ -177,7 +177,7 @@ impl fmt::Display for PayloadError {
 impl std::error::Error for PayloadError {}
 
 fn dimensions(log_cycles: u32, address_bits: u32) -> Result<(usize, usize), PayloadError> {
-    if log_cycles < 2 || log_cycles >= usize::BITS {
+    if !(2..usize::BITS).contains(&log_cycles) {
         return Err(PayloadError(
             "log_cycles must be at least 2 and fit usize".into(),
         ));

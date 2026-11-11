@@ -291,3 +291,34 @@ fn malformed_words_proof_shapes_and_every_payload_mutation_are_detected() {
     }
     assert!(super::verify(n, a, &proof, &mut t(), b"different-label").is_err());
 }
+
+/// The zerocheck fixes seven of its equality coordinates to public constants.
+/// Its soundness then rests on the 128 equality weights over those seven
+/// coordinates being F_2-linearly independent: a Boolean gate-error vector
+/// over the 128 inner rows then packs to a nonzero field element, and only the
+/// remaining random coordinates contribute error. `soundness_terms` relies on
+/// this, so check it.
+#[test]
+fn fixed_inner_equality_weights_form_an_f2_basis() {
+    use flock_core::zerocheck::univariate_skip_optimized::{
+        medium_challenges_ghash, small_challenges_ghash,
+    };
+    let fixed: Vec<F128> = small_challenges_ghash()
+        .into_iter()
+        .chain(medium_challenges_ghash())
+        .collect();
+    assert_eq!(fixed.len(), 7);
+    let mut basis: Vec<u128> = Vec::new();
+    for y in 0..128usize {
+        let weight = fixed.iter().enumerate().fold(F128::ONE, |acc, (i, &r)| {
+            acc * if y >> i & 1 == 1 { r } else { F128::ONE + r }
+        });
+        let mut v = weight.lo as u128 | ((weight.hi as u128) << 64);
+        for &b in &basis {
+            v = v.min(v ^ b);
+        }
+        assert_ne!(v, 0, "weight {y} is in the span of earlier weights");
+        basis.push(v);
+        basis.sort_unstable_by(|a, b| b.cmp(a));
+    }
+}

@@ -61,7 +61,7 @@ fn sources_sha256() -> String {
     hex(&Hasher::sha256().digest(&bytes))
 }
 const HELP: &str = "Chronological shared-address RAM: BinaryTwist Flat versus ordered Spice
-  --methods twist,spice,spice-ripple,spice-typed|both
+  --methods twist,spice,spice-ripple,spice-typed,spice-typed-2fp|both
                                   Ordered methods; both=twist,spice (default)
   --trace-format rmw|operations    Default rmw; spice-typed requires operations
   --patterns random,guest,locality|both
@@ -193,6 +193,7 @@ fn options() -> Result<Option<Options>> {
                         "spice",
                         "spice-ripple",
                         "spice-typed",
+                        "spice-typed-2fp",
                     ],
                     &["twist", "spice"],
                 )?
@@ -249,7 +250,7 @@ fn validate_options(o: &Options) -> Result<()> {
     if !["rmw", "operations"].contains(&o.trace_format.as_str()) {
         return Err("trace format must be rmw or operations".into());
     }
-    if o.methods.iter().any(|m| m == "spice-typed") && o.trace_format != "operations" {
+    if o.methods.iter().any(|m| m.starts_with("spice-typed")) && o.trace_format != "operations" {
         return Err("spice-typed requires --trace-format operations".into());
     }
     if !(1..=31).contains(&o.address_bits) || o.log_cycles > 31 || o.threads == 0 || o.repeat == 0 {
@@ -394,7 +395,14 @@ fn ordering_name(method: &str) -> Option<&'static str> {
         "spice" => Some("flock-boolean"),
         "spice-ripple" => Some("ripple-eq-factor"),
         "spice-typed" => Some("single-value-flock"),
+        "spice-typed-2fp" => Some("single-value-flock-2fp"),
         _ => unreachable!("validated method"),
+    }
+}
+fn typed_options(method: &str, o: &Options) -> spice_argument::operations::Options {
+    spice_argument::operations::Options {
+        fingerprints: if method == "spice-typed-2fp" { 2 } else { 1 },
+        private_final_memory: o.final_memory == "private",
     }
 }
 fn hex(bytes: &[u8]) -> String {
@@ -474,13 +482,19 @@ impl Area {
         let populated_bits = components.iter().map(|c| c.bits).sum::<usize>();
         if method.starts_with("spice") {
             let b = o.address_bits.max(o.log_cycles) + 1;
-            let (cycle_bits, boundary_bits) = if method == "spice-typed" {
+            let (cycle_bits, boundary_bits) = if method.starts_with("spice-typed") {
                 (64 + o.address_bits + 2 * b + 1, b + 1)
             } else {
                 (128 + o.address_bits + 2 * b - 1, b)
             };
-            let expected =
-                cycle_bits * (1usize << o.log_cycles) + boundary_bits * (1usize << o.address_bits);
+            // Private final memory commits one more word per cell.
+            let final_bits = if method.starts_with("spice-typed") && o.final_memory == "private" {
+                64
+            } else {
+                0
+            };
+            let expected = cycle_bits * (1usize << o.log_cycles)
+                + (boundary_bits + final_bits) * (1usize << o.address_bits);
             if populated_bits != expected {
                 return Err("Spice component area differs from predecessor/carry formula".into());
             }
@@ -893,15 +907,20 @@ fn measure(
             method,
             o,
         )
-    } else if method == "spice-typed" {
+    } else if method.starts_with("spice-typed") {
         let operation_trace = operation_trace.ok_or("spice-typed requires an operation trace")?;
-        let result =
-            spice_argument::operations::prove(black_box(config), black_box(operation_trace))?;
+        let options = typed_options(method, o);
+        let result = spice_argument::operations::prove_with(
+            black_box(config),
+            black_box(operation_trace),
+            &options,
+        )?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
         let (verifier_ms, verifier_metrics) = timed_verify(|| {
-            spice_argument::operations::verify(
+            spice_argument::operations::verify_with(
                 black_box(&result.statement),
                 black_box(&result.proof),
+                &options,
             )?;
             Ok(())
         })?;
@@ -910,7 +929,7 @@ fn measure(
             prover_ms,
             verifier_ms,
             verifier_metrics,
-            proof_size::spice_typed(&result.proof),
+            proof_size::spice_typed_crate(&result.proof),
             (&result.statement).into(),
             result.metrics,
             &result.summary,
@@ -1239,13 +1258,15 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 }
             }
             let l = area.cycles + area.memory_cells;
+            // Independent fingerprint sets multiply the collision bound.
+            let sets = if method == "spice-typed-2fp" { 2 } else { 1 };
+            let fingerprint_bits = sets as f64 * (128.0 - (l as f64).log2());
             if method.starts_with("spice") {
                 println!(
-                    "  fingerprint_bound_bits≈{:.3} (GP term only; excludes other checks)",
-                    128.0 - (l as f64).log2()
+                    "  fingerprint_bound_bits≈{fingerprint_bits:.3} (GP term only; excludes other checks)"
                 );
             }
-            let bound = method.starts_with("spice").then(|| serde_json::json!({"field_bits":128,"degree_numerator":l,"probability_bound":(l as f64)*2f64.powi(-128),"fingerprint_bound_bits":128.0-(l as f64).log2(),"scope":"GP fingerprint term only; excludes order/mask/GKR/batching/PCS/hash errors; not an equal-security claim"}));
+            let bound = method.starts_with("spice").then(|| serde_json::json!({"field_bits":128,"degree_numerator":l,"fingerprint_sets":sets,"probability_bound":2f64.powf(-fingerprint_bits),"fingerprint_bound_bits":fingerprint_bits,"scope":"GP fingerprint term only; excludes order/mask/GKR/batching/PCS/hash errors; not an equal-security claim"}));
             let ordering = ordering_name(&method).map(str::to_owned);
             cases.push(Case {
                 method,
@@ -2221,7 +2242,7 @@ mod tests {
         assert!(rows[0].contains("mask_ms"));
         assert!(rows[0].contains("pcs_bytes") && rows[0].contains("proof_bytes"));
         assert!(rows[0].contains("soundness_bits"));
-        assert_eq!(report.cases[0].soundness.iop_source, "local-fallback");
+        assert_eq!(report.cases[0].soundness.iop_source, "crate");
         assert_eq!(report.cases[2].soundness.iop_source, "partial");
         assert!(rows[0].contains("populated_fraction"));
         assert!(!rows[0].contains("ordering_gate_fraction"));

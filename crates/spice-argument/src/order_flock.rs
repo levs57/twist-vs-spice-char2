@@ -11,12 +11,13 @@
 //! The caller must commit predecessor/carry bitplanes before entering, then
 //! authenticate ALL returned claims. Flock's non-grinding schedule is used.
 
+pub use flock_core::zerocheck::{ZerocheckClaim as FlockClaim, ZerocheckProof as FlockProof};
 use flock_core::{
     challenger::Challenger,
     field::F128,
     zerocheck::{
         K_SKIP, PaddingSpec, ZerocheckClaim, ZerocheckProof, multilinear::lagrange_weights_naive,
-        prove_packed_padded, verify as verify_zerocheck,
+        prove_packed_padded, verify as verify_flock_zerocheck,
     },
 };
 use om_field::{K, U256};
@@ -294,14 +295,17 @@ fn absorb_sources(tr: &mut Transcript, base: &[u8], proof: &OrderProof) {
     tr.absorb_ks(&label(base, b"/carries-c"), &proof.carries_c);
 }
 
-pub fn prove(
+/// The ordering zerocheck alone. The caller evaluates the sources at the
+/// returned points later (see [`terminal_points`] and [`check_sources`]) and
+/// must absorb them before any challenge that depends on them.
+pub fn prove_zerocheck(
     previous: &[u32],
     carries: &[u32],
     n: usize,
     a: usize,
     tr: &mut Transcript,
     base: &[u8],
-) -> Result<(OrderProof, OrderClaims), OrderError> {
+) -> Result<(ZerocheckProof, ZerocheckClaim), OrderError> {
     let ([a_rows, b_rows, c_rows], w) = {
         let _span = Span::new("spice.order.pack");
         packed_rows(previous, carries, n, a)?
@@ -317,17 +321,63 @@ pub fn prove(
         prove_packed_padded(&a_rows, &b_rows, &c_rows, m, &padding, &mut challenger)
     };
     *tr = challenger.tr;
+    Ok((zerocheck, terminal))
+}
+
+/// Verifier half of [`prove_zerocheck`].
+pub fn verify_zerocheck_with(
+    n: usize,
+    a: usize,
+    proof: &ZerocheckProof,
+    tr: &mut Transcript,
+    base: &[u8],
+) -> Result<ZerocheckClaim, OrderError> {
+    let padded_n = setup(n, a, tr, base)?;
+    let mut challenger = OmChallenger { tr: tr.clone() };
+    let terminal = verify_flock_zerocheck(K_SKIP + padded_n, proof, &mut challenger)
+        .map_err(|e| OrderError(format!("order/flock: {e:?}")))?;
+    *tr = challenger.tr;
+    Ok(terminal)
+}
+
+/// `(skip variables, multilinear rounds, fixed equality coordinates)` of the
+/// Flock zerocheck for `2^n` cycles. The fixed coordinates are the seven
+/// public inner challenges that `flock_core::zerocheck::verify` places at
+/// `r[K_SKIP..K_SKIP + 7]`.
+pub fn zerocheck_shape(n: usize) -> (usize, usize, usize) {
+    (K_SKIP, n.max(MIN_CYCLE_BITS), MIN_CYCLE_BITS)
+}
+
+/// The A/B and C cycle points at which the sources must be evaluated.
+pub fn terminal_points(n: usize, claim: &ZerocheckClaim) -> (Vec<K>, Vec<K>) {
+    let take = |xs: &[F128]| xs.iter().take(n).copied().map(from_flock).collect();
+    (take(&claim.mlv_challenges), take(&claim.r_rest))
+}
+
+/// Check the zerocheck's terminal values against source evaluations.
+pub fn check_sources(
+    n: usize,
+    a: usize,
+    claim: &ZerocheckClaim,
+    previous_ab: &[K],
+    carries_ab: &[K],
+    carries_c: &[K],
+) -> Result<OrderClaims, OrderError> {
+    check_terminals(n, width(n, a)?, claim, previous_ab, carries_ab, carries_c)
+}
+
+pub fn prove(
+    previous: &[u32],
+    carries: &[u32],
+    n: usize,
+    a: usize,
+    tr: &mut Transcript,
+    base: &[u8],
+) -> Result<(OrderProof, OrderClaims), OrderError> {
+    let (zerocheck, terminal) = prove_zerocheck(previous, carries, n, a, tr, base)?;
+    let w = width(n, a)?;
     let _span = Span::new("spice.order.claims");
-    let point_ab: Vec<K> = terminal.mlv_challenges[..n]
-        .iter()
-        .copied()
-        .map(from_flock)
-        .collect();
-    let point_c: Vec<K> = terminal.r_rest[..n]
-        .iter()
-        .copied()
-        .map(from_flock)
-        .collect();
+    let (point_ab, point_c) = terminal_points(n, &terminal);
     let (previous_ab, carries_ab, carries_c) =
         evaluate_sources(previous, carries, &point_ab, &point_c, w);
     let claims = check_terminals(n, w, &terminal, &previous_ab, &carries_ab, &carries_c)?;
@@ -357,11 +407,7 @@ pub fn verify(
             "order/flock: malformed source evaluations".into(),
         ));
     }
-    let padded_n = setup(n, a, tr, base)?;
-    let mut challenger = OmChallenger { tr: tr.clone() };
-    let terminal = verify_zerocheck(K_SKIP + padded_n, &proof.zerocheck, &mut challenger)
-        .map_err(|e| OrderError(format!("order/flock: {e:?}")))?;
-    *tr = challenger.tr;
+    let terminal = verify_zerocheck_with(n, a, &proof.zerocheck, tr, base)?;
     let claims = check_terminals(
         n,
         w,

@@ -6,13 +6,14 @@
 //! sum-check, beta-batching, proximity-gap (already including repetitions)
 //! and query terms.
 //!
-//! IOP terms: LOCAL FALLBACK. The agreed interface is
-//! `soundness_terms(&Statement, ...) -> Vec<(String, f64)>` in each argument
-//! crate (CONVENTIONS.md). Neither crate has it on this branch, so the terms
-//! below were derived by reading the verifiers at 632855e; each names the
-//! verifier code it comes from. Replace `twist_iop` and `spice_typed_iop` with
-//! the crate functions when they land. Untyped `spice`/`spice-ripple` get only
-//! the grand-product fingerprint term and are marked partial.
+//! IOP terms: `twist` (Twist v2) and the typed Spice methods use each
+//! crate's `soundness_terms`, plus the ring switch, which the crates leave to
+//! the caller. `twist-legacy` uses a local fallback derived by reading the
+//! verifier at 632855e; each term names the verifier code it comes from.
+//! `spice_typed_iop` is the same kind of derivation for typed Spice at
+//! 632855e, kept so the baseline's soundness can be reported next to its
+//! timings. Untyped `spice`/`spice-ripple` get only the grand-product
+//! fingerprint term and are marked partial.
 //!
 //! Conventions: every term is a probability. A sum-check with `r` rounds of
 //! degree `d` contributes `r*d/|K|`; a random linear combination of claims
@@ -262,6 +263,7 @@ pub fn twist_iop(d: &Dims) -> Vec<Term> {
     terms
 }
 
+#[allow(dead_code)]
 /// Rounds summed over the batched radix-4 GKR layers of a grand product
 /// with `2^log_size` leaves (lean-grandproduct `verify`).
 pub fn grand_product_rounds(log_size: usize) -> (usize, usize) {
@@ -284,7 +286,40 @@ fn fingerprint(d: &Dims) -> Term {
     )
 }
 
-/// Typed Spice as `spice_argument::operations::verify` runs it.
+/// Typed Spice, from `spice_argument::operations::soundness_terms` (which
+/// includes Mosaic), plus the ring switch.
+pub fn spice_typed_crate(d: &Dims, fingerprints: usize, public_final: bool) -> Vec<Term> {
+    let statement = ram_argument::Statement {
+        config: ram_argument::Config {
+            address_bits: d.a,
+            word_log_bits: d.word_log_bits,
+            ..Default::default()
+        },
+        log_cycles: d.n,
+        initial_memory: Vec::new(),
+        final_memory: Vec::new(),
+    };
+    let options = spice_argument::operations::Options {
+        fingerprints,
+        private_final_memory: !public_final,
+    };
+    let mut terms: Vec<Term> = spice_argument::operations::soundness_terms(&statement, &options)
+        .into_iter()
+        .map(|(name, probability)| Term {
+            name: format!("spice.{name}"),
+            group: "iop",
+            probability,
+            bits: -probability.log2(),
+            location: "crates/spice-argument/src/operations.rs soundness_terms",
+        })
+        .collect();
+    terms.extend(ring_switch(d));
+    terms
+}
+
+/// Typed Spice as `spice_argument::operations::verify` ran it at 632855e
+/// (one fingerprint, one Mosaic claim per bit plane).
+#[allow(dead_code)]
 pub fn spice_typed_iop(d: &Dims) -> Vec<Term> {
     let l = d.n.max(d.a);
     let (layers, rounds) = grand_product_rounds(l + 1);
@@ -359,7 +394,8 @@ pub fn compose(
     let (iop_source, mut terms) = match method {
         "twist" => ("crate", twist2_iop(d, public_final)),
         "twist-legacy" => ("local-fallback", twist_iop(d)),
-        "spice-typed" => ("local-fallback", spice_typed_iop(d)),
+        "spice-typed" => ("crate", spice_typed_crate(d, 1, public_final)),
+        "spice-typed-2fp" => ("crate", spice_typed_crate(d, 2, public_final)),
         _ => ("partial", vec![fingerprint(d)]),
     };
     terms.extend(pcs_terms(d.ell, profile, log_rate));
@@ -435,13 +471,21 @@ mod tests {
         );
         let typed = compose(
             "spice-typed",
-            &twist_dims(20, 16, 27, 126),
+            &twist_dims(20, 16, 27, 19),
             "provable-120",
             2,
             true,
         );
         assert!((twist.bits - 117.06).abs() < 0.01, "{}", twist.bits);
         assert!((typed.bits - 107.91).abs() < 0.01, "{}", typed.bits);
+        let two = compose(
+            "spice-typed-2fp",
+            &twist_dims(20, 16, 27, 19),
+            "provable-120",
+            2,
+            true,
+        );
+        assert!((two.bits - 116.92).abs() < 0.01, "{}", two.bits);
         assert!(twist.pcs_probability > twist.iop_probability);
         assert!(typed.iop_probability > typed.pcs_probability);
         assert_eq!(twist.terms.iter().filter(|t| t.group == "pcs").count(), 12);

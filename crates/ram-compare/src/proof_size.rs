@@ -1,11 +1,10 @@
 //! Structural proof sizes, split into PCS, Mosaic and IOP parts.
 //!
-//! LOCAL FALLBACK. The agreed interface is `pub fn proof_size(&Proof) ->
-//! ProofSize` in each argument crate (see CONVENTIONS.md). Neither crate has
-//! it on this branch, so this module counts the public fields of the current
-//! proof structs. When the crates gain `proof_size`, replace the bodies of
-//! `twist`, `spice` and `spice_typed` with calls to it and delete the
-//! walkers below.
+//! PCS and Mosaic bytes are counted here for every method, so they are
+//! comparable. The IOP bytes of `twist` (Twist v2) and the typed Spice
+//! methods come from each crate's `proof_size`. For `twist-legacy` and the
+//! untyped Spice methods this module counts the public fields of the proof
+//! structs (a local fallback).
 //!
 //! Counting rule (CONVENTIONS.md): a field element is 16 bytes, a hash or
 //! Merkle root is 32 bytes (counted as its actual digest length), an index is
@@ -175,20 +174,16 @@ pub fn spice(p: &spice_argument::Proof) -> ProofSize {
 }
 
 /// Typed Spice (`spice-typed`).
-pub fn spice_typed(p: &spice_argument::operations::Proof) -> ProofSize {
-    let i = &p.inputs;
-    let inputs = fields(&i.address)
-        + fields(&i.previous)
-        + fields(&i.final_previous)
-        + 3 * FIELD
-        + fields(&i.masked.cycle)
-        + FIELD;
-    let masks = sumcheck(&p.masks.sc) + 4 * FIELD;
-    ProofSize::new(
+/// Typed Spice: PCS and Mosaic counted as for the other methods, the rest
+/// from `spice_argument::operations::proof_size`.
+pub fn spice_typed_crate(p: &spice_argument::operations::Proof) -> ProofSize {
+    let mut size = ProofSize::new(
         pcs(&p.commitment, &p.opening),
         mosaic(&p.mosaic),
-        grand_product(&p.permutation) + inputs + masks + flock_order(&p.order),
-    )
+        spice_argument::operations::proof_size(p).iop_bytes,
+    );
+    size.source = "crate";
+    size
 }
 
 #[cfg(test)]
@@ -247,12 +242,12 @@ mod tests {
             ..Default::default()
         };
         let result = spice_argument::operations::prove(&config, &trace).unwrap();
-        let size = spice_typed(&result.proof);
+        let size = spice_typed_crate(&result.proof);
         assert_eq!(
             size.total_bytes,
             size.pcs_bytes + size.mosaic_bytes + size.iop_bytes
         );
-        assert!(size.iop_bytes > grand_product(&result.proof.permutation));
+        assert!(size.iop_bytes > 0);
         assert_eq!(
             size.pcs_bytes,
             32 + INDEX + ring_switch(&result.proof.opening.0) + ligerito(&result.proof.opening.1)
