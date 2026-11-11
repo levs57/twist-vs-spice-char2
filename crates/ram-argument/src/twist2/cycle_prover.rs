@@ -1,7 +1,6 @@
 //! The prover of the cycle check (protocol in `cycle.rs`). It sends the same
-//! messages as the reference prover there, which stores
-//! `LT(·, r_j) + γ` and `δ eq(r_j, ·)` as columns, but it does not store
-//! `δ eq(r_j, ·)`.
+//! messages as the reference prover there, which stores `LT(·, r_j) + γ`
+//! and `δ eq(r_j, ·)` as columns, but stores neither.
 //!
 //! **Split eq.** In round `i`, with `z_{<i}` bound and `X` the current
 //! variable, `eq(r_j, (z_{<i}, X, m)) = E_i · eq(r_i, X) · eq(r_{>i}, m)`
@@ -11,6 +10,15 @@
 //! once per round. The weight `eq(r_{>i}, m)` is split as
 //! `eq_lo[m_lo] · eq_hi[m_hi]`: the inner sum over `m_lo` is accumulated
 //! unreduced and the outer factor is applied once per block.
+//!
+//! **Split LT.** With the low variables least significant,
+//! `LT((z_{<i}, X, m), r_j) = LT(m, r_{>i}) + eq(m, r_{>i}) · L_i(X)` with
+//! `L_i(X) = LT((z_{<i}, X), r_{≤i}) = (1 + X) r_i + eq(X, r_i) ℓ_i` and
+//! `ℓ_i = LT(z_{<i}, r_{<i})`. With `P = Π_i A_i · Inc`, the value part is
+//! `Σ_m (LT(m, r_{>i}) + γ) P(X, m) + L_i(X) Σ_m eq(r_{>i}, m) P(X, m)`; both
+//! sums have degree `d + 1`. `LT(m, ·)` is split as
+//! `lt_hi[m_hi] + eq_hi[m_hi] · lt_lo[m_lo]`, so the inner sums need
+//! `Σ P`, `Σ lt_lo P` and `Σ eq_lo P`.
 
 use om_field::{K, U256};
 use om_sumcheck::{interpolate_eval, sumcheck_init};
@@ -20,24 +28,44 @@ use rayon::prelude::*;
 use super::cycle::{
     Challenges, CycleResult, CycleWitness, LABEL, component_tables, conclude, eps_scaled,
 };
-use super::util::{PAR, SplitEq, SplitLt, checks_enabled, emit_round, node, par_build};
+use super::util::{PAR, SplitEq, checks_enabled, emit_round, node, par_build};
 
-/// Row layout: `[tl, inc, A_1..A_d, Ã_1..Ã_d]` with `tl = LT(·, r_j) + γ`
-/// and `Ã_i = ε_i' A_i(1 + r_k^i, ·)`.
-const TL: usize = 0;
-const INC: usize = 1;
-const A0: usize = 2;
+/// Row layout: `[inc, A_1..A_d, Ã_1..Ã_d]` with `Ã_i = ε_i' A_i(1 + r_k^i, ·)`.
+const INC: usize = 0;
+const A0: usize = 1;
 
 /// Pairs per parallel task (rounded up to whole weight blocks).
 const CHUNK: usize = 1 << 9;
 
-/// Round sums, also used for one block of pairs. `u[e]` holds
-/// `Σ tl·inc·ΠA` at node `e` (slot 1 unused), `pi[e]` the eq-weighted
-/// `ΠA` at nodes `0..=d` and `mir[e]` the eq-weighted mirror sum at nodes
-/// `0..=2`.
+/// Split `eq(r_{>i}, ·)` and `LT(·, r_{>i})` tables for one round.
+struct Weights {
+    eq: SplitEq,
+    lt_lo: Vec<K>,
+    lt_hi: Vec<K>,
+}
+
+impl Weights {
+    fn new(s: &[K]) -> Self {
+        let eq = SplitEq::new(s);
+        let h = eq.h;
+        Weights {
+            lt_lo: om_memcheck::twist::lt_table(&s[..h]),
+            lt_hi: om_memcheck::twist::lt_table(&s[h..]),
+            eq,
+        }
+    }
+}
+
+/// Round sums, also used for one block of pairs. At node `e`, for
+/// `e ≤ d + 1`: `p0` is `Σ P`, `plt` is `Σ lt·P` and `peq` is `Σ eq·P`; in a
+/// round total, `p0` is unused and `plt` holds `Σ (LT + γ) P`. `pi[e]` is
+/// the eq-weighted `ΠA` at nodes `0..=d` and `mir[e]` the eq-weighted mirror
+/// sum at nodes `0..=2`.
 #[derive(Clone)]
 struct Acc {
-    u: Vec<U256>,
+    p0: Vec<K>,
+    plt: Vec<U256>,
+    peq: Vec<U256>,
     pi: Vec<U256>,
     mir: [U256; 3],
 }
@@ -45,14 +73,19 @@ struct Acc {
 impl Acc {
     fn new(d: usize) -> Self {
         Acc {
-            u: vec![U256::ZERO; d + 3],
+            p0: vec![K::ZERO; d + 2],
+            plt: vec![U256::ZERO; d + 2],
+            peq: vec![U256::ZERO; d + 2],
             pi: vec![U256::ZERO; d + 1],
             mir: [U256::ZERO; 3],
         }
     }
 
     fn merge(mut self, o: Acc) -> Acc {
-        for (a, b) in self.u.iter_mut().zip(o.u) {
+        for (a, b) in self.plt.iter_mut().zip(o.plt) {
+            *a += b;
+        }
+        for (a, b) in self.peq.iter_mut().zip(o.peq) {
             *a += b;
         }
         for (a, b) in self.pi.iter_mut().zip(o.pi) {
@@ -64,18 +97,22 @@ impl Acc {
         self
     }
 
-    /// Add block `b`, whose eq weights lack the factor `hi`, and clear it.
-    fn flush(&mut self, b: &mut Acc, hi: K) {
-        for (a, x) in self.u.iter_mut().zip(b.u.iter_mut()) {
-            *a += *x;
-            *x = U256::ZERO;
+    /// Add block `b`, whose weights lack the outer factors, and clear it.
+    /// `lt_hi` already includes `γ`.
+    fn flush(&mut self, b: &mut Acc, eq_hi: K, lt_hi: K) {
+        for e in 0..b.p0.len() {
+            self.plt[e] += lt_hi.clmul(b.p0[e]) + eq_hi.clmul(b.plt[e].reduce());
+            self.peq[e] += eq_hi.clmul(b.peq[e].reduce());
+            b.p0[e] = K::ZERO;
+            b.plt[e] = U256::ZERO;
+            b.peq[e] = U256::ZERO;
         }
         for (a, x) in self.pi.iter_mut().zip(b.pi.iter_mut()) {
-            *a += hi.clmul(x.reduce());
+            *a += eq_hi.clmul(x.reduce());
             *x = U256::ZERO;
         }
         for (a, x) in self.mir.iter_mut().zip(b.mir.iter_mut()) {
-            *a += hi.clmul(x.reduce());
+            *a += eq_hi.clmul(x.reduce());
             *x = U256::ZERO;
         }
     }
@@ -98,14 +135,24 @@ impl Scratch {
     }
 }
 
-/// Add one pair's contribution with inner eq weight `eq_lo`.
+/// Add one pair's contribution with inner weights `eq_lo` and `lt_lo`.
+#[allow(clippy::too_many_arguments)]
 #[inline]
-fn kernel(x0: &[K], x1: &[K], d: usize, eq_lo: K, b: &mut Acc, delta: &mut [K], val: &mut [K]) {
+fn kernel(
+    x0: &[K],
+    x1: &[K],
+    d: usize,
+    eq_lo: K,
+    lt_lo: K,
+    b: &mut Acc,
+    delta: &mut [K],
+    val: &mut [K],
+) {
     let w = x0.len();
     for t in 0..w {
         delta[t] = x0[t] + x1[t];
     }
-    for e in 0..=d + 2 {
+    for e in 0..=d + 1 {
         let v: &[K] = match e {
             0 => x0,
             1 => x1,
@@ -122,9 +169,10 @@ fn kernel(x0: &[K], x1: &[K], d: usize, eq_lo: K, b: &mut Acc, delta: &mut [K], 
         for i in 1..d {
             prod *= v[A0 + i];
         }
-        if e != 1 {
-            b.u[e] += (v[TL] * v[INC]).clmul(prod);
-        }
+        let p = prod * v[INC];
+        b.p0[e] += p;
+        b.plt[e] += lt_lo.clmul(p);
+        b.peq[e] += eq_lo.clmul(p);
         if e <= d {
             b.pi[e] += eq_lo.clmul(prod);
         }
@@ -152,11 +200,13 @@ fn eval_pass<P: Fn(usize, &mut [K]) + Sync>(
     pairs: usize,
     w: usize,
     d: usize,
-    wts: &SplitEq,
+    wts: &Weights,
+    gamma: K,
     pair: &P,
 ) -> Acc {
-    let block = 1usize << wts.h;
-    let task = task_pairs(pairs, wts.h);
+    let h = wts.eq.h;
+    let block = 1usize << h;
+    let task = task_pairs(pairs, h);
     (0..pairs / task)
         .into_par_iter()
         .map(|t| {
@@ -167,9 +217,18 @@ fn eval_pass<P: Fn(usize, &mut [K]) + Sync>(
                 pair(m, &mut s.pair);
                 let (x0, x1) = s.pair.split_at(w);
                 let lo = m & (block - 1);
-                kernel(x0, x1, d, wts.lo[lo], &mut blk, &mut s.delta, &mut s.val);
+                kernel(
+                    x0,
+                    x1,
+                    d,
+                    wts.eq.lo[lo],
+                    wts.lt_lo[lo],
+                    &mut blk,
+                    &mut s.delta,
+                    &mut s.val,
+                );
                 if lo == block - 1 {
-                    acc.flush(&mut blk, wts.hi[m >> wts.h]);
+                    acc.flush(&mut blk, wts.eq.hi[m >> h], wts.lt_hi[m >> h] + gamma);
                 }
             }
             acc
@@ -183,11 +242,13 @@ fn bind_pass<B: Fn(usize, &mut [K]) + Sync>(
     pairs: usize,
     w: usize,
     d: usize,
-    wts: &SplitEq,
+    wts: &Weights,
+    gamma: K,
     bind: &B,
 ) -> (Vec<K>, Acc) {
-    let block = 1usize << wts.h;
-    let task = task_pairs(pairs, wts.h);
+    let h = wts.eq.h;
+    let block = 1usize << h;
+    let task = task_pairs(pairs, h);
     let accs = std::sync::Mutex::new(Vec::new());
     // SAFETY: `task` divides `pairs`, so every chunk is `task` whole output
     // pairs of `2 * w` elements, and the zip below writes all of them.
@@ -206,9 +267,18 @@ fn bind_pass<B: Fn(usize, &mut [K]) + Sync>(
                 }
                 let (x0, x1) = s.pair.split_at(w);
                 let lo = p & (block - 1);
-                kernel(x0, x1, d, wts.lo[lo], &mut blk, &mut s.delta, &mut s.val);
+                kernel(
+                    x0,
+                    x1,
+                    d,
+                    wts.eq.lo[lo],
+                    wts.lt_lo[lo],
+                    &mut blk,
+                    &mut s.delta,
+                    &mut s.val,
+                );
                 if lo == block - 1 {
-                    acc.flush(&mut blk, wts.hi[p >> wts.h]);
+                    acc.flush(&mut blk, wts.eq.hi[p >> h], wts.lt_hi[p >> h] + gamma);
                 }
             }
             accs.lock().unwrap().push(acc);
@@ -229,29 +299,52 @@ fn bind_row(src0: &[K], src1: &[K], r: K, dst: &mut [K]) {
     }
 }
 
-/// The round message values `[g(t_0), …, g(t_{d+2})]`, given the eq prefix
-/// `e_pref = eq(r_{<i}, z_{<i})` and `r_i`.
-fn values(acc: &Acc, d: usize, cur: K, e_pref: K, r_i: K, delta: K) -> Vec<K> {
-    let pi: Vec<K> = acc.pi.iter().map(|x| x.reduce()).collect();
-    let mir: Vec<K> = acc.mir.iter().map(|x| x.reduce()).collect();
+/// Running prefix factors: `e = eq(r_{<i}, z_{<i})` and
+/// `l = LT(z_{<i}, r_{<i})`.
+#[derive(Clone, Copy)]
+struct Prefix {
+    e: K,
+    l: K,
+}
+
+impl Prefix {
+    /// `L_i(x) = LT((z_{<i}, x), r_{≤i})`.
+    fn lt_at(self, x: K, r_i: K) -> K {
+        (K::ONE + x) * r_i + (K::ONE + x + r_i) * self.l
+    }
+
+    fn eq_at(self, x: K, r_i: K) -> K {
+        self.e * (K::ONE + x + r_i)
+    }
+
+    fn bind(self, z_i: K, r_i: K) -> Prefix {
+        Prefix {
+            e: self.eq_at(z_i, r_i),
+            l: self.lt_at(z_i, r_i),
+        }
+    }
+}
+
+/// The round message values `[g(t_0), …, g(t_{d+2})]`.
+fn values(acc: &Acc, d: usize, cur: K, pre: Prefix, r_i: K, delta: K) -> Vec<K> {
+    let red = |v: &[U256]| -> Vec<K> { v.iter().map(|x| x.reduce()).collect() };
+    let (plt, peq, pi, mir) = (red(&acc.plt), red(&acc.peq), red(&acc.pi), red(&acc.mir));
+    let at = |v: &[K], e: usize| -> K {
+        if e < v.len() {
+            v[e]
+        } else {
+            interpolate_eval(v, node(e))
+        }
+    };
     let mut ys = vec![K::ZERO; d + 3];
     for (e, y) in ys.iter_mut().enumerate() {
         if e == 1 {
             continue;
         }
         let x = node(e);
-        let p = if e <= d {
-            pi[e]
-        } else {
-            interpolate_eval(&pi, x)
-        };
-        let m = if e <= 2 {
-            mir[e]
-        } else {
-            interpolate_eval(&mir, x)
-        };
-        let kappa = e_pref * (K::ONE + x + r_i);
-        *y = acc.u[e].reduce() + kappa * delta * (p + m);
+        *y = at(&plt, e)
+            + pre.lt_at(x, r_i) * at(&peq, e)
+            + pre.eq_at(x, r_i) * delta * (at(&pi, e) + at(&mir, e));
     }
     ys[1] = cur + ys[0];
     ys
@@ -273,10 +366,8 @@ pub(crate) fn prove(
     let eps_scaled = eps_scaled(ch);
     let (eq_a, eq_am) = component_tables(r_k, c, d, &eps_scaled);
     let mask = (1u32 << c) - 1;
-    let lt = SplitLt::new(r_j);
     let make_row = |j: usize, row: &mut [K]| {
         let ad = w.addr[j];
-        row[TL] = lt.at(j) + ch.gamma;
         row[INC] = w.inc_e[j];
         for i in 0..d {
             let u = ((ad >> (i * c)) & mask) as usize;
@@ -288,7 +379,6 @@ pub(crate) fn prove(
     let bound_row = |j: usize, r: K, out: &mut [K]| {
         let bind = |a: K, b: K| a + r * (a + b);
         let (a0, a1) = (w.addr[j], w.addr[j + 1]);
-        out[TL] = bind(lt.at(j), lt.at(j + 1)) + ch.gamma;
         out[INC] = bind(w.inc_e[j], w.inc_e[j + 1]);
         for i in 0..d {
             let u0 = ((a0 >> (i * c)) & mask) as usize;
@@ -303,30 +393,35 @@ pub(crate) fn prove(
     let mut msgs = Vec::with_capacity(n);
     let mut z = Vec::with_capacity(n);
     let mut cur = claim;
-    let mut e_pref = K::ONE;
+    let mut pre = Prefix {
+        e: K::ONE,
+        l: K::ZERO,
+    };
 
     // Round 0 over rows built on the fly.
     let acc = eval_pass(
         1 << (n - 1),
         width,
         d,
-        &SplitEq::new(&r_j[1..]),
+        &Weights::new(&r_j[1..]),
+        ch.gamma,
         &|m, out: &mut [K]| {
             let (x0, x1) = out.split_at_mut(width);
             make_row(2 * m, x0);
             make_row(2 * m + 1, x1);
         },
     );
-    let mut ys = values(&acc, d, cur, e_pref, r_j[0], ch.delta);
+    let mut ys = values(&acc, d, cur, pre, r_j[0], ch.delta);
     let (r, next) = emit_round(&ys, tr, LABEL, &mut msgs);
-    (cur, e_pref) = (next, e_pref * (K::ONE + r + r_j[0]));
+    (cur, pre) = (next, pre.bind(r, r_j[0]));
     z.push(r);
     // Bind round 0 and accumulate round 1 in one pass.
     let (mut rows, mut acc) = bind_pass(
         1 << (n - 2),
         width,
         d,
-        &SplitEq::new(&r_j[2..]),
+        &Weights::new(&r_j[2..]),
+        ch.gamma,
         &|p, out: &mut [K]| {
             let (o0, o1) = out.split_at_mut(width);
             bound_row(4 * p, r, o0);
@@ -334,9 +429,9 @@ pub(crate) fn prove(
         },
     );
     for i in 1..n {
-        ys = values(&acc, d, cur, e_pref, r_j[i], ch.delta);
+        ys = values(&acc, d, cur, pre, r_j[i], ch.delta);
         let (r, next) = emit_round(&ys, tr, LABEL, &mut msgs);
-        (cur, e_pref) = (next, e_pref * (K::ONE + r + r_j[i]));
+        (cur, pre) = (next, pre.bind(r, r_j[i]));
         z.push(r);
         let src = &rows;
         if i + 1 < n {
@@ -344,7 +439,8 @@ pub(crate) fn prove(
                 src.len() / (4 * width),
                 width,
                 d,
-                &SplitEq::new(&r_j[i + 2..]),
+                &Weights::new(&r_j[i + 2..]),
+                ch.gamma,
                 &|p, out: &mut [K]| {
                     let s = &src[4 * p * width..(4 * p + 4) * width];
                     let (o0, o1) = out.split_at_mut(width);
@@ -362,7 +458,7 @@ pub(crate) fn prove(
     if checks_enabled() {
         let prod: K = (0..d).fold(K::ONE, |p, i| p * row[A0 + i]);
         let mir: K = (0..d).fold(K::ZERO, |s, i| s + row[A0 + i] * row[A0 + d + i]);
-        let value = row[TL] * row[INC] * prod + e_pref * ch.delta * (prod + mir);
+        let value = (pre.l + ch.gamma) * row[INC] * prod + pre.e * ch.delta * (prod + mir);
         assert_eq!(value, cur, "cycle check final value");
     }
     conclude(
