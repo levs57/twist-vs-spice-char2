@@ -8,16 +8,17 @@ Each case reports a composed soundness error: the union bound over every PCS ter
 
 **PCS terms.** The harness calls `om_pcs::ligerito::soundness_bits` on the parameters the provers actually use: `make_params(ell - 7, profile, log_rate)`, where `2^ell` is the committed bit count reported by the prover. Every level contributes four terms (sum-check, β-batching, proximity gap including its repetitions, queries), and all of them are summed.
 
-**IOP terms.** The argument crates do not yet expose `soundness_terms`, so `crates/ram-compare/src/soundness.rs` contains a local fallback derived by reading the verifiers. A sum-check with `r` rounds of degree `d` contributes `r·d/2^128`; a powers-of-γ batch over `m` claims contributes `(m−1)/2^128`; a Schwartz–Zippel check of a multilinear identity at a random point in `K^v` contributes `v/2^128`. Fiat–Shamir and hash-collision terms are out of scope. The untyped `spice` and `spice-ripple` methods get only their grand-product fingerprint term and are marked `partial`.
+**IOP terms.** For `twist` (Twist v2) the terms come from `ram_argument::twist2::soundness_terms`, which `docs/soundness-twist.md` derives; the harness adds the ring switch. For `twist-legacy`, `crates/ram-compare/src/soundness.rs` contains a local fallback derived by reading the verifiers. A sum-check with `r` rounds of degree `d` contributes `r·d/2^128`; a powers-of-γ batch over `m` claims contributes `(m−1)/2^128`; a Schwartz–Zippel check of a multilinear identity at a random point in `K^v` contributes `v/2^128`. Fiat–Shamir and hash-collision terms are out of scope. The untyped `spice` and `spice-ripple` methods get only their grand-product fingerprint term and are marked `partial`.
 
 At `n = 20`, `a = 16`, chunk 4, `provable-120`, log rate 2:
 
 | Method | PCS | IOP | Composed | Dominant term |
 | --- | --- | --- | --- | --- |
-| `twist` | 2^-117.63 | 650/2^128 (2^-118.66) | 2^-117.06 | Ligerito query and batch terms, about 2^-120 per level |
+| `twist` (v2) | 2^-117.63 | 403/2^128 (2^-119.35) | 2^-117.25 | Ligerito query and batch terms, about 2^-120 per level |
+| `twist-legacy` | 2^-117.63 | 650/2^128 (2^-118.66) | 2^-117.06 | Ligerito query and batch terms, about 2^-120 per level |
 | `spice-typed` | 2^-117.64 | 1,115,011/2^128 (2^-107.91) | 2^-107.91 | Grand-product fingerprint (T+K)/2^128 = 1,114,112/2^128 |
 
-These agree with the issue's estimates (about 2^-117 and 2^-107.9). The non-fingerprint IOP sums are somewhat lower than the issue's (650 against about 670 for Twist, 899 against about 1030 for typed Spice). The likely reasons: the GKR round messages carry four coefficients with the eq factor divided out, so the enforced degree is 4, not 5; only the 13 random coordinates of Flock's zero-check point count, because 7 are fixed constants; and Twist's input identities share one random point, so their `w + n` term is counted once. None of these differences moves the composed totals.
+The `twist-legacy` and `spice-typed` rows agree with the issue's estimates (about 2^-117 and 2^-107.9). The non-fingerprint IOP sums are somewhat lower than the issue's (650 against about 670 for the old Twist, 899 against about 1030 for typed Spice). The likely reasons: the GKR round messages carry four coefficients with the eq factor divided out, so the enforced degree is 4, not 5; only the 13 random coordinates of Flock's zero-check point count, because 7 are fixed constants; and Twist's input identities share one random point, so their `w + n` term is counted once. None of these differences moves the composed totals.
 
 **Caveat.** The Flock fixed coordinates cost nothing only if the 128 values `eq(c, x)` form an F2-basis of GF(2^128). The in-repo test checks a weaker property. This was argued on paper, not checked in code.
 
