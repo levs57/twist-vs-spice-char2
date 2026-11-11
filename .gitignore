@@ -11,3 +11,4 @@ target/
 # Keep the comparison guide; local project notes and generated reports stay local.
 *.md
 !/README.md
+!/docs/methodology.md

@@ -9,6 +9,10 @@ publish.workspace = true
 ram-argument = { path = "../ram-argument" }
 spice-argument = { path = "../spice-argument" }
 ram-payload = { path = "../ram-payload" }
+om-pcs = { path = "../../vendor/open-magnetar/crates/om-pcs" }
+om-mosaic = { path = "../../vendor/open-magnetar/crates/om-mosaic" }
+om-sumcheck = { path = "../../vendor/open-magnetar/crates/om-sumcheck" }
+lean-grandproduct = { path = "../../vendor/lean-grandproduct" }
 om-transcript = { path = "../../vendor/open-magnetar/crates/om-transcript", features = ["profiling"] }
 rayon.workspace = true
 serde.workspace = true
