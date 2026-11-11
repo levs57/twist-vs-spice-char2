@@ -400,16 +400,62 @@ fn region_sums(
             vec![vec![K::ZERO; np]; group.len()],
         )
     };
+    let rows = 1usize << h;
+    // Rows of whole words, eight or more per block: scan eight rows at a time
+    // and use subset-sum lookups (`om_field::subset`) where they are dense.
+    let grouped = np >= 64 && rows >= 8;
+    let words_per_row = np / 64;
     let one_block = |(mut tot, mut acc): (Vec<Vec<U256>>, Vec<Vec<K>>), yhi: usize| {
         for column in &mut acc {
             column.fill(K::ZERO);
         }
-        for_each_one(words, base + yhi * block, block, |l| {
-            let (p, ylo) = (l & (np - 1), l >> (r + 1));
-            for (a, e) in acc.iter_mut().zip(&lo) {
-                a[p] += e[ylo];
+        if grouped {
+            let mut tables = vec![[K::ZERO; 256]; lo.len()];
+            let first = (base + yhi * block) / 64;
+            for y0 in (0..rows).step_by(8) {
+                let start = first + y0 * words_per_row;
+                let group = &words[start..start + 8 * words_per_row];
+                let ones: usize = group.iter().map(|w| w.count_ones() as usize).sum();
+                if ones * DENSE_DIVISOR >= 8 * np {
+                    for (t, e) in tables.iter_mut().zip(&lo) {
+                        *t = om_field::subset::subset_sums8(&e[y0..y0 + 8]);
+                    }
+                    for c in 0..words_per_row {
+                        let column_rows: [u64; 8] =
+                            std::array::from_fn(|k| group[k * words_per_row + c]);
+                        for (q, bytes) in om_field::subset::column_bytes(&column_rows)
+                            .into_iter()
+                            .enumerate()
+                        {
+                            for j in 0..8 {
+                                let set = ((bytes >> (8 * j)) & 0xff) as usize;
+                                if set != 0 {
+                                    let p = 64 * c + 8 * q + j;
+                                    for (a, t) in acc.iter_mut().zip(&tables) {
+                                        a[p] += t[set];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if ones != 0 {
+                    for k in 0..8 {
+                        for_each_one(group, k * np, np, |p| {
+                            for (a, e) in acc.iter_mut().zip(&lo) {
+                                a[p] += e[y0 + k];
+                            }
+                        });
+                    }
+                }
             }
-        });
+        } else {
+            for_each_one(words, base + yhi * block, block, |l| {
+                let (p, ylo) = (l & (np - 1), l >> (r + 1));
+                for (a, e) in acc.iter_mut().zip(&lo) {
+                    a[p] += e[ylo];
+                }
+            });
+        }
         for ((t, a), e) in tot.iter_mut().zip(&acc).zip(&hi) {
             for (x, y) in t.chunks_exact_mut(2).zip(a.chunks_exact(2)) {
                 if y[0].is_zero() {
@@ -453,6 +499,11 @@ fn region_sums(
 
 /// Regions at least this many bits long are scanned in parallel.
 const PAR_BITS: usize = 1 << 16;
+
+/// In [`region_sums`], a group of eight rows uses subset-sum lookups when at
+/// least `1 / DENSE_DIVISOR` of its bits are set, and adds bit by bit
+/// otherwise. Both paths give the same sums.
+const DENSE_DIVISOR: usize = 6;
 
 /// The batching sum-check over packed `G`. Rounds `0..m` (`m =
 /// min(bit_rounds, ell)`) are computed from the bits of `G` directly:
