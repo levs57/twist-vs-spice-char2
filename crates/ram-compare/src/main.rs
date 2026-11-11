@@ -440,17 +440,18 @@ fn ordering_name(method: &str) -> Option<&'static str> {
         _ => unreachable!("validated method"),
     }
 }
-/// Which prover a method name runs in this binary. Baseline binaries built
+/// Which prover a method name runs in this binary, without commas so CSV
+/// readers that split on commas keep their columns. Baseline binaries built
 /// before schema 5 used `twist` for the prover that is now `twist-legacy`,
 /// so cross-binary comparisons read this field to label their rows.
 fn implementation_name(method: &str, o: &Options) -> String {
     match method {
-        "twist" => format!("ram_argument::twist2, {}-first read check", o.read_order),
+        "twist" => format!("ram_argument::twist2 ({}-first read check)", o.read_order),
         "twist-legacy" => "ram_argument BinaryTwist flat (as at 632855e)".into(),
-        "spice" => "untyped Spice, Flock ordering (as at 632855e)".into(),
-        "spice-ripple" => "untyped Spice, ripple eq-factor ordering (as at 632855e)".into(),
-        "spice-typed" => "spice_argument::operations, one fingerprint set".into(),
-        "spice-typed-2fp" => "spice_argument::operations, two fingerprint sets".into(),
+        "spice" => "untyped Spice with Flock ordering (as at 632855e)".into(),
+        "spice-ripple" => "untyped Spice with ripple eq-factor ordering (as at 632855e)".into(),
+        "spice-typed" => "spice_argument::operations (one fingerprint set)".into(),
+        "spice-typed-2fp" => "spice_argument::operations (two fingerprint sets)".into(),
         _ => unreachable!("validated method"),
     }
 }
