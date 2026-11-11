@@ -459,6 +459,9 @@ fn cycle_prover_matches_the_reference_prover() {
         (9, 8, 2),
         (14, 8, 4),
         (15, 12, 4),
+        // Chunks wider than LOOKUP_MAX_C build round-0 rows instead.
+        (9, 12, 6),
+        (13, 16, 8),
     ] {
         fn rand_k(s: &mut u64) -> K {
             K::from_u128(((lcg(s) as u128) << 64) | lcg(s) as u128)

@@ -123,6 +123,7 @@ struct Scratch {
     delta: Vec<K>,
     val: Vec<K>,
     pair: Vec<K>,
+    keys: Vec<usize>,
 }
 
 impl Scratch {
@@ -131,6 +132,7 @@ impl Scratch {
             delta: vec![K::ZERO; w],
             val: vec![K::ZERO; w],
             pair: vec![K::ZERO; 2 * w],
+            keys: vec![0; (w - 1) / 2],
         }
     }
 }
@@ -195,8 +197,9 @@ fn task_pairs(pairs: usize, h: usize) -> usize {
     }
 }
 
-/// Round sums over `pairs` pairs that `pair(m, out)` writes as two rows.
-fn eval_pass<P: Fn(usize, &mut [K]) + Sync>(
+/// Round sums over `pairs` pairs; `pair(m, eq_lo, lt_lo, blk, scratch)`
+/// adds pair `m`'s contribution to `blk`.
+fn eval_pass<P: Fn(usize, K, K, &mut Acc, &mut Scratch) + Sync>(
     pairs: usize,
     w: usize,
     d: usize,
@@ -214,19 +217,8 @@ fn eval_pass<P: Fn(usize, &mut [K]) + Sync>(
             let mut blk = Acc::new(d);
             let mut s = Scratch::new(w);
             for m in t * task..(t + 1) * task {
-                pair(m, &mut s.pair);
-                let (x0, x1) = s.pair.split_at(w);
                 let lo = m & (block - 1);
-                kernel(
-                    x0,
-                    x1,
-                    d,
-                    wts.eq.lo[lo],
-                    wts.lt_lo[lo],
-                    &mut blk,
-                    &mut s.delta,
-                    &mut s.val,
-                );
+                pair(m, wts.eq.lo[lo], wts.lt_lo[lo], &mut blk, &mut s);
                 if lo == block - 1 {
                     acc.flush(&mut blk, wts.eq.hi[m >> h], wts.lt_hi[m >> h] + gamma);
                 }
@@ -290,6 +282,104 @@ fn bind_pass<B: Fn(usize, &mut [K]) + Sync>(
         .into_iter()
         .fold(Acc::new(d), Acc::merge);
     (data, acc)
+}
+
+/// Round-0 tables for one-hot rows. Before binding, `A_i(·, j)` takes one
+/// of `2^c` values, so on a pair of rows it is fixed by the pair's chunk
+/// values `k = u_0 + 2^c u_1`. `a[(i 2^{2c} + k)(d + 2) + e]` is `A_i` at
+/// node `e ≤ d + 1` and `m[(i 2^{2c} + k) 3 + e]` is `A_i Ã_i` at node
+/// `e ≤ 2`.
+struct PairTables {
+    c: usize,
+    d: usize,
+    a: Vec<K>,
+    m: Vec<K>,
+}
+
+/// Largest chunk width that uses round-0 tables: `2^{2c}` pairs of values
+/// per component.
+const LOOKUP_MAX_C: usize = 5;
+
+impl PairTables {
+    fn new(eq_a: &[Vec<K>], eq_am: &[Vec<K>], c: usize) -> Self {
+        let d = eq_a.len();
+        let (side, pts) = (1usize << c, d + 2);
+        let mut a = Vec::with_capacity(d * side * side * pts);
+        let mut m = Vec::with_capacity(d * side * side * 3);
+        for i in 0..d {
+            for k in 0..side * side {
+                let (u0, u1) = (k & (side - 1), k >> c);
+                let (a0, a1) = (eq_a[i][u0], eq_a[i][u1]);
+                let (m0, m1) = (eq_am[i][u0], eq_am[i][u1]);
+                for e in 0..pts {
+                    a.push(a0 + (a0 + a1).mul_t(e as u128));
+                }
+                for e in 0..3u128 {
+                    m.push((a0 + (a0 + a1).mul_t(e)) * (m0 + (m0 + m1).mul_t(e)));
+                }
+            }
+        }
+        PairTables { c, d, a, m }
+    }
+
+    /// Pair `(j, j + 1)`'s contribution in round 0.
+    #[allow(clippy::too_many_arguments)]
+    #[inline]
+    fn kernel(
+        &self,
+        addr: &[u32],
+        inc: &[K],
+        j: usize,
+        eq_lo: K,
+        lt_lo: K,
+        b: &mut Acc,
+        keys: &mut [usize],
+    ) {
+        let (c, d) = (self.c, self.d);
+        let mask = (1u32 << c) - 1;
+        let (a0, a1) = (addr[j], addr[j + 1]);
+        for (i, key) in keys.iter_mut().enumerate() {
+            let k = (((a0 >> (i * c)) & mask) | (((a1 >> (i * c)) & mask) << c)) as usize;
+            *key = (i << (2 * c)) + k;
+        }
+        let (i0, i1) = (inc[j], inc[j + 1]);
+        let di = i0 + i1;
+        let pts = d + 2;
+        for e in 0..pts {
+            let mut prod = self.a[keys[0] * pts + e];
+            for &key in &keys[1..] {
+                prod *= self.a[key * pts + e];
+            }
+            let p = prod * (i0 + di.mul_t(e as u128));
+            b.p0[e] += p;
+            b.plt[e] += lt_lo.clmul(p);
+            b.peq[e] += eq_lo.clmul(p);
+            if e <= d {
+                b.pi[e] += eq_lo.clmul(prod);
+            }
+            if e <= 2 {
+                let mut m = K::ZERO;
+                for &key in keys.iter() {
+                    m += self.m[key * 3 + e];
+                }
+                b.mir[e] += eq_lo.clmul(m);
+            }
+        }
+    }
+}
+
+/// `t[i 2^{2c} + k] = x_i(u_0) + r (x_i(u_0) + x_i(u_1))` for `k = u_0 + 2^c u_1`:
+/// component tables bound to the round-0 challenge.
+fn bound_pair_table(x: &[Vec<K>], c: usize, r: K) -> Vec<K> {
+    let side = 1usize << c;
+    let mut t = Vec::with_capacity(x.len() * side * side);
+    for xi in x {
+        for k in 0..side * side {
+            let (a, b) = (xi[k & (side - 1)], xi[k >> c]);
+            t.push(a + r * (a + b));
+        }
+    }
+    t
 }
 
 #[inline]
@@ -398,36 +488,82 @@ pub(crate) fn prove(
         l: K::ZERO,
     };
 
-    // Round 0 over rows built on the fly.
-    let acc = eval_pass(
-        1 << (n - 1),
-        width,
-        d,
-        &Weights::new(&r_j[1..]),
-        ch.gamma,
-        &|m, out: &mut [K]| {
-            let (x0, x1) = out.split_at_mut(width);
-            make_row(2 * m, x0);
-            make_row(2 * m + 1, x1);
-        },
-    );
+    // Round 0 reads one-hot rows through pair tables, or builds the rows on
+    // the fly for wide chunks.
+    let lookups = (c <= LOOKUP_MAX_C).then(|| PairTables::new(&eq_a, &eq_am, c));
+    let w0 = Weights::new(&r_j[1..]);
+    let acc = match &lookups {
+        Some(t) => eval_pass(
+            1 << (n - 1),
+            width,
+            d,
+            &w0,
+            ch.gamma,
+            &|m, eq_lo, lt_lo, blk: &mut Acc, s: &mut Scratch| {
+                t.kernel(w.addr, w.inc_e, 2 * m, eq_lo, lt_lo, blk, &mut s.keys);
+            },
+        ),
+        None => eval_pass(
+            1 << (n - 1),
+            width,
+            d,
+            &w0,
+            ch.gamma,
+            &|m, eq_lo, lt_lo, blk: &mut Acc, s: &mut Scratch| {
+                let (x0, x1) = s.pair.split_at_mut(width);
+                make_row(2 * m, x0);
+                make_row(2 * m + 1, x1);
+                kernel(x0, x1, d, eq_lo, lt_lo, blk, &mut s.delta, &mut s.val);
+            },
+        ),
+    };
     let mut ys = values(&acc, d, cur, pre, r_j[0], ch.delta);
     let (r, next) = emit_round(&ys, tr, LABEL, &mut msgs);
     (cur, pre) = (next, pre.bind(r, r_j[0]));
     z.push(r);
-    // Bind round 0 and accumulate round 1 in one pass.
-    let (mut rows, mut acc) = bind_pass(
-        1 << (n - 2),
-        width,
-        d,
-        &Weights::new(&r_j[2..]),
-        ch.gamma,
-        &|p, out: &mut [K]| {
-            let (o0, o1) = out.split_at_mut(width);
-            bound_row(4 * p, r, o0);
-            bound_row(4 * p + 2, r, o1);
-        },
-    );
+    // Bind round 0 and accumulate round 1 in one pass. With pair tables, the
+    // bound one-hot columns are lookups into tables bound to `r`.
+    let w1 = Weights::new(&r_j[2..]);
+    let (mut rows, mut acc) = match lookups {
+        Some(_) => {
+            let ba = bound_pair_table(&eq_a, c, r);
+            let bm = bound_pair_table(&eq_am, c, r);
+            let bound = |j: usize, out: &mut [K]| {
+                let (a0, a1) = (w.addr[j], w.addr[j + 1]);
+                let (i0, i1) = (w.inc_e[j], w.inc_e[j + 1]);
+                out[INC] = i0 + r * (i0 + i1);
+                for i in 0..d {
+                    let k = (((a0 >> (i * c)) & mask) | (((a1 >> (i * c)) & mask) << c)) as usize;
+                    out[A0 + i] = ba[(i << (2 * c)) + k];
+                    out[A0 + d + i] = bm[(i << (2 * c)) + k];
+                }
+            };
+            bind_pass(
+                1 << (n - 2),
+                width,
+                d,
+                &w1,
+                ch.gamma,
+                &|p, out: &mut [K]| {
+                    let (o0, o1) = out.split_at_mut(width);
+                    bound(4 * p, o0);
+                    bound(4 * p + 2, o1);
+                },
+            )
+        }
+        None => bind_pass(
+            1 << (n - 2),
+            width,
+            d,
+            &w1,
+            ch.gamma,
+            &|p, out: &mut [K]| {
+                let (o0, o1) = out.split_at_mut(width);
+                bound_row(4 * p, r, o0);
+                bound_row(4 * p + 2, r, o1);
+            },
+        ),
+    };
     for i in 1..n {
         ys = values(&acc, d, cur, pre, r_j[i], ch.delta);
         let (r, next) = emit_round(&ys, tr, LABEL, &mut msgs);
