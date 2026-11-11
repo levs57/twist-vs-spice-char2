@@ -18,8 +18,8 @@ use rayon::prelude::*;
 use std::collections::BTreeMap;
 
 use crate::{
-    ComponentSummary, Config, Error, OrderingMode, Schema, Statement, Summary, column_claims,
-    combine_bits, dims, eval_columns, eval_columns_weighted, flock_order_claims,
+    ComponentSummary, Config, Error, OrderingMode, Schema, Statement, Summary, combine_bits, dims,
+    eval_columns, eval_columns_weighted,
     masked_reduction::{self, MaskClaims, MaskProof},
     order, order_flock, pack_columns, pack_values, require, validate, word_claim, word_eval,
 };
@@ -177,33 +177,67 @@ pub struct ProveResult {
     pub summary: Summary,
 }
 
-fn schema(s: &Statement) -> Schema {
+/// Committed bitplane groups: name prefix, plane count and plane log size.
+///
+/// Each group is split into aligned power-of-two chunks (21 = 16 + 4 + 1).
+/// A chunk of `2^k` planes is one Mosaic component of log size
+/// `plane_log + k`, with plane `i` at offset `i * 2^plane_log`, so the plane
+/// index occupies the high `k` coordinates. The committed bits are the same
+/// bitplanes as before, only grouped.
+fn plane_groups(s: &Statement) -> [(&'static str, usize, usize); 5] {
     let (n, a, _, b) = dims(s);
-    let mut components = vec![ComponentSummary {
-        name: "input/value".into(),
-        log_size: n + s.config.word_log_bits,
-    }];
-    for (prefix, count, log_size) in [
+    [
         ("input/address", a, n),
         ("input/previous", b, n),
         ("order/carry", b - 1, n),
         ("boundary/previous", b, a),
-    ] {
-        components.extend((0..count).map(|i| ComponentSummary {
-            name: format!("{prefix}/{i}"),
-            log_size,
-        }));
+        // Plane 0 is is_write and plane 1 is next_is_write.
+        ("input/flags", 2, n),
+    ]
+}
+
+/// Aligned power-of-two chunks `(first plane, log chunk size)`, largest first.
+fn plane_chunks(count: usize) -> Vec<(usize, usize)> {
+    let mut start = 0;
+    (0..usize::BITS as usize)
+        .rev()
+        .filter(|&k| (count >> k) & 1 == 1)
+        .map(|k| {
+            let chunk = (start, k);
+            start += 1 << k;
+            chunk
+        })
+        .collect()
+}
+
+fn chunk_name(prefix: &str, start: usize, log_len: usize) -> String {
+    format!("{prefix}/{start}+{}", 1usize << log_len)
+}
+
+/// Combination coordinates drawn for every plane chunk (chunks have at most
+/// 32 planes because predecessor words have at most 32 bits).
+const RHO_LEN: usize = 5;
+
+fn schema(s: &Statement) -> Schema {
+    let (n, a, _, _) = dims(s);
+    let mut components = vec![ComponentSummary {
+        name: "input/value".into(),
+        log_size: n + s.config.word_log_bits,
+    }];
+    for (prefix, count, log_size) in plane_groups(s) {
+        components.extend(
+            plane_chunks(count)
+                .into_iter()
+                .map(|(start, k)| ComponentSummary {
+                    name: chunk_name(prefix, start, k),
+                    log_size: log_size + k,
+                }),
+        );
     }
-    for (name, log_size) in [
-        ("input/is_write", n),
-        ("input/next_is_write", n),
-        ("initial/next_is_write", a),
-    ] {
-        components.push(ComponentSummary {
-            name: name.into(),
-            log_size,
-        });
-    }
+    components.push(ComponentSummary {
+        name: "initial/next_is_write".into(),
+        log_size: a,
+    });
     let ids: BTreeMap<_, _> = components
         .iter()
         .enumerate()
@@ -228,6 +262,84 @@ fn schema(s: &Statement) -> Schema {
         components,
         pcs,
     }
+}
+
+/// Write bitplane `planes[i]` of group `prefix` into its chunk component.
+fn place_planes(g: &mut PackedBits, schema: &Schema, prefix: &str, planes: &[PackedBits]) {
+    let placements = schema.layout.by_id();
+    for (start, k) in plane_chunks(planes.len()) {
+        let placement = placements[&schema.ids[&chunk_name(prefix, start, k)]];
+        let plane_len = 1usize << (placement.log_size - k);
+        for (i, plane) in planes[start..start + (1 << k)].iter().enumerate() {
+            assert_eq!(plane.len(), plane_len, "bitplane length");
+            let offset = placement.offset + i * plane_len;
+            let words = g.words_mut();
+            if offset % 64 == 0 && plane_len >= 64 {
+                words[offset / 64..offset / 64 + plane.words().len()]
+                    .copy_from_slice(plane.words());
+            } else {
+                for bit in plane.iter_ones() {
+                    words[(offset + bit) / 64] |= 1u64 << ((offset + bit) % 64);
+                }
+            }
+        }
+    }
+}
+
+/// A claim before the chunk combination challenge is drawn.
+enum Pending {
+    /// All planes of one group evaluated at one point.
+    Planes {
+        prefix: &'static str,
+        point: Vec<K>,
+        values: Vec<K>,
+    },
+    Direct(EvalClaim),
+}
+
+fn planes(prefix: &'static str, point: &[K], values: &[K]) -> Pending {
+    Pending::Planes {
+        prefix,
+        point: point.to_vec(),
+        values: values.to_vec(),
+    }
+}
+
+/// Replace each group of per-plane values by one claim per chunk:
+/// `sum_i eq(rho[..k], i) * value_i` at `point || rho[..k]`. `rho` must be
+/// drawn after every per-plane value has been absorbed.
+fn finish_claims(pending: Vec<Pending>, rho: &[K]) -> Vec<EvalClaim> {
+    pending
+        .into_iter()
+        .flat_map(|claim| match claim {
+            Pending::Direct(claim) => vec![claim],
+            Pending::Planes {
+                prefix,
+                point,
+                values,
+            } => plane_chunks(values.len())
+                .into_iter()
+                .map(|(start, k)| {
+                    let weights = om_sumcheck::eq_table(&rho[..k]);
+                    let value = values[start..start + (1 << k)]
+                        .iter()
+                        .zip(&weights)
+                        .fold(K::ZERO, |sum, (&v, &w)| sum + v * w);
+                    let mut at = point.clone();
+                    at.extend_from_slice(&rho[..k]);
+                    EvalClaim {
+                        poly: chunk_name(prefix, start, k),
+                        point: at,
+                        value,
+                    }
+                })
+                .collect(),
+        })
+        .collect()
+}
+
+fn group_rho(tr: &mut Transcript) -> Vec<K> {
+    tr.challenge_ks(b"spice/typed/plane-chunks/rho", RHO_LEN)
 }
 
 fn transcript(s: &Statement, schema: &Schema, options: &Options) -> Transcript {
@@ -259,45 +371,45 @@ fn scalar_claim(name: &str, point: &[K], value: K) -> EvalClaim {
     }
 }
 
-fn input_claims(s: &Statement, p: &[K], v: &Inputs) -> Vec<EvalClaim> {
-    let (n, a, _, _) = dims(s);
-    let mut out = column_claims("input/address", &v.address, &p[..n]);
-    out.extend(column_claims("input/previous", &v.previous, &p[..n]));
-    out.extend(column_claims(
-        "boundary/previous",
-        &v.final_previous,
-        &p[..a],
-    ));
-    out.push(scalar_claim("input/is_write", &p[..n], v.is_write));
-    out.push(scalar_claim(
-        "input/next_is_write",
-        &p[..n],
-        v.next_is_write,
-    ));
-    out.push(scalar_claim(
-        "initial/next_is_write",
-        &p[..a],
-        v.initial_next_is_write,
-    ));
-    out
-}
-
-fn mask_source_claims(s: &Statement, v: &masked_reduction::SourceClaims) -> Vec<EvalClaim> {
+fn input_claims(s: &Statement, p: &[K], v: &Inputs) -> Vec<Pending> {
     let (n, a, _, _) = dims(s);
     vec![
-        word_claim(
+        planes("input/address", &p[..n], &v.address),
+        planes("input/previous", &p[..n], &v.previous),
+        planes("boundary/previous", &p[..a], &v.final_previous),
+        planes("input/flags", &p[..n], &[v.is_write, v.next_is_write]),
+        Pending::Direct(scalar_claim(
+            "initial/next_is_write",
+            &p[..a],
+            v.initial_next_is_write,
+        )),
+    ]
+}
+
+fn mask_source_claims(s: &Statement, v: &masked_reduction::SourceClaims) -> Vec<Pending> {
+    let (n, a, _, _) = dims(s);
+    vec![
+        Pending::Direct(word_claim(
             "input/value",
             &v.point[..n],
             v.value,
             s.config.word_log_bits,
-        ),
-        scalar_claim("input/is_write", &v.point[..n], v.is_write),
-        scalar_claim("input/next_is_write", &v.point[..n], v.next_is_write),
-        scalar_claim(
+        )),
+        planes("input/flags", &v.point[..n], &[v.is_write, v.next_is_write]),
+        Pending::Direct(scalar_claim(
             "initial/next_is_write",
             &v.point[..a],
             v.initial_next_is_write,
-        ),
+        )),
+    ]
+}
+
+fn order_claims(terminal: &order_flock::OrderClaims) -> Vec<Pending> {
+    vec![
+        planes("input/previous", &terminal.point_ab, &terminal.previous_ab),
+        planes("order/carry", &terminal.point_ab, &terminal.carries_ab),
+        // Flock extracts the linear C column at a second cycle point.
+        planes("order/carry", &terminal.point_c, &terminal.carries_c),
     ]
 }
 
@@ -462,17 +574,14 @@ pub fn prove_with(
             &pack_values(&trace.values, config.word_log_bits),
         );
         for (prefix, cols) in [
-            ("input/address", &address),
-            ("input/previous", &prev),
-            ("boundary/previous", &last_columns),
-            ("order/carry", &carry),
+            ("input/address", &address[..]),
+            ("input/previous", &prev[..]),
+            ("boundary/previous", &last_columns[..]),
+            ("order/carry", &carry[..]),
+            ("input/flags", &flags[..]),
         ] {
-            for (i, col) in cols.iter().enumerate() {
-                schema.place(&mut g, &format!("{prefix}/{i}"), col);
-            }
+            place_planes(&mut g, &schema, prefix, cols);
         }
-        schema.place(&mut g, "input/is_write", &flags[0]);
-        schema.place(&mut g, "input/next_is_write", &flags[1]);
         schema.place(&mut g, "initial/next_is_write", &initial_flags);
         (address, prev, last_columns, flags, initial_flags, g)
     };
@@ -607,7 +716,8 @@ pub fn prove_with(
         let _span = Span::new("spice.order");
         order_flock::prove(&previous, &carries, n, a, &mut tr, b"spice/typed/order")?
     };
-    claims.extend(flock_order_claims(&order_sources));
+    claims.extend(order_claims(&order_sources));
+    let claims = finish_claims(claims, &group_rho(&mut tr));
     let (mosaic, r, value) = {
         let _span = Span::new("mosaic.batch");
         batch_prove_packed(&schema.layout, &schema.claims(&claims)?, &g, &mut tr)
@@ -675,7 +785,8 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error
     )?;
     claims.extend(mask_source_claims(s, &sources));
     let terminal = order_flock::verify(n, a, &p.order, &mut tr, b"spice/typed/order")?;
-    claims.extend(flock_order_claims(&terminal));
+    claims.extend(order_claims(&terminal));
+    let claims = finish_claims(claims, &group_rho(&mut tr));
     let (r, value) = batch_verify(&schema.layout, &schema.claims(&claims)?, &p.mosaic, &mut tr)?;
     schema
         .pcs
@@ -706,6 +817,36 @@ mod tests {
                 rounds: Vec::new(),
                 children,
             }],
+        }
+    }
+
+    #[test]
+    fn chunks_are_aligned_and_keep_the_primary_commitment_size() {
+        assert_eq!(plane_chunks(21), vec![(0, 4), (16, 2), (20, 0)]);
+        assert_eq!(plane_chunks(20), vec![(0, 4), (16, 2)]);
+        assert_eq!(plane_chunks(16), vec![(0, 4)]);
+        assert_eq!(plane_chunks(2), vec![(0, 1)]);
+        let s = Statement {
+            config: Config {
+                address_bits: 16,
+                chunk_bits: 1,
+                ..Config::default()
+            },
+            log_cycles: 20,
+            initial_memory: vec![0; 1 << 16],
+            final_memory: vec![0; 1 << 16],
+        };
+        let schema = schema(&s);
+        let populated: usize = schema
+            .components
+            .iter()
+            .map(|c| 1usize << c.log_size)
+            .sum();
+        // 124.375 populated bits per row; the padded commitment stays 2^27.
+        assert_eq!(populated, 130_416_640);
+        assert_eq!(schema.layout.ell, 27);
+        for p in &schema.layout.placements {
+            assert_eq!(p.offset % (1usize << p.log_size), 0);
         }
     }
 

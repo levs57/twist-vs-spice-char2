@@ -37,7 +37,11 @@ fn typed_read_write_semantics_write_first_and_precise_pricing() {
         .map(|c| 1usize << c.log_size)
         .sum();
     assert_eq!(populated, (64 + 2 + 2 * 4 + 1) * 8 + (4 + 1) * 4);
-    assert_eq!(r.summary.mosaic_claims, 2 + 5 * 4 + 5);
+    // Address (2 planes), predecessor (4) and boundary (4) are one chunk each;
+    // the flag pair is one chunk; carries (3) split into 2 + 1.
+    // Leaf point: address, previous, boundary, flags, initial flag = 5.
+    // Mask point: value, flags, initial flag = 3. Order: 1 + 2 + 2 = 5.
+    assert_eq!(r.summary.mosaic_claims, 5 + 3 + 5);
     assert!(
         r.summary
             .commitment_components
@@ -281,4 +285,30 @@ fn two_fingerprint_tampering_rejects() {
         )
         .is_err()
     );
+}
+
+#[test]
+fn every_plane_of_a_chunk_is_bound_by_the_combined_claim() {
+    let r = fixture();
+    // Swapping two planes' values keeps their sum but not the rho combination.
+    let mut p = r.proof.clone();
+    assert_ne!(p.inputs.address[0], p.inputs.address[1]);
+    p.inputs.address.swap(0, 1);
+    assert!(operations::verify(&r.statement, &p).is_err());
+    for plane in 0..4 {
+        let mut p = r.proof.clone();
+        p.inputs.previous[plane] += K::ONE;
+        assert!(operations::verify(&r.statement, &p).is_err());
+        let mut p = r.proof.clone();
+        p.order.previous_ab[plane] += K::ONE;
+        assert!(operations::verify(&r.statement, &p).is_err());
+    }
+    for plane in 0..3 {
+        let mut p = r.proof.clone();
+        p.order.carries_ab[plane] += K::ONE;
+        assert!(operations::verify(&r.statement, &p).is_err());
+        let mut p = r.proof.clone();
+        p.order.carries_c[plane] += K::ONE;
+        assert!(operations::verify(&r.statement, &p).is_err());
+    }
 }
