@@ -121,6 +121,12 @@ fn dims(s: &Statement) -> (usize, usize, usize, usize) {
 }
 
 fn validate(s: &Statement) -> Result<(), Error> {
+    validate_memory(s, true)
+}
+
+/// With `public_final` false the statement's final memory is ignored: it is
+/// neither checked here nor read by the verifier.
+fn validate_memory(s: &Statement, public_final: bool) -> Result<(), Error> {
     let c = &s.config;
     require(
         (1..=31).contains(&c.address_bits) && s.log_cycles <= 31,
@@ -141,15 +147,13 @@ fn validate(s: &Statement) -> Result<(), Error> {
     )?;
     require(
         s.initial_memory.len() == 1usize << c.address_bits
-            && s.final_memory.len() == s.initial_memory.len(),
+            && (!public_final || s.final_memory.len() == s.initial_memory.len()),
         "public memory shape mismatch",
     )?;
     let word_fits = |&v: &u64| c.word_log_bits == 6 || v >> (1usize << c.word_log_bits) == 0;
+    let final_memory: &[u64] = if public_final { &s.final_memory } else { &[] };
     require(
-        s.initial_memory
-            .iter()
-            .chain(&s.final_memory)
-            .all(word_fits),
+        s.initial_memory.iter().chain(final_memory).all(word_fits),
         "public memory word exceeds configured width",
     )
 }
@@ -232,6 +236,16 @@ impl Schema {
 }
 
 fn transcript(s: &Statement, schema: &Schema, ordering: &OrderingMode) -> Transcript {
+    transcript_with(s, schema, ordering, true)
+}
+
+/// The statement transcript. Final memory is absorbed only when public.
+fn transcript_with(
+    s: &Statement,
+    schema: &Schema,
+    ordering: &OrderingMode,
+    public_final: bool,
+) -> Transcript {
     let _span = Span::new("spice.statement");
     let mut tr = Transcript::new_default(b"ordered-spice-ram/gf128/v2");
     tr.absorb_bytes(
@@ -262,9 +276,14 @@ fn transcript(s: &Statement, schema: &Schema, ordering: &OrderingMode) -> Transc
         format!("{:?}", s.config.virtualization).as_bytes(),
     );
     tr.absorb_bytes(b"spice/profile", s.config.profile.as_bytes());
+    let empty = Vec::new();
     for (label, values) in [
         (b"spice/initial".as_slice(), &s.initial_memory),
-        (b"spice/final".as_slice(), &s.final_memory),
+        if public_final {
+            (b"spice/final".as_slice(), &s.final_memory)
+        } else {
+            (b"spice/final-committed".as_slice(), &empty)
+        },
     ] {
         tr.absorb_bytes(
             label,

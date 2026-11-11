@@ -19,8 +19,8 @@ use std::collections::BTreeMap;
 use crate::{
     ComponentSummary, Config, Error, OrderingMode, Schema, Statement, Summary, combine_bits, dims,
     masked_reduction::{self, MaskClaims},
-    order, order_flock, pack_columns, pack_values, planes, require, validate, word_claim,
-    word_eval,
+    order, order_flock, pack_columns, pack_values, planes, require, validate, validate_memory,
+    word_claim, word_eval,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -40,17 +40,27 @@ pub struct Options {
     /// all drawn after the commitment: 1 or 2. Two sets square the
     /// fingerprint collision term; both share one batched GKR.
     pub fingerprints: usize,
+    /// Commit final memory (one word per cell) instead of reading it from the
+    /// statement. The leaf binding then uses a Mosaic claim on the committed
+    /// words, and the verifier ignores `Statement::final_memory`.
+    pub private_final_memory: bool,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { fingerprints: 1 }
+        Self {
+            fingerprints: 1,
+            private_final_memory: false,
+        }
     }
 }
 
 impl Options {
     /// The `spice-typed-2fp` method: two independent fingerprints.
-    pub const TWO_FINGERPRINTS: Self = Self { fingerprints: 2 };
+    pub const TWO_FINGERPRINTS: Self = Self {
+        fingerprints: 2,
+        private_final_memory: false,
+    };
 
     fn validate(&self) -> Result<(), Error> {
         require(
@@ -64,7 +74,13 @@ impl Options {
     fn absorb(&self, tr: &mut Transcript) {
         tr.absorb_bytes(
             b"spice/typed/options",
-            &(self.fingerprints as u64).to_le_bytes(),
+            &[
+                self.fingerprints as u64,
+                u64::from(self.private_final_memory),
+            ]
+            .into_iter()
+            .flat_map(u64::to_le_bytes)
+            .collect::<Vec<_>>(),
         );
     }
 }
@@ -168,6 +184,9 @@ pub struct Evaluations {
     pub previous_ab: Vec<K>,
     pub carries_ab: Vec<K>,
     pub carries_c: Vec<K>,
+    /// With private final memory: the committed final words at the GKR leaf
+    /// point's memory prefix. `None` when final memory is public.
+    pub final_value: Option<K>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -232,12 +251,18 @@ fn chunk_name(prefix: &str, start: usize, log_len: usize) -> String {
 /// 32 planes because predecessor words have at most 32 bits).
 const RHO_LEN: usize = 5;
 
-fn schema(s: &Statement) -> Schema {
+fn schema(s: &Statement, options: &Options) -> Schema {
     let (n, a, _, _) = dims(s);
     let mut components = vec![ComponentSummary {
         name: "input/value".into(),
         log_size: n + s.config.word_log_bits,
     }];
+    if options.private_final_memory {
+        components.push(ComponentSummary {
+            name: "boundary/final".into(),
+            log_size: a + s.config.word_log_bits,
+        });
+    }
     for (prefix, count, log_size) in plane_groups(s) {
         components.extend(
             plane_chunks(count)
@@ -357,7 +382,12 @@ fn group_rho(tr: &mut Transcript) -> Vec<K> {
 }
 
 fn transcript(s: &Statement, schema: &Schema, options: &Options) -> Transcript {
-    let mut tr = crate::transcript(s, schema, &OrderingMode::FlockBoolean);
+    let mut tr = crate::transcript_with(
+        s,
+        schema,
+        &OrderingMode::FlockBoolean,
+        !options.private_final_memory,
+    );
     tr.absorb_bytes(b"spice/trace-semantics", b"typed-single-value-masked/v1");
     options.absorb(&mut tr);
     tr
@@ -395,7 +425,15 @@ fn pending_claims(
     v: &Evaluations,
 ) -> Vec<Pending> {
     let (n, a, _, _) = dims(s);
-    vec![
+    let final_value = v.final_value.map(|value| {
+        Pending::Direct(word_claim(
+            "boundary/final",
+            &leaf[..a],
+            value,
+            s.config.word_log_bits,
+        ))
+    });
+    final_value.into_iter().chain([
         group("input/address", &leaf[..n], &v.address),
         group("input/previous", &leaf[..n], &v.previous),
         group("input/flags", &leaf[..n], &v.flags),
@@ -421,7 +459,8 @@ fn pending_claims(
         group("order/carry", &order.point_ab, &order.carries_ab),
         // Flock extracts the linear C column at a second cycle point.
         group("order/carry", &order.point_c, &order.carries_c),
-    ]
+    ])
+    .collect()
 }
 
 fn absorb_masked(tr: &mut Transcript, v: &MaskClaims) {
@@ -443,12 +482,16 @@ fn absorb_evaluations(tr: &mut Transcript, v: &Evaluations) {
     tr.absorb_ks(b"spice/typed/order/previous-ab", &v.previous_ab);
     tr.absorb_ks(b"spice/typed/order/carries-ab", &v.carries_ab);
     tr.absorb_ks(b"spice/typed/order/carries-c", &v.carries_c);
+    if let Some(value) = v.final_value {
+        tr.absorb_k(b"spice/typed/final-value", value);
+    }
 }
 
-fn check_shapes(s: &Statement, v: &Evaluations) -> Result<(), Error> {
+fn check_shapes(s: &Statement, v: &Evaluations, options: &Options) -> Result<(), Error> {
     let (_, a, _, b) = dims(s);
     require(
-        v.address.len() == a
+        v.final_value.is_some() == options.private_final_memory
+            && v.address.len() == a
             && v.previous.len() == b
             && v.final_previous.len() == b
             && v.previous_ab.len() == b
@@ -479,7 +522,12 @@ fn check_leaves(
     let final_previous = combine_bits(&v.final_previous);
     let memory_addr = combine_bits(&p[..a]);
     let time = K::from_u128(1u128 << l) + combine_bits(&p[..n]);
-    let final_value = word_eval(&s.final_memory, &p[..a], s.config.word_log_bits);
+    // Private final memory: the committed words' claimed evaluation, which
+    // Mosaic authenticates. Public: the verifier evaluates it directly.
+    let final_value = match v.final_value {
+        Some(value) => value,
+        None => word_eval(&s.final_memory, &p[..a], s.config.word_log_bits),
+    };
     // Set f occupies the aligned block selected by the top log_f coordinates.
     let selectors = om_sumcheck::eq_table(&p[l + 1..]);
     let mut expected = [K::ZERO; 2];
@@ -528,9 +576,10 @@ fn check_evaluations(
     order: &order_flock::FlockClaim,
     v: &Evaluations,
     fps: &[Fingerprint],
+    options: &Options,
 ) -> Result<order_flock::OrderClaims, Error> {
     let (n, a, _, _) = dims(s);
-    check_shapes(s, v)?;
+    check_shapes(s, v, options)?;
     check_leaves(s, leaves, masked, v, fps)?;
     mask.check(
         v.mask_value,
@@ -617,7 +666,7 @@ pub fn prove_with(
         let carries = order::build_carries(&previous, n, a)?;
         (previous, next, initial_next, last, carries)
     };
-    let schema = schema(&statement);
+    let schema = schema(&statement, options);
     let mut tr = transcript(&statement, &schema, options);
     let (address_columns, previous_columns, carry_columns, last_columns, flags, initial_flags, g) = {
         let _span = Span::new("spice.pack");
@@ -643,6 +692,13 @@ pub fn prove_with(
             place_planes(&mut g, &schema, prefix, cols);
         }
         schema.place(&mut g, "initial/next_is_write", &initial_flags);
+        if options.private_final_memory {
+            schema.place(
+                &mut g,
+                "boundary/final",
+                &pack_values(&statement.final_memory, config.word_log_bits),
+            );
+        }
         (address, prev, carry, last_columns, flags, initial_flags, g)
     };
     let (commitment, state) = {
@@ -806,6 +862,13 @@ pub fn prove_with(
             initial_next_is_write: take(&mut memory)[0],
             mask_initial_next_is_write: take(&mut memory)[0],
             mask_value,
+            final_value: options.private_final_memory.then(|| {
+                word_eval(
+                    &statement.final_memory,
+                    &leaves.point[..a],
+                    config.word_log_bits,
+                )
+            }),
         }
     };
     require(
@@ -818,7 +881,7 @@ pub fn prove_with(
         "typed masked reduction: folded masks disagree with flag sources",
     )?;
     absorb_evaluations(&mut tr, &evaluations);
-    check_shapes(&statement, &evaluations)?;
+    check_shapes(&statement, &evaluations, options)?;
     check_leaves(&statement, &leaves, &masked, &evaluations, &fps)?;
     let order_claims = order_flock::check_sources(
         n,
@@ -875,10 +938,10 @@ pub fn prove_with(
 }
 
 fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error> {
-    validate(s)?;
+    validate_memory(s, !options.private_final_memory)?;
     options.validate()?;
     let (n, a, l, _) = dims(s);
-    let schema = schema(s);
+    let schema = schema(s, options);
     require(
         p.commitment.n == schema.layout.ell - 7 && p.commitment.root.len() == 32,
         "malformed typed commitment",
@@ -904,8 +967,16 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error
     )?;
     let order = order_flock::verify_zerocheck_with(n, a, &p.order, &mut tr, b"spice/typed/order")?;
     absorb_evaluations(&mut tr, &p.evaluations);
-    let order_claims =
-        check_evaluations(s, &leaves, &p.masked, &mask, &order, &p.evaluations, &fps)?;
+    let order_claims = check_evaluations(
+        s,
+        &leaves,
+        &p.masked,
+        &mask,
+        &order,
+        &p.evaluations,
+        &fps,
+        options,
+    )?;
     let claims = finish_claims(
         pending_claims(s, &leaves.point, &mask.point, &order_claims, &p.evaluations),
         &group_rho(&mut tr),
@@ -959,7 +1030,7 @@ mod tests {
             initial_memory: vec![0; 1 << 16],
             final_memory: vec![0; 1 << 16],
         };
-        let schema = schema(&s);
+        let schema = schema(&s, &Options::default());
         let populated: usize = schema.components.iter().map(|c| 1usize << c.log_size).sum();
         // 124.375 populated bits per row; the padded commitment stays 2^27.
         assert_eq!(populated, 130_416_640);
@@ -967,6 +1038,84 @@ mod tests {
         for p in &schema.layout.placements {
             assert_eq!(p.offset % (1usize << p.log_size), 0);
         }
+    }
+
+    #[test]
+    fn private_final_memory_adds_one_word_component_and_one_claim() {
+        let s = Statement {
+            config: Config {
+                address_bits: 16,
+                chunk_bits: 1,
+                ..Config::default()
+            },
+            log_cycles: 20,
+            initial_memory: vec![0; 1 << 16],
+            final_memory: Vec::new(),
+        };
+        let options = Options {
+            private_final_memory: true,
+            ..Options::default()
+        };
+        let schema = schema(&s, &options);
+        let populated: usize = schema.components.iter().map(|c| 1usize << c.log_size).sum();
+        // 64 bits per cell: 2^22 more populated bits, which crosses 2^27.
+        assert_eq!(populated, 130_416_640 + (1 << 22));
+        assert_eq!(schema.layout.ell, 28);
+    }
+
+    #[test]
+    fn private_final_value_is_a_mosaic_claim_on_the_committed_words() {
+        let config = Config {
+            address_bits: 2,
+            chunk_bits: 1,
+            ..Config::default()
+        };
+        let trace = AccessTrace {
+            initial: vec![7, 11, 19, 23],
+            addresses: vec![0, 1, 1, 3],
+            values: vec![9, 11, 4, 23],
+            is_write: vec![true, false, true, false],
+        };
+        let options = Options {
+            private_final_memory: true,
+            ..Options::default()
+        };
+        let r = prove_with(&config, &trace, &options).unwrap();
+        let p = &r.proof;
+        let (n, _, l, _) = dims(&r.statement);
+        let order = order_flock::OrderClaims {
+            point_ab: vec![K::ZERO; n],
+            point_c: vec![K::ZERO; n],
+            previous_ab: p.evaluations.previous_ab.clone(),
+            carries_ab: p.evaluations.carries_ab.clone(),
+            carries_c: p.evaluations.carries_c.clone(),
+        };
+        let leaf: Vec<K> = (0..l + 1).map(|i| K::from_u128(5 + i as u128)).collect();
+        let pending = pending_claims(&r.statement, &leaf, &leaf, &order, &p.evaluations);
+        let claims = finish_claims(pending, &[K::ONE; RHO_LEN]);
+        let finals: Vec<_> = claims.iter().filter(|c| c.poly == "boundary/final").collect();
+        let a = r.statement.config.address_bits;
+        let expected = word_claim(
+            "boundary/final",
+            &leaf[..a],
+            p.evaluations.final_value.unwrap(),
+            r.statement.config.word_log_bits,
+        );
+        assert_eq!(finals, vec![&expected]);
+        let public = finish_claims(
+            pending_claims(
+                &r.statement,
+                &leaf,
+                &leaf,
+                &order,
+                &Evaluations {
+                    final_value: None,
+                    ..p.evaluations.clone()
+                },
+            ),
+            &[K::ONE; RHO_LEN],
+        );
+        assert_eq!(public.len() + 1, claims.len());
     }
 
     #[test]

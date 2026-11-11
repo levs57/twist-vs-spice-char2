@@ -326,7 +326,10 @@ fn two_fingerprint_tampering_rejects() {
         operations::prove_with(
             &config(2),
             &trace(),
-            &operations::Options { fingerprints: 3 }
+            &operations::Options {
+                fingerprints: 3,
+                ..Default::default()
+            }
         )
         .is_err()
     );
@@ -356,4 +359,84 @@ fn every_plane_of_a_chunk_is_bound_by_the_combined_claim() {
         p.evaluations.carries_c[plane] += K::ONE;
         assert!(operations::verify(&r.statement, &p).is_err());
     }
+}
+
+fn private_options(fingerprints: usize) -> operations::Options {
+    operations::Options {
+        fingerprints,
+        private_final_memory: true,
+    }
+}
+
+#[test]
+fn private_final_memory_verifies_without_the_public_final_memory() {
+    for fingerprints in [1, 2] {
+        let options = private_options(fingerprints);
+        for (a, t) in [
+            (2, trace()),
+            (
+                3,
+                AccessTrace {
+                    initial: (0..8).map(|i| 100 + i).collect(),
+                    addresses: vec![7, 0, 7, 3],
+                    values: vec![5, 100, 5, 1],
+                    is_write: vec![true, false, false, true],
+                },
+            ),
+        ] {
+            let r = operations::prove_with(&config(a), &t, &options).unwrap();
+            assert!(r.proof.evaluations.final_value.is_some());
+            // The harness still sees the prover's final memory.
+            assert_eq!(r.statement.final_memory, fixture_final(&t));
+            operations::verify_with(&r.statement, &r.proof, &options).unwrap();
+            // The verifier never reads the statement's final memory.
+            let mut s = r.statement.clone();
+            s.final_memory = Vec::new();
+            operations::verify_with(&s, &r.proof, &options).unwrap();
+            // Public and private proofs are not interchangeable.
+            let public = operations::Options {
+                private_final_memory: false,
+                ..options
+            };
+            assert!(operations::verify_with(&r.statement, &r.proof, &public).is_err());
+        }
+    }
+    let public = operations::Options::default();
+    assert!(
+        operations::verify_with(&fixture().statement, &fixture().proof, &private_options(1))
+            .is_err()
+    );
+    operations::verify_with(&fixture().statement, &fixture().proof, &public).unwrap();
+}
+
+fn fixture_final(t: &AccessTrace) -> Vec<u64> {
+    let mut memory = t.initial.clone();
+    for j in 0..t.addresses.len() {
+        if t.is_write[j] {
+            memory[t.addresses[j] as usize] = t.values[j];
+        }
+    }
+    memory
+}
+
+#[test]
+fn private_final_memory_tampering_rejects() {
+    let options = private_options(1);
+    let r = operations::prove_with(&config(2), &trace(), &options).unwrap();
+    // A wrong committed-word evaluation fails the leaf check and the Mosaic claim.
+    let mut p = r.proof.clone();
+    *p.evaluations.final_value.as_mut().unwrap() += K::ONE;
+    assert!(operations::verify_with(&r.statement, &p, &options).is_err());
+    // Dropping the evaluation is a shape error.
+    let mut p = r.proof.clone();
+    p.evaluations.final_value = None;
+    assert!(operations::verify_with(&r.statement, &p, &options).is_err());
+    // The committed words are bound to the PCS opening.
+    let mut p = r.proof.clone();
+    p.mosaic = fixture().proof.mosaic.clone();
+    assert!(operations::verify_with(&r.statement, &p, &options).is_err());
+    // Initial memory stays public.
+    let mut s = r.statement.clone();
+    s.initial_memory[1] ^= 2;
+    assert!(operations::verify_with(&s, &r.proof, &options).is_err());
 }
