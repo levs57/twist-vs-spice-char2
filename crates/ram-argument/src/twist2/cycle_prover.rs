@@ -154,7 +154,10 @@ fn kernel(
     for t in 0..w {
         delta[t] = x0[t] + x1[t];
     }
-    for e in 0..=d + 1 {
+    // With Inc zero on both rows (two loads), `P` vanishes and only the
+    // degree-d eq-weighted part remains.
+    let store = !(x0[INC].is_zero() && x1[INC].is_zero());
+    for e in 0..=d + store as usize {
         let v: &[K] = match e {
             0 => x0,
             1 => x1,
@@ -171,10 +174,12 @@ fn kernel(
         for i in 1..d {
             prod *= v[A0 + i];
         }
-        let p = prod * v[INC];
-        b.p0[e] += p;
-        b.plt[e] += lt_lo.clmul(p);
-        b.peq[e] += eq_lo.clmul(p);
+        if store {
+            let p = prod * v[INC];
+            b.p0[e] += p;
+            b.plt[e] += lt_lo.clmul(p);
+            b.peq[e] += eq_lo.clmul(p);
+        }
         if e <= d {
             b.pi[e] += eq_lo.clmul(prod);
         }
@@ -345,15 +350,18 @@ impl PairTables {
         let (i0, i1) = (inc[j], inc[j + 1]);
         let di = i0 + i1;
         let pts = d + 2;
-        for e in 0..pts {
+        let store = !(i0.is_zero() && i1.is_zero());
+        for e in 0..=d + store as usize {
             let mut prod = self.a[keys[0] * pts + e];
             for &key in &keys[1..] {
                 prod *= self.a[key * pts + e];
             }
-            let p = prod * (i0 + di.mul_t(e as u128));
-            b.p0[e] += p;
-            b.plt[e] += lt_lo.clmul(p);
-            b.peq[e] += eq_lo.clmul(p);
+            if store {
+                let p = prod * (i0 + di.mul_t(e as u128));
+                b.p0[e] += p;
+                b.plt[e] += lt_lo.clmul(p);
+                b.peq[e] += eq_lo.clmul(p);
+            }
             if e <= d {
                 b.pi[e] += eq_lo.clmul(prod);
             }
