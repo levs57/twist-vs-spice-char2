@@ -194,3 +194,91 @@ fn inconsistent_typed_reads_and_malformed_proofs_reject() {
     p.masks.sc.round_msgs.clear();
     assert!(operations::verify(&r.statement, &p).is_err());
 }
+
+fn fixture_2fp() -> &'static ProveResult {
+    static RESULT: OnceLock<ProveResult> = OnceLock::new();
+    RESULT.get_or_init(|| {
+        operations::prove_with(&config(2), &trace(), &operations::Options::TWO_FINGERPRINTS)
+            .unwrap()
+    })
+}
+
+#[test]
+fn two_fingerprints_verify_with_matching_options_only() {
+    let two = operations::Options::TWO_FINGERPRINTS;
+    let r = fixture_2fp();
+    operations::verify_with(&r.statement, &r.proof, &two).unwrap();
+    assert_eq!(r.statement, fixture().statement);
+    // The verifier chooses the fingerprint count: neither proof passes as the other.
+    assert!(operations::verify(&r.statement, &r.proof).is_err());
+    assert!(operations::verify_with(&fixture().statement, &fixture().proof, &two).is_err());
+    // Same commitment and claims; only the permutation tree doubles.
+    assert_eq!(r.summary.committed_bits, fixture().summary.committed_bits);
+    assert_eq!(r.summary.mosaic_claims, fixture().summary.mosaic_claims);
+    assert_eq!(
+        r.proof.permutation.layers.len(),
+        fixture().proof.permutation.layers.len() + 1
+    );
+}
+
+#[test]
+fn two_fingerprints_cover_binary_and_radix_four_first_layers() {
+    // (a, n) = (2, 3) gives a 5-level tree (binary first layer); (2, 2) and
+    // (3, 1) give 4- and 5-level trees.
+    for (a, n) in [(2, 3), (2, 2), (3, 1), (1, 0)] {
+        let mut memory: Vec<u64> = (0..1u64 << a).map(|i| 100 + i).collect();
+        let mut t = AccessTrace {
+            initial: memory.clone(),
+            addresses: Vec::new(),
+            values: Vec::new(),
+            is_write: Vec::new(),
+        };
+        for j in 0..1usize << n {
+            let k = (j * 5 + 1) % (1usize << a);
+            let w = j % 3 == 0;
+            let v = if w { 7 * j as u64 + 1 } else { memory[k] };
+            if w {
+                memory[k] = v;
+            }
+            t.addresses.push(k as u32);
+            t.values.push(v);
+            t.is_write.push(w);
+        }
+        let two = operations::Options::TWO_FINGERPRINTS;
+        let r = operations::prove_with(&config(a), &t, &two).unwrap();
+        operations::verify_with(&r.statement, &r.proof, &two).unwrap();
+        assert_eq!(r.statement.final_memory, memory);
+    }
+}
+
+#[test]
+fn two_fingerprint_tampering_rejects() {
+    let two = operations::Options::TWO_FINGERPRINTS;
+    let r = fixture_2fp();
+    // Rescale the per-set products while keeping the root product fixed.
+    let mut p = r.proof.clone();
+    let c = K::from_u128(3);
+    p.permutation.layers[0].children[0][0] *= c;
+    p.permutation.layers[0].children[0][1] /= c;
+    assert!(operations::verify_with(&r.statement, &p, &two).is_err());
+    let mut p = r.proof.clone();
+    p.permutation.layers.last_mut().unwrap().children[1][0] += K::ONE;
+    assert!(operations::verify_with(&r.statement, &p, &two).is_err());
+    let mut p = r.proof.clone();
+    p.inputs.masked.cycle[0] += K::ONE;
+    assert!(operations::verify_with(&r.statement, &p, &two).is_err());
+    let mut s = r.statement.clone();
+    s.final_memory[2] ^= 4;
+    assert!(operations::verify_with(&s, &r.proof, &two).is_err());
+    let mut s = r.statement.clone();
+    s.initial_memory[3] ^= 4;
+    assert!(operations::verify_with(&s, &r.proof, &two).is_err());
+    assert!(
+        operations::prove_with(
+            &config(2),
+            &trace(),
+            &operations::Options { fingerprints: 3 }
+        )
+        .is_err()
+    );
+}

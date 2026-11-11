@@ -33,6 +33,120 @@ pub struct AccessTrace {
     pub is_write: Vec<bool>,
 }
 
+/// Protocol options for typed Spice. The default is the original setting:
+/// one fingerprint and public final memory.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Options {
+    /// Independent fingerprint challenge sets `(gamma, alpha, beta, delta)`,
+    /// all drawn after the commitment: 1 or 2. Two sets square the
+    /// fingerprint collision term; both share one batched GKR.
+    pub fingerprints: usize,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self { fingerprints: 1 }
+    }
+}
+
+impl Options {
+    /// The `spice-typed-2fp` method: two independent fingerprints.
+    pub const TWO_FINGERPRINTS: Self = Self { fingerprints: 2 };
+
+    fn validate(&self) -> Result<(), Error> {
+        require(
+            matches!(self.fingerprints, 1 | 2),
+            "typed Spice supports one or two fingerprints",
+        )
+    }
+    fn log_fingerprints(&self) -> usize {
+        self.fingerprints.trailing_zeros() as usize
+    }
+    fn absorb(&self, tr: &mut Transcript) {
+        tr.absorb_bytes(
+            b"spice/typed/options",
+            &(self.fingerprints as u64).to_le_bytes(),
+        );
+    }
+}
+
+/// One fingerprint challenge set: shift, address, value and write-tag
+/// coefficients.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct Fingerprint {
+    gamma: K,
+    alpha: K,
+    beta: K,
+    delta: K,
+}
+
+fn fingerprints(tr: &mut Transcript, options: &Options) -> Vec<Fingerprint> {
+    // Set 0 keeps the original labels; set 1 uses distinct labels. Every set
+    // is drawn after the commitment has been absorbed.
+    const LABELS: [[&[u8]; 4]; 2] = [
+        [
+            b"spice/typed/fingerprint/shift",
+            b"spice/typed/fingerprint/address",
+            b"spice/typed/fingerprint/value",
+            b"spice/typed/fingerprint/write",
+        ],
+        [
+            b"spice/typed/fingerprint2/shift",
+            b"spice/typed/fingerprint2/address",
+            b"spice/typed/fingerprint2/value",
+            b"spice/typed/fingerprint2/write",
+        ],
+    ];
+    LABELS[..options.fingerprints]
+        .iter()
+        .map(|[g, a, b, d]| Fingerprint {
+            gamma: tr.challenge_k(g),
+            alpha: tr.challenge_k(a),
+            beta: tr.challenge_k(b),
+            delta: tr.challenge_k(d),
+        })
+        .collect()
+}
+
+/// The two multiset products (left, right) of every fingerprint set.
+///
+/// With one set these are the GKR roots. With two sets the trees hold
+/// `[set 0 | set 1]`, so the first GKR layer's children are the per-set
+/// products (binary first layer) or their halves (radix-four first layer).
+/// The GKR binds these children exactly as it binds every other layer.
+fn fingerprint_products(
+    proof: &GrandProductProof,
+    options: &Options,
+) -> Result<Vec<[K; 2]>, Error> {
+    if options.fingerprints == 1 {
+        return Ok(vec![proof.roots]);
+    }
+    let first = proof
+        .layers
+        .first()
+        .ok_or_else(|| Error("typed permutation has no layers".into()))?;
+    let [left, right] = &first.children;
+    match left.len() {
+        2 if right.len() == 2 => Ok((0..2).map(|f| [left[f], right[f]]).collect()),
+        4 if right.len() == 4 => Ok((0..2)
+            .map(|f| {
+                [
+                    left[2 * f] * left[2 * f + 1],
+                    right[2 * f] * right[2 * f + 1],
+                ]
+            })
+            .collect()),
+        _ => Err(Error("malformed typed permutation first layer".into())),
+    }
+}
+
+fn check_products(proof: &GrandProductProof, options: &Options) -> Result<(), Error> {
+    for [left, right] in fingerprint_products(proof, options)? {
+        require(left == right, "typed RAM permutation products disagree")?;
+    }
+    Ok(())
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Inputs {
     pub address: Vec<K>,
@@ -116,9 +230,10 @@ fn schema(s: &Statement) -> Schema {
     }
 }
 
-fn transcript(s: &Statement, schema: &Schema) -> Transcript {
+fn transcript(s: &Statement, schema: &Schema, options: &Options) -> Transcript {
     let mut tr = crate::transcript(s, schema, &OrderingMode::FlockBoolean);
     tr.absorb_bytes(b"spice/trace-semantics", b"typed-single-value-masked/v1");
+    options.absorb(&mut tr);
     tr
 }
 
@@ -204,14 +319,12 @@ fn check_leaves(
     s: &Statement,
     leaves: &LeafClaims,
     v: &Inputs,
-    gamma: K,
-    alpha: K,
-    beta: K,
-    delta: K,
+    fps: &[Fingerprint],
 ) -> Result<(), Error> {
     let (n, a, l, b) = dims(s);
+    let log_f = fps.len().trailing_zeros() as usize;
     require(
-        leaves.point.len() == l + 1
+        leaves.point.len() == l + 1 + log_f
             && v.address.len() == a
             && v.previous.len() == b
             && v.final_previous.len() == b,
@@ -221,32 +334,42 @@ fn check_leaves(
     let cm = p[n..l].iter().fold(K::ONE, |v, &x| v * (K::ONE + x));
     let mm = p[a..l].iter().fold(K::ONE, |v, &x| v * (K::ONE + x));
     let addr = combine_bits(&v.address);
+    let previous = combine_bits(&v.previous);
+    let final_previous = combine_bits(&v.final_previous);
     let memory_addr = combine_bits(&p[..a]);
     let time = K::from_u128(1u128 << l) + combine_bits(&p[..n]);
-    let cycles = [
-        gamma
-            + combine_bits(&v.previous)
-            + alpha * addr
-            + beta * v.masked.cycle[0]
-            + delta * v.is_write,
-        gamma + time + alpha * addr + beta * v.masked.cycle[1] + delta * v.next_is_write,
-    ];
-    let memory = [
-        gamma
-            + combine_bits(&v.final_previous)
-            + alpha * memory_addr
-            + beta * word_eval(&s.final_memory, &p[..a], s.config.word_log_bits),
-        gamma
-            + memory_addr
-            + alpha * memory_addr
-            + beta * v.masked.initial
-            + delta * v.initial_next_is_write,
-    ];
+    let final_value = word_eval(&s.final_memory, &p[..a], s.config.word_log_bits);
+    // Set f occupies the aligned block selected by the top log_f coordinates.
+    let selectors = om_sumcheck::eq_table(&p[l + 1..]);
+    let mut expected = [K::ZERO; 2];
+    for (fp, &select) in fps.iter().zip(&selectors) {
+        let Fingerprint {
+            gamma,
+            alpha,
+            beta,
+            delta,
+        } = *fp;
+        let cycles = [
+            gamma + previous + alpha * addr + beta * v.masked.cycle[0] + delta * v.is_write,
+            gamma + time + alpha * addr + beta * v.masked.cycle[1] + delta * v.next_is_write,
+        ];
+        let memory = [
+            gamma + final_previous + alpha * memory_addr + beta * final_value,
+            gamma
+                + memory_addr
+                + alpha * memory_addr
+                + beta * v.masked.initial
+                + delta * v.initial_next_is_write,
+        ];
+        for side in 0..2 {
+            expected[side] += select
+                * ((K::ONE + p[l]) * (K::ONE + cm * (K::ONE + cycles[side]))
+                    + p[l] * (K::ONE + mm * (K::ONE + memory[side])));
+        }
+    }
     for side in 0..2 {
-        let expected = (K::ONE + p[l]) * (K::ONE + cm * (K::ONE + cycles[side]))
-            + p[l] * (K::ONE + mm * (K::ONE + memory[side]));
         require(
-            expected == leaves.values[side],
+            expected[side] == leaves.values[side],
             "typed permutation leaf binding failed",
         )?;
     }
@@ -254,7 +377,16 @@ fn check_leaves(
 }
 
 pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, Error> {
+    prove_with(config, trace, &Options::default())
+}
+
+pub fn prove_with(
+    config: &Config,
+    trace: &AccessTrace,
+    options: &Options,
+) -> Result<ProveResult, Error> {
     profiling::clear();
+    options.validate()?;
     let t = trace.addresses.len();
     require(
         t.is_power_of_two(),
@@ -314,7 +446,7 @@ pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, Error>
         (previous, next, initial_next, last, carries)
     };
     let schema = schema(&statement);
-    let mut tr = transcript(&statement, &schema);
+    let mut tr = transcript(&statement, &schema, options);
     let (address_columns, previous_columns, last_columns, flags, initial_flags, g) = {
         let _span = Span::new("spice.pack");
         let address = pack_columns(&trace.addresses, a);
@@ -348,18 +480,29 @@ pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, Error>
         let _span = Span::new("pcs.commit");
         schema.pcs.commit_packed(&g, &mut tr)
     };
-    let gamma = tr.challenge_k(b"spice/typed/fingerprint/shift");
-    let alpha = tr.challenge_k(b"spice/typed/fingerprint/address");
-    let beta = tr.challenge_k(b"spice/typed/fingerprint/value");
-    let delta = tr.challenge_k(b"spice/typed/fingerprint/write");
+    let fps = fingerprints(&mut tr, options);
+    let log_f = options.log_fingerprints();
     let leaves = {
         let _span = Span::new("spice.permutation.leaves");
         let half = 1usize << l;
-        let padding = [t..half, half + cells..2 * half]
-            .into_iter()
+        let set = 2 * half;
+        let padding = (0..fps.len())
+            .flat_map(|f| {
+                [
+                    f * set + t..f * set + half,
+                    f * set + half + cells..(f + 1) * set,
+                ]
+            })
             .filter(|x| !x.is_empty())
             .collect();
-        Leaves::from_fn_pair(2 * half, padding, |row| {
+        Leaves::from_fn_pair(set << log_f, padding, |row| {
+            let Fingerprint {
+                gamma,
+                alpha,
+                beta,
+                delta,
+            } = fps[row / set];
+            let row = row % set;
             if row < half {
                 let j = row;
                 let common = gamma + alpha * K::from_u128(trace.addresses[j] as u128);
@@ -401,12 +544,9 @@ pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, Error>
     };
     let (permutation, leaves) = {
         let _span = Span::new("spice.permutation.gkr");
-        lean_grandproduct::prove(l + 1, leaves, &mut tr, b"spice/typed/permutation")?
+        lean_grandproduct::prove(l + 1 + log_f, leaves, &mut tr, b"spice/typed/permutation")?
     };
-    require(
-        permutation.roots[0] == permutation.roots[1],
-        "typed RAM permutation products disagree",
-    )?;
+    check_products(&permutation, options)?;
     let inputs = {
         let _span = Span::new("spice.claims");
         let eq = om_sumcheck::eq_table(&leaves.point[..n]);
@@ -445,7 +585,7 @@ pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, Error>
             },
         }
     };
-    check_leaves(&statement, &leaves, &inputs, gamma, alpha, beta, delta)?;
+    check_leaves(&statement, &leaves, &inputs, &fps)?;
     absorb_inputs(&mut tr, &inputs);
     let mut claims = input_claims(&statement, &leaves.point, &inputs);
     let (masks, mask_sources) = {
@@ -456,7 +596,7 @@ pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, Error>
             &next,
             &trace.initial,
             &initial_next,
-            &leaves.point,
+            &leaves.point[..l + 1],
             &inputs.masked,
             &mut tr,
             b"spice/typed/masks",
@@ -503,32 +643,31 @@ pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, Error>
     })
 }
 
-fn verify_inner(s: &Statement, p: &Proof) -> Result<(), Error> {
+fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error> {
     validate(s)?;
+    options.validate()?;
     let (n, a, l, _) = dims(s);
     let schema = schema(s);
     require(
         p.commitment.n == schema.layout.ell - 7 && p.commitment.root.len() == 32,
         "malformed typed commitment",
     )?;
-    let mut tr = transcript(s, &schema);
+    let mut tr = transcript(s, &schema, options);
     schema.pcs.absorb_commitment(&p.commitment, &mut tr);
-    let gamma = tr.challenge_k(b"spice/typed/fingerprint/shift");
-    let alpha = tr.challenge_k(b"spice/typed/fingerprint/address");
-    let beta = tr.challenge_k(b"spice/typed/fingerprint/value");
-    let delta = tr.challenge_k(b"spice/typed/fingerprint/write");
-    require(
-        p.permutation.roots[0] == p.permutation.roots[1],
-        "typed permutation roots disagree",
+    let fps = fingerprints(&mut tr, options);
+    let leaves = lean_grandproduct::verify(
+        l + 1 + options.log_fingerprints(),
+        &p.permutation,
+        &mut tr,
+        b"spice/typed/permutation",
     )?;
-    let leaves =
-        lean_grandproduct::verify(l + 1, &p.permutation, &mut tr, b"spice/typed/permutation")?;
-    check_leaves(s, &leaves, &p.inputs, gamma, alpha, beta, delta)?;
+    check_products(&p.permutation, options)?;
+    check_leaves(s, &leaves, &p.inputs, &fps)?;
     absorb_inputs(&mut tr, &p.inputs);
     let mut claims = input_claims(s, &leaves.point, &p.inputs);
     let sources = masked_reduction::verify(
         &s.initial_memory,
-        &leaves.point,
+        &leaves.point[..l + 1],
         &p.inputs.masked,
         &p.masks,
         &mut tr,
@@ -545,6 +684,53 @@ fn verify_inner(s: &Statement, p: &Proof) -> Result<(), Error> {
 }
 
 pub fn verify(s: &Statement, p: &Proof) -> Result<(), Error> {
-    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| verify_inner(s, p)))
+    verify_with(s, p, &Options::default())
+}
+
+/// Verify under explicit options. The verifier, not the proof, chooses the
+/// number of fingerprints, so a one-fingerprint proof never passes as 2fp.
+pub fn verify_with(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| verify_inner(s, p, options)))
         .map_err(|_| Error("malformed typed RAM proof".into()))?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lean_grandproduct::LayerProof;
+
+    fn proof(children: [Vec<K>; 2]) -> GrandProductProof {
+        GrandProductProof {
+            roots: [K::ONE; 2],
+            layers: vec![LayerProof {
+                rounds: Vec::new(),
+                children,
+            }],
+        }
+    }
+
+    #[test]
+    fn per_set_products_come_from_the_first_layer() {
+        let k = |v: u128| K::from_u128(v);
+        let two = Options::TWO_FINGERPRINTS;
+        // Binary first layer: one child per set.
+        let p = proof([vec![k(2), k(3)], vec![k(2), k(3)]]);
+        assert_eq!(
+            fingerprint_products(&p, &two).unwrap(),
+            vec![[k(2), k(2)], [k(3), k(3)]]
+        );
+        assert!(check_products(&p, &two).is_ok());
+        // Equal overall products, unequal per-set products: rejected.
+        let p = proof([vec![k(2) * k(5), k(3)], vec![k(2), k(3) * k(5)]]);
+        assert!(check_products(&p, &two).is_err());
+        // Radix-four first layer: cycle and memory halves of each set.
+        let p = proof([vec![k(2), k(3), k(5), k(7)], vec![k(6), K::ONE, k(7), k(5)]]);
+        assert!(check_products(&p, &two).is_ok());
+        let p = proof([vec![k(2), k(3), k(5), k(7)], vec![k(5), k(7), k(2), k(3)]]);
+        // Swapping the sets keeps the overall product but not the per-set ones.
+        assert!(check_products(&p, &two).is_err());
+        let p = proof([vec![k(2), k(3), k(5), k(7)], vec![k(2), k(5), k(3), k(7)]]);
+        assert!(check_products(&p, &two).is_err());
+        assert!(fingerprint_products(&proof([vec![k(1)], vec![k(1)]]), &two).is_err());
+    }
 }

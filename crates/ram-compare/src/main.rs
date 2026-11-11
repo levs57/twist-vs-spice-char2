@@ -13,7 +13,7 @@ use std::{
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const HELP: &str = "Chronological shared-address RAM: BinaryTwist Flat versus ordered Spice
-  --methods twist,spice,spice-ripple,spice-typed|both
+  --methods twist,spice,spice-ripple,spice-typed,spice-typed-2fp|both
                                   Ordered methods; both=twist,spice (default)
   --trace-format rmw|operations    Default rmw; spice-typed requires operations
   --patterns random,guest|both     Alias --payload; default both
@@ -127,7 +127,13 @@ fn options() -> Result<Option<Options>> {
             "--methods" => {
                 o.methods = select(
                     &value,
-                    &["twist", "spice", "spice-ripple", "spice-typed"],
+                    &[
+                        "twist",
+                        "spice",
+                        "spice-ripple",
+                        "spice-typed",
+                        "spice-typed-2fp",
+                    ],
                     &["twist", "spice"],
                 )?
             }
@@ -177,7 +183,7 @@ fn validate_options(o: &Options) -> Result<()> {
     if !["rmw", "operations"].contains(&o.trace_format.as_str()) {
         return Err("trace format must be rmw or operations".into());
     }
-    if o.methods.iter().any(|m| m == "spice-typed") && o.trace_format != "operations" {
+    if o.methods.iter().any(|m| m.starts_with("spice-typed")) && o.trace_format != "operations" {
         return Err("spice-typed requires --trace-format operations".into());
     }
     if !(1..=31).contains(&o.address_bits) || o.log_cycles > 31 || o.threads == 0 || o.repeat == 0 {
@@ -313,7 +319,14 @@ fn ordering_name(method: &str) -> Option<&'static str> {
         "spice" => Some("flock-boolean"),
         "spice-ripple" => Some("ripple-eq-factor"),
         "spice-typed" => Some("single-value-flock"),
+        "spice-typed-2fp" => Some("single-value-flock-2fp"),
         _ => unreachable!("validated method"),
+    }
+}
+fn typed_options(method: &str) -> spice_argument::operations::Options {
+    match method {
+        "spice-typed-2fp" => spice_argument::operations::Options::TWO_FINGERPRINTS,
+        _ => spice_argument::operations::Options::default(),
     }
 }
 fn hex(bytes: &[u8]) -> String {
@@ -393,7 +406,7 @@ impl Area {
         let populated_bits = components.iter().map(|c| c.bits).sum::<usize>();
         if method.starts_with("spice") {
             let b = o.address_bits.max(o.log_cycles) + 1;
-            let (cycle_bits, boundary_bits) = if method == "spice-typed" {
+            let (cycle_bits, boundary_bits) = if method.starts_with("spice-typed") {
                 (64 + o.address_bits + 2 * b + 1, b + 1)
             } else {
                 (128 + o.address_bits + 2 * b - 1, b)
@@ -698,13 +711,21 @@ fn sample(
             method,
             o,
         )
-    } else if method == "spice-typed" {
+    } else if method.starts_with("spice-typed") {
         let operation_trace = operation_trace.ok_or("spice-typed requires an operation trace")?;
-        let result =
-            spice_argument::operations::prove(black_box(config), black_box(operation_trace))?;
+        let options = typed_options(method);
+        let result = spice_argument::operations::prove_with(
+            black_box(config),
+            black_box(operation_trace),
+            &options,
+        )?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
         let verify = Instant::now();
-        spice_argument::operations::verify(black_box(&result.statement), black_box(&result.proof))?;
+        spice_argument::operations::verify_with(
+            black_box(&result.statement),
+            black_box(&result.proof),
+            &options,
+        )?;
         let verifier_ms = verify.elapsed().as_secs_f64() * 1000.0;
         observed(
             iteration,
