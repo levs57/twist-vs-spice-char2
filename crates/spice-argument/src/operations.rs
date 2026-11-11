@@ -1098,6 +1098,117 @@ pub fn proof_size(p: &Proof) -> ProofSize {
     }
 }
 
+/// Soundness error terms of typed Spice outside the PCS, as probabilities
+/// over `K = GF(2^128)`. Each term is a union-bound summand; the PCS and
+/// Fiat-Shamir terms are added by the caller. `docs/soundness-spice.md`
+/// states what each step proves.
+pub fn soundness_terms(s: &Statement, options: &Options) -> Vec<(String, f64)> {
+    let field = 2f64.powi(-128);
+    let (n, a, l, _) = dims(s);
+    let mut terms: Vec<(String, f64)> = Vec::new();
+
+    // Fingerprints (`fingerprints`, `check_products`): each set compares two
+    // products of `T + K` affine forms in (gamma, alpha, beta, delta). Distinct
+    // multisets give distinct polynomials of total degree `T + K`, so one set
+    // collides with probability at most `(T + K) / |K|`. Sets use independent
+    // challenges, so the errors multiply.
+    let fingerprint = ((1u64 << n) + (1u64 << a)) as f64 * field;
+    terms.push((
+        "fingerprint".into(),
+        fingerprint.powi(options.fingerprints as i32),
+    ));
+    let mut push = |name: &str, numerator: f64| terms.push((name.to_string(), numerator * field));
+
+    // GKR (`lean_grandproduct::verify` over `l + 1 + log_f` variables): per
+    // layer, one batching challenge for the two trees (1), one normalized
+    // quartic sum-check round per coordinate already bound (4 each), and the
+    // child point that reduces 2 or 4 children to one claim (1 or 2).
+    let log_size = l + 1 + options.log_fingerprints();
+    let (mut batch, mut rounds, mut children) = (0usize, 0usize, 0usize);
+    let mut layer = log_size;
+    while layer > 0 {
+        let step = if layer % 2 != 0 { 1 } else { 2 };
+        batch += 1;
+        rounds += log_size - layer;
+        children += step;
+        layer -= step;
+    }
+    push("gkr.batch", batch as f64);
+    push("gkr.sumcheck", 4.0 * rounds as f64);
+    push("gkr.child-point", children as f64);
+
+    // Masked reduction (`masked_reduction::verify_sumcheck`): three claims
+    // batched with independent weights (1), then `l` cubic rounds.
+    push("mask.batch", 1.0);
+    push("mask.sumcheck", 3.0 * l as f64);
+
+    // Flock zerocheck (`order_flock::verify_zerocheck_with`, then
+    // `flock_core::zerocheck::verify`). The seven fixed equality coordinates
+    // have F_2-independent weights (test `fixed_inner_equality_weights_form_
+    // an_f2_basis`), so a Boolean gate error survives them and only the random
+    // coordinates count: at most `skip + rounds - fixed`. The univariate-skip
+    // fold point `z` checks a polynomial of degree below `2 * 2^skip`; each
+    // multilinear round is quadratic.
+    let (skip, flock_rounds, fixed) = order_flock::zerocheck_shape(n);
+    push("flock.zerocheck", (skip + flock_rounds - fixed) as f64);
+    push("flock.skip", ((2usize << skip) - 1) as f64);
+    push("flock.sumcheck", 2.0 * flock_rounds as f64);
+
+    // Plane chunks (`finish_claims`, `group_rho`): a chunk of `2^k` planes is
+    // one claim weighted by `eq(rho[..k], i)`, multilinear of degree `k` in
+    // rho. Every wrong plane value makes its chunk's claim wrong unless rho
+    // hits a root, so the largest `k` bounds the error.
+    let k_max = plane_groups(s)
+        .iter()
+        .flat_map(|&(_, count, _)| plane_chunks(count))
+        .map(|(_, k)| k)
+        .max()
+        .unwrap_or(0);
+    push("rho", k_max as f64);
+
+    // Mosaic (`om_mosaic::batch_verify`): powers-of-gamma batching of `c`
+    // claims (c - 1), then `ell` quadratic rounds over the committed `G`.
+    let schema = schema(s, options);
+    let claims = claim_count(s, options);
+    push("mosaic.batch", (claims - 1) as f64);
+    push("mosaic.sumcheck", 2.0 * schema.layout.ell as f64);
+    terms
+}
+
+/// The number of Mosaic claims typed Spice makes, from the same code path
+/// the prover and verifier use.
+fn claim_count(s: &Statement, options: &Options) -> usize {
+    let (n, a, l, b) = dims(s);
+    let zeros = |len: usize| vec![K::ZERO; len];
+    let v = Evaluations {
+        address: zeros(a),
+        previous: zeros(b),
+        flags: [K::ZERO; 2],
+        final_previous: zeros(b),
+        initial_next_is_write: K::ZERO,
+        mask_value: K::ZERO,
+        mask_flags: [K::ZERO; 2],
+        mask_initial_next_is_write: K::ZERO,
+        previous_ab: zeros(b),
+        carries_ab: zeros(b - 1),
+        carries_c: zeros(b - 1),
+        final_value: options.private_final_memory.then_some(K::ZERO),
+    };
+    let order = order_flock::OrderClaims {
+        point_ab: zeros(n),
+        point_c: zeros(n),
+        previous_ab: v.previous_ab.clone(),
+        carries_ab: v.carries_ab.clone(),
+        carries_c: v.carries_c.clone(),
+    };
+    let point = zeros(l + 1);
+    finish_claims(
+        pending_claims(s, &point, &point, &order, &v),
+        &[K::ZERO; RHO_LEN],
+    )
+    .len()
+}
+
 pub fn verify(s: &Statement, p: &Proof) -> Result<(), Error> {
     verify_with(s, p, &Options::default())
 }
@@ -1229,6 +1340,81 @@ mod tests {
             &[K::ONE; RHO_LEN],
         );
         assert_eq!(public.len() + 1, claims.len());
+    }
+
+    fn shipped(final_memory: Vec<u64>) -> Statement {
+        Statement {
+            config: Config {
+                address_bits: 16,
+                chunk_bits: 1,
+                ..Config::default()
+            },
+            log_cycles: 20,
+            initial_memory: vec![0; 1 << 16],
+            final_memory,
+        }
+    }
+
+    #[test]
+    fn soundness_terms_match_the_issue_estimate() {
+        let s = shipped(vec![0; 1 << 16]);
+        let total = |terms: &[(String, f64)]| terms.iter().map(|t| t.1).sum::<f64>();
+        let one = soundness_terms(&s, &Options::default());
+        let get = |terms: &[(String, f64)], name: &str| {
+            terms.iter().find(|t| t.0 == name).unwrap().1 * 2f64.powi(128)
+        };
+        // l = 20: a binary top layer, then radix-four layers with 1, 3, ..., 19 rounds.
+        assert_eq!(get(&one, "gkr.batch"), 11.0);
+        assert_eq!(get(&one, "gkr.sumcheck"), 400.0);
+        assert_eq!(get(&one, "gkr.child-point"), 21.0);
+        assert_eq!(get(&one, "flock.zerocheck"), 19.0);
+        assert_eq!(get(&one, "rho"), 4.0);
+        assert_eq!(get(&one, "mosaic.batch"), 18.0);
+        assert_eq!(get(&one, "mosaic.sumcheck"), 54.0);
+        // The fingerprint dominates: (2^20 + 2^16) / 2^128 = 2^-107.91.
+        assert!(
+            (total(&one).log2() + 107.9).abs() < 0.02,
+            "{}",
+            total(&one).log2()
+        );
+        let rest: f64 = one.iter().skip(1).map(|t| t.1).sum();
+        assert!(rest.log2() < -118.0);
+        let two = soundness_terms(&s, &Options::TWO_FINGERPRINTS);
+        assert!(two[0].1.log2() < -215.0);
+        assert_eq!(get(&two, "gkr.sumcheck"), 440.0);
+        assert!(total(&two).log2() < -118.0);
+        let private = Options {
+            private_final_memory: true,
+            ..Options::default()
+        };
+        let terms = soundness_terms(&shipped(Vec::new()), &private);
+        assert_eq!(get(&terms, "mosaic.batch"), 19.0);
+        assert_eq!(get(&terms, "mosaic.sumcheck"), 56.0);
+    }
+
+    #[test]
+    fn claim_count_matches_the_proof() {
+        let config = Config {
+            address_bits: 2,
+            chunk_bits: 1,
+            ..Config::default()
+        };
+        let trace = AccessTrace {
+            initial: vec![7, 11, 19, 23],
+            addresses: vec![0, 1, 1, 3],
+            values: vec![9, 11, 4, 23],
+            is_write: vec![true, false, true, false],
+        };
+        for options in [
+            Options::default(),
+            Options {
+                private_final_memory: true,
+                ..Options::default()
+            },
+        ] {
+            let r = prove_with(&config, &trace, &options).unwrap();
+            assert_eq!(claim_count(&r.statement, &options), r.summary.mosaic_claims,);
+        }
     }
 
     #[test]

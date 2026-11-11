@@ -340,6 +340,14 @@ pub fn verify_zerocheck_with(
     Ok(terminal)
 }
 
+/// `(skip variables, multilinear rounds, fixed equality coordinates)` of the
+/// Flock zerocheck for `2^n` cycles. The fixed coordinates are the seven
+/// public inner challenges that `flock_core::zerocheck::verify` places at
+/// `r[K_SKIP..K_SKIP + 7]`.
+pub fn zerocheck_shape(n: usize) -> (usize, usize, usize) {
+    (K_SKIP, n.max(MIN_CYCLE_BITS), MIN_CYCLE_BITS)
+}
+
 /// The A/B and C cycle points at which the sources must be evaluated.
 pub fn terminal_points(n: usize, claim: &ZerocheckClaim) -> (Vec<K>, Vec<K>) {
     let take = |xs: &[F128]| xs.iter().take(n).copied().map(from_flock).collect();

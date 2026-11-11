@@ -103,3 +103,7 @@ Measured with `--example typed_options` on a random workload (bytes):
 | 18 | spice-typed-2fp | 238,420 | 225,092 | 816 | 12,512 |
 
 These agree with the issue's estimates (334 KB at 2^20, 236 KB at 2^18). Ligerito is 96% of the proof. The 2fp IOP part is 704 bytes larger at n=20 (one more GKR layer). Its PCS part differs by a few hundred bytes only because the number of distinct query columns after deduplication depends on the challenges.
+
+## 7. Soundness terms (§2)
+
+`operations::soundness_terms(&Statement, &Options) -> Vec<(String, f64)>` returns the fingerprint, GKR, masked-reduction, Flock, ρ and Mosaic terms as probabilities. It takes `Options` as well as the statement, because the fingerprint count and private final memory change the terms. The Mosaic claim count comes from the same `pending_claims` / `finish_claims` path the prover uses, and a test checks it against a real proof. `docs/soundness-spice.md` has the derivations and the table. At n=20, a=16 the total for typed Spice is 2^-107.91, which confirms the issue's estimate: the fingerprint term `(2^20 + 2^16)/2^128` dominates, and everything else sums to `755/2^128 ≈ 2^-118.4`. With two fingerprints the total is about 2^-118.4. The Flock term relies on the zerocheck's seven fixed equality coordinates having F_2-independent weights; a new test checks this directly.
