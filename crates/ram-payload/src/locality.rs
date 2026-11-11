@@ -11,9 +11,11 @@
 //! The model mixes three access streams, each a standard ingredient of
 //! memory-trace models:
 //!
-//! - **Stack (45%).** The top 1/16 of memory is a downward-growing stack. A
-//!   call pushes a frame of 2–16 words (probability 1/48 per stack access),
-//!   a return pops one (same probability while frames exist). An access
+//! - **Stack (45%).** The top 1/16 of memory is a downward-growing stack,
+//!   of which frames may use half. A call pushes a frame of 2–16 words
+//!   (probability 1/48 per stack access, skipped if the frame would not
+//!   fit). Otherwise a return pops one with probability 1/48 when more than
+//!   one frame exists, so 47/48 · 1/48 per access in all. An access
 //!   touches the current frame at a geometric offset (p = 1/4), so a few slots
 //!   are hot. 65% reads: locals are read more often than spilled.
 //! - **Sequential scans (30%).** Half of memory holds arrays. Up to four
@@ -29,8 +31,8 @@
 //!   Every `2^16` operations a new phase rotates which objects are hot.
 //!
 //! Overall, 0.45 * 0.65 + 0.30 * 2/3 + 0.25 * 0.75 = 68% of operations are
-//! reads. Written values are random 64-bit words half of the time and 16-bit
-//! counters otherwise.
+//! reads. Written values are random 64-bit words half of the time and random
+//! 16-bit values otherwise.
 
 use serde::{Deserialize, Serialize};
 

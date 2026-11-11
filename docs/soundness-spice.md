@@ -17,6 +17,8 @@ Numerators over 2^128:
 | everything but the fingerprint | 755, i.e. 2^-118.4 | 796, i.e. 2^-118.4 | |
 | total | 2^-107.91 | 2^-118.4 | |
 
+These totals exclude the PCS and the ring switch. `ram-compare` adds both and reports 2^-107.91 composed with one fingerprint and 2^-116.92 with two.
+
 With private final memory the Mosaic terms are 19 / 56 (one more claim, one more variable) and the total is unchanged at 2^-107.91. The issue's estimate of about 2^-107.9 for typed Spice is correct. The fingerprint term dominates it by a factor of about 1,400.
 
 The unit test `soundness_terms_match_the_issue_estimate` checks these numbers. The non-fingerprint terms come from the code as follows:
