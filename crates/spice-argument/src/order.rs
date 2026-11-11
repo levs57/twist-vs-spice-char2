@@ -15,6 +15,7 @@ use om_field::{K, U256, clmul_pairs, mul_pairs};
 use om_memcheck::eq_factor::{self, Cofactor, Endpoint, scale_low_weights};
 use om_sumcheck::{SumcheckProof, eq_eval, sumcheck_verify};
 use om_transcript::Transcript;
+use rayon::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OrderError(pub String);
@@ -57,7 +58,7 @@ pub fn build_carries(previous: &[u32], n: usize, a: usize) -> Result<Vec<u32>, O
     let base = 1u64 << (w - 1);
     let mask = (1u64 << w) - 1;
     previous
-        .iter()
+        .par_iter()
         .enumerate()
         .map(|(j, &p)| carry_word(p, base + j as u64, mask))
         .collect()
