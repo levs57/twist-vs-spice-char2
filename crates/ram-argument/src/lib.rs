@@ -9,6 +9,8 @@
 //! The default shared-address read/modify/write mode commits RV and Inc, derives
 //! WV = RV + Inc, and shares read/write address components as upstream does.
 
+pub mod twist2;
+
 use std::collections::BTreeMap;
 use std::fmt;
 use std::time::Duration;
