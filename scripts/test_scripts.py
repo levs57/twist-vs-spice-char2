@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Self-tests for the benchmark driver scripts. Run: python3 scripts/test_scripts.py"""
 
+import itertools
 import json
 import stat
 import subprocess
@@ -15,6 +16,7 @@ sys.path.insert(0, str(SCRIPTS))
 import bench_stats  # noqa: E402
 import check_stage16  # noqa: E402
 import interleave  # noqa: E402
+import sweep  # noqa: E402
 import write_manifest  # noqa: E402
 
 FAKE = """#!{python}
@@ -108,6 +110,73 @@ class InterleaveTests(unittest.TestCase):
                 interleave.main(
                     ["--baseline", "x", "--branch", "y", "--out-dir", tmp, "--", "--repeat", "3"]
                 )
+
+
+SWEEP_FAKE = """#!{python}
+import json, sys
+args = sys.argv[1:]
+value = lambda flag: args[args.index(flag) + 1]
+a, n, t = int(value("--address-bits")), int(value("--log-cycles")), int(value("--threads"))
+with open("{calls}", "a") as f:
+    f.write(f"{{a}} {{n}} {{t}}\\n")
+if a == {fail_at}:
+    sys.exit(3)
+case = {{"pattern": "random/operations", "method": "spice-typed", "chunk_bits": None,
+         "median": {{"prover_ms": float(2 ** n) / t, "verifier_ms": 1.0}},
+         "throughput": {{"prover_ns_per_operation": 1e6 / t}},
+         "proof_size": {{"total_bytes": 1000 + n}}, "soundness": {{"bits": 110.5}},
+         "samples": []}}
+json.dump({{"schema_version": 5, "cases": [case]}}, open(value("--output"), "w"))
+"""
+
+
+class SweepTests(unittest.TestCase):
+    def fake(self, tmp, fail_at=0):
+        path = Path(tmp) / "fake-sweep"
+        calls = Path(tmp) / "calls.log"
+        path.write_text(SWEEP_FAKE.format(python=sys.executable, calls=calls, fail_at=fail_at))
+        path.chmod(path.stat().st_mode | stat.S_IEXEC)
+        return str(path), calls
+
+    def test_writes_one_json_per_point_and_resumes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            binary, calls = self.fake(tmp)
+            out = Path(tmp) / "sweep"
+            args = ["--binary", binary, "--address-bits", "12,16", "--log-cycles", "4,6",
+                    "--threads", "1,8", "--out-dir", str(out), "--", "--methods", "spice-typed"]
+            self.assertEqual(sweep.main(args), 0)
+            ran = calls.read_text().split("\n")[:-1]
+            # N outermost, then A, then T.
+            self.assertEqual(ran[:4], ["12 4 1", "12 4 8", "16 4 1", "16 4 8"])
+            self.assertEqual(len(ran), 8)
+            for a, n, t in itertools.product((12, 16), (4, 6), (1, 8)):
+                self.assertTrue((out / f"a{a}-n{n}-t{t}.json").exists())
+            index = json.loads((out / "index.json").read_text())
+            self.assertEqual(len(index), 8)
+            self.assertTrue(all("raw" in e["uptime_before"] and "raw" in e["uptime_after"] for e in index))
+            self.assertIn("--methods", index[0]["command"])
+            summary = json.loads((out / "summary.json").read_text())
+            row = next(r for r in summary["rows"] if (r["address_bits"], r["log_cycles"], r["threads"]) == (16, 6, 8))
+            self.assertEqual((row["prover_ms"], row["proof_bytes"], row["soundness_bits"]), (8.0, 1006, 110.5))
+            self.assertIn("| 16 | 6 | 8 | random/operations spice-typed | 8.00 |", (out / "summary.md").read_text())
+            # Resuming runs nothing that already finished.
+            self.assertEqual(sweep.main(args[:-3] + ["--skip-existing"]), 0)
+            self.assertEqual(len(calls.read_text().split("\n")[:-1]), 8)
+
+    def test_records_failures_and_rejects_reserved_flags(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            binary, _ = self.fake(tmp, fail_at=16)
+            out = Path(tmp) / "sweep"
+            code = sweep.main(["--binary", binary, "--address-bits", "12,16", "--log-cycles", "4",
+                               "--threads", "1", "--out-dir", str(out)])
+            self.assertEqual(code, 1)
+            summary = json.loads((out / "summary.json").read_text())
+            self.assertEqual(summary["failed"], ["a16-n4-t1.json"])
+            self.assertEqual(len(summary["rows"]), 1)
+            with self.assertRaises(SystemExit):
+                sweep.main(["--binary", binary, "--out-dir", str(out), "--", "--threads", "4"])
+            with self.assertRaises(SystemExit):
+                sweep.main(["--binary", binary, "--threads", "1,1"])
 
 
 class ManifestTests(unittest.TestCase):
