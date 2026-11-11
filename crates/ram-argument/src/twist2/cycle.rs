@@ -2,9 +2,9 @@
 //! proves, at the address point `r_k` and cycle point `r_j` from the read
 //! check,
 //!
-//! 1. the value claim `V(r_o, r_k, r_j) = M0(r_o, r_k) + Σ_j LT(j, r_j) ra(r_k, j) Inc(r_o, j)`;
-//! 2. the final-memory claim `Mf(r_o, r_k) = M0(r_o, r_k) + Σ_j ra(r_k, j) Inc(r_o, j)`
-//!    at the same `(r_o, r_k)` (issue item 4, as in Jolt's `RamValCheck`);
+//! 1. the value claim `V(r_k, r_j) = W[M0](r_k) + Σ_j LT(j, r_j) ra(r_k, j) Inc_w(j)`;
+//! 2. the final-memory claim `W[Mf](r_k) = W[M0](r_k) + Σ_j ra(r_k, j) Inc_w(j)`
+//!    at the same `r_k` (issue item 4, as in Jolt's `RamValCheck`);
 //! 3. the virtualisation `ra(r_k, r_j) = Σ_j eq(r_j, j) Π_i A_i(r_k^i, j)`,
 //!    run directly on the read check's claim with no separate claim
 //!    reduction (issue item 6);
@@ -16,8 +16,9 @@
 //! `(LT(j, r_j) + γ) · Π_i A_i · Inc + δ eq(r_j, j) · (Π_i A_i + Σ_i ε_i' A_i A_i')`
 //! with `γ`, `δ`, `ε_i` sampled after the read check and `ε_i' = ε_i / δ`.
 //! It has degree `d + 2` in each cycle variable. The sum-check ends with
-//! claims on `A_i(r_k^i, z)`, `A_i(1 + r_k^i, z)` and `Inc(r_o, z)` at one new
-//! cycle point `z`: `2d + 1` Mosaic claims.
+//! claims on `A_i(r_k^i, z)`, `A_i(1 + r_k^i, z)` and `Inc_w(z)` at one new
+//! cycle point `z`: `2d + 1` Mosaic claims. Here `Inc_w(j) = enc(Inc_j)` is
+//! the word-level increment and `W[M](k) = Σ eq(k, ·) enc(M[·])`.
 
 use om_field::{K, U256};
 use om_sumcheck::{
@@ -38,7 +39,7 @@ pub struct CycleProof {
     pub a: Vec<K>,
     /// `A_i(1 + r_k^i, z)` for each component.
     pub a_mirror: Vec<K>,
-    /// `Inc(r_o, z)`.
+    /// `Inc_w(z)`.
     pub inc: K,
 }
 
@@ -72,7 +73,7 @@ pub(crate) fn mirrored(r: &[K]) -> Vec<K> {
 }
 
 /// The claimed sum, given `val_minus_m0 = V − M0` and `final_minus_m0 =
-/// Mf − M0` at `(r_o, r_k)`.
+/// Mf − M0` at `r_k`, both word-level.
 pub(crate) fn claimed_sum(
     ch: &Challenges,
     val_minus_m0: K,

@@ -1,7 +1,7 @@
-//! Small helpers shared by the Twist v2 provers: split equality tables, word
-//! evaluation by byte lookup and sum-check message plumbing.
+//! Small helpers shared by the Twist v2 provers: split equality tables and
+//! sum-check message plumbing.
 
-use om_field::{K, U256};
+use om_field::K;
 use om_sumcheck::{eq_table, interpolate_eval};
 use om_transcript::Transcript;
 use rayon::prelude::*;
@@ -83,74 +83,6 @@ impl SplitLt {
     pub(crate) fn at(&self, j: usize) -> K {
         let (lo, hi) = (j & ((1usize << self.h) - 1), j >> self.h);
         self.lt_hi[hi] + self.eq_hi[hi] * self.lt_lo[lo]
-    }
-}
-
-/// `w ↦ Σ_o eq(r_o, o) · bit_o(w)`: one word's MLE in the bit variables.
-pub(crate) struct WordEval {
-    tabs: Vec<[K; 256]>,
-    mask: u64,
-}
-
-impl WordEval {
-    pub(crate) fn new(r_o: &[K]) -> Self {
-        assert!(r_o.len() <= 6, "WordEval: ell must be <= 6");
-        let eo = eq_table(r_o);
-        let l = eo.len();
-        let nbytes = l.div_ceil(8);
-        let mut tabs = vec![[K::ZERO; 256]; nbytes];
-        for (b, tab) in tabs.iter_mut().enumerate() {
-            for v in 1..256usize {
-                let low = v & (v - 1);
-                let bit = v.trailing_zeros() as usize;
-                let o = 8 * b + bit;
-                tab[v] = tab[low] + if o < l { eo[o] } else { K::ZERO };
-            }
-        }
-        let mask = if l >= 64 { u64::MAX } else { (1u64 << l) - 1 };
-        WordEval { tabs, mask }
-    }
-
-    #[inline]
-    pub(crate) fn eval(&self, w: u64) -> K {
-        let w = w & self.mask;
-        let mut acc = K::ZERO;
-        for (b, tab) in self.tabs.iter().enumerate() {
-            acc += tab[((w >> (8 * b)) & 0xff) as usize];
-        }
-        acc
-    }
-
-    pub(crate) fn eval_all(&self, words: &[u64]) -> Vec<K> {
-        if words.len() >= PAR {
-            words.par_iter().map(|&w| self.eval(w)).collect()
-        } else {
-            words.iter().map(|&w| self.eval(w)).collect()
-        }
-    }
-}
-
-/// `MLE(word table)(r_o ‖ r_c)` for `words.len() == 2^len(r_c)`, with bit
-/// `o` of word `j` at index `o + 2^len(r_o) j`.
-pub(crate) fn word_mle(words: &[u64], r_o: &[K], r_c: &[K]) -> K {
-    assert_eq!(words.len(), 1usize << r_c.len(), "word_mle: length");
-    let we = WordEval::new(r_o);
-    let se = SplitEq::new(r_c);
-    let block = |hi: usize| -> K {
-        let base = hi << se.h;
-        let mut acc = U256::ZERO;
-        for (lo, &e) in se.lo.iter().enumerate() {
-            acc += e.clmul(we.eval(words[base | lo]));
-        }
-        se.hi[hi] * acc.reduce()
-    };
-    if words.len() >= PAR {
-        (0..se.hi.len())
-            .into_par_iter()
-            .map(block)
-            .reduce(|| K::ZERO, |a, b| a + b)
-    } else {
-        (0..se.hi.len()).map(block).fold(K::ZERO, |a, b| a + b)
     }
 }
 

@@ -1,16 +1,23 @@
 //! Twist v2: the RAM argument of issue #1, §1–§2.
 //!
-//! The statement and committed trace are the same as the shared-address
-//! upstream Twist (`crate::prove`): one read and one write per cycle at the
-//! same address, committed one-hot address components `A_1..A_d`, the
-//! increment `Inc` and the read value `RV`. The protocol differs:
+//! The trace has one read and one write per cycle at the same address, as in
+//! the shared-address upstream Twist (`crate::prove`). Twist v2 commits only
+//! the one-hot address components `A_1..A_d` and the increment `Inc` (plus
+//! final memory when it is private). The read value is virtual, as in Jolt,
+//! which commits only `RamInc` and `RamRa`: after the commitment the verifier
+//! draws a CPU point `r_c`, and the proof outputs word-level claims on the
+//! address, the read value `rv` and the write value `wv` at `r_c`
+//! ([`Interface`]). A CPU proof would consume them; here the caller checks
+//! them against the trace. The protocol has:
 //!
-//! * a read check with no write term (`read.rs`, items 1–3);
+//! * a read check with no write term on the claim `v_rv + γ_a v_addr`, with
+//!   the address claim folded into the memory values (`read.rs`, items 1–3);
+//! * one Mosaic claim on `Inc` at `r_c` for the write claim;
 //! * one cycle sum-check for the value claim, the final-memory claim at the
 //!   same address point, the virtualisation of `ra` and Wambsgans' mirror
 //!   test, which replaces the degree-4 one-hot check (`cycle.rs`, items 4–6);
-//! * word-level final-memory evaluation in the verifier, no evaluation points
-//!   in the proof and no address-bit claims (§2);
+//! * word-level memory evaluation in the verifier, no evaluation points in
+//!   the proof and no address-bit claims (§2);
 //! * a one-pass witness builder (item 7).
 //!
 //! The soundness argument is in `docs/soundness-twist.md`.
@@ -22,7 +29,7 @@ pub(crate) mod util;
 
 use std::collections::BTreeMap;
 
-use om_field::K;
+use om_field::{K, U256};
 use om_memcheck::onehot::AddrComps;
 use om_mosaic::{
     BatchProof, Claim, Layout, batch_prove_packed, batch_verify, compute_layout, place_in_g_packed,
@@ -37,8 +44,9 @@ use rayon::prelude::*;
 pub use cycle::CycleProof;
 pub use read::{ReadOrder, ReadProof};
 
+use crate::word;
 use crate::{AccessTrace, ComponentSummary, RamError, Summary};
-use util::{SplitEq, WordEval, word_mle};
+use util::SplitEq;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Config {
@@ -100,13 +108,30 @@ pub struct Statement {
     pub final_memory: Option<Vec<u64>>,
 }
 
+/// The word-level claims a CPU proof consumes, at the CPU point `r_c`:
+/// `W[x](r_c) = Σ_j eq(r_c, j) enc(x_j)` for the address, read-value and
+/// write-value columns.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CpuClaims {
+    pub address: K,
+    pub read: K,
+    pub write: K,
+}
+
+/// What an accepting verifier outputs: the CPU point and the claims at it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Interface {
+    pub point: Vec<K>,
+    pub claims: CpuClaims,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Proof {
     pub commitment: Commitment,
-    /// `RV(r_o, r_c)`.
-    pub rv: K,
+    /// The CPU claims at `r_c`.
+    pub claims: CpuClaims,
     pub read: ReadProof,
-    /// `Mf(r_o, r_k)` when final memory is committed.
+    /// `W[Mf](r_k)` when final memory is committed.
     pub final_eval: Option<K>,
     pub cycle: CycleProof,
     pub mosaic: BatchProof,
@@ -119,6 +144,9 @@ pub struct ProveResult {
     /// Final memory, whether or not it is public.
     pub final_memory: Vec<u64>,
     pub proof: Proof,
+    /// The prover's view of the interface; callers should use the one
+    /// `verify` returns.
+    pub interface: Interface,
     pub metrics: Vec<(&'static str, std::time::Duration)>,
     pub summary: Summary,
 }
@@ -165,7 +193,8 @@ pub fn proof_size(proof: &Proof) -> ProofSize {
         + proof.cycle.a.len()
         + proof.cycle.a_mirror.len()
         + 1;
-    let iop = 1 + read + cycle + usize::from(proof.final_eval.is_some());
+    // Three CPU claims.
+    let iop = 3 + read + cycle + usize::from(proof.final_eval.is_some());
     ProofSize {
         pcs_bytes: pcs_bytes(&proof.commitment, &proof.opening),
         mosaic_bytes: mosaic_bytes(&proof.mosaic),
@@ -179,27 +208,27 @@ pub fn proof_size(proof: &Proof) -> ProofSize {
 /// derives each term.
 pub fn soundness_terms(statement: &Statement) -> Vec<(String, f64)> {
     let config = &statement.config;
-    let (n, a, c, w) = (
+    let (n, a, c) = (
         statement.log_cycles,
         config.address_bits,
         config.chunk_bits,
-        config.word_log_bits,
     );
     let d = config.components();
     let schema = Schema::new(config, n);
+    // Two per component, Inc at z, Inc at r_c, and committed final memory.
     let claims = 2 * d + 2 + usize::from(!config.public_final);
     let field = 2f64.powi(-128);
     let terms: [(&str, usize); 8] = [
-        // RV(r_o, r_c) against the read check's sum: multilinear in w + n
-        // variables. r_c is drawn from K \ {0}, which changes the bound by a
-        // factor |K| / (|K| - 1).
-        ("read.point", w + n),
+        // The prover fixes v_rv and v_addr before gamma_a; if either is
+        // wrong, v_rv + gamma_a v_addr equals the true sum for at most one
+        // gamma_a.
+        ("read.batch", 1),
         // n cycle rounds of a cubic (eq times a quadratic) and a address
         // rounds of a quadratic.
         ("read.sumcheck", 3 * n + 2 * a),
-        // The final-memory identity Mf = M0 + sum ra Inc at (r_o, r_k),
-        // multilinear in w + a variables.
-        ("final.point", w + a),
+        // The word-level final-memory identity W[Mf] = W[M0] + sum ra Inc_w
+        // at r_k, multilinear in a variables.
+        ("final.point", a),
         // gamma, delta and eps_1..eps_d combine d + 2 identities linearly.
         ("cycle.batch", 1),
         // n rounds of degree d + 2.
@@ -282,10 +311,6 @@ impl Schema {
             name: "ram/inc".into(),
             log_size: config.word_log_bits + n,
         });
-        components.push(ComponentSummary {
-            name: "input/rv0".into(),
-            log_size: config.word_log_bits + n,
-        });
         if !config.public_final {
             components.push(ComponentSummary {
                 name: "ram/final".into(),
@@ -351,7 +376,7 @@ fn pack_words(words: &[u64], log_bits: usize) -> PackedBits {
 
 fn statement_transcript(statement: &Statement, schema: &Schema) -> Transcript {
     let config = &statement.config;
-    let mut tr = Transcript::new_default(b"ram-argument/twist-v2");
+    let mut tr = Transcript::new_default(b"ram-argument/twist-v2/virtual-read");
     let params = [
         config.address_bits,
         config.chunk_bits,
@@ -389,7 +414,7 @@ fn statement_transcript(statement: &Statement, schema: &Schema) -> Transcript {
 
 /// The witness in one pass (issue item 7). With supplied read values, `Inc`
 /// is a parallel map and only stores update the final memory. Without them
-/// the trace is replayed once.
+/// the trace is replayed once. `rv` is prover-only: it is not committed.
 pub(crate) struct Witness {
     pub addr: Vec<u32>,
     pub rv: Vec<u64>,
@@ -440,44 +465,85 @@ pub(crate) fn build_witness(trace: &AccessTrace) -> Witness {
     }
 }
 
-fn post_commit_points(tr: &mut Transcript, ell: usize, n: usize) -> (Vec<K>, Vec<K>) {
-    let r_o = tr.challenge_ks(b"ram/point_o", ell);
-    // Nonzero so the split-eq read rounds can always derive q(1).
-    let r_c = (0..n)
+/// The CPU point `r_c`, drawn after the commitment. Nonzero so the split-eq
+/// read rounds can always derive `q(1)`.
+fn cpu_point(tr: &mut Transcript, n: usize) -> Vec<K> {
+    (0..n)
         .map(|_| tr.challenge_nonzero_k(b"ram/point_c"))
-        .collect();
-    (r_o, r_c)
+        .collect()
 }
 
+fn absorb_claims(tr: &mut Transcript, claims: &CpuClaims) {
+    tr.absorb_ks(
+        b"ram/cpu_claims",
+        &[claims.address, claims.read, claims.write],
+    );
+}
+
+/// `W[addr](r_c)`, `W[rv](r_c)` and `W[rv ⊕ Inc](r_c)` in one pass.
+fn cpu_claims(w: &Witness, r_c: &[K]) -> CpuClaims {
+    let se = SplitEq::new(r_c);
+    let block = |hi: usize| -> [K; 3] {
+        let base = hi << se.h;
+        let mut acc = [U256::ZERO; 3];
+        for (lo, &e) in se.lo.iter().enumerate() {
+            let j = base | lo;
+            acc[0] += e.clmul(word::enc(w.addr[j] as u64));
+            acc[1] += e.clmul(word::enc(w.rv[j]));
+            acc[2] += e.clmul(word::enc(w.inc[j]));
+        }
+        acc.map(|x| se.hi[hi] * x.reduce())
+    };
+    let [address, read, inc] = (0..se.hi.len())
+        .into_par_iter()
+        .map(block)
+        .reduce(
+            || [K::ZERO; 3],
+            |x, y| [x[0] + y[0], x[1] + y[1], x[2] + y[2]],
+        );
+    CpuClaims {
+        address,
+        read,
+        write: read + inc,
+    }
+}
+
+/// The Mosaic claims: `A_i` at `(r_k^i ‖ z)` and `(1 + r_k^i ‖ z)`, `Inc` at
+/// `(p_w ‖ z)` and `(p_w ‖ r_c)`, and committed final memory at `(p_w ‖ r_k)`.
 #[allow(clippy::too_many_arguments)]
 fn output_claims(
     schema: &Schema,
     config: &Config,
-    r_o: &[K],
     r_c: &[K],
-    rv: K,
+    claims: &CpuClaims,
     r_k: &[K],
     z: &[K],
     cycle: &CycleProof,
     final_eval: Option<K>,
 ) -> Vec<Claim> {
-    let c = config.chunk_bits;
+    let (c, w) = (config.chunk_bits, config.word_log_bits);
     let join = |a: &[K], b: &[K]| -> Vec<K> { a.iter().chain(b).copied().collect() };
-    let mut claims = vec![schema.claim("input/rv0", join(r_o, r_c), rv)];
+    let word_claim = |name: &str, point: &[K], value: K| {
+        let (point, value) = word::claim_at(point, value, w);
+        schema.claim(name, point, value)
+    };
+    let mut out = Vec::with_capacity(2 * config.components() + 3);
     for i in 0..config.components() {
         let rk = cycle::chunk_point(r_k, c, i);
-        claims.push(schema.claim(&comp_name(i), join(rk, z), cycle.a[i]));
-        claims.push(schema.claim(
+        out.push(schema.claim(&comp_name(i), join(rk, z), cycle.a[i]));
+        out.push(schema.claim(
             &comp_name(i),
             join(&cycle::mirrored(rk), z),
             cycle.a_mirror[i],
         ));
     }
-    claims.push(schema.claim("ram/inc", join(r_o, z), cycle.inc));
+    out.push(word_claim("ram/inc", z, cycle.inc));
+    // The write claim: W[Inc](r_c) = v_wv + v_rv, because enc is F2-linear.
+    out.push(word_claim("ram/inc", r_c, claims.write + claims.read));
     if let Some(v) = final_eval {
-        claims.push(schema.claim("ram/final", join(r_o, r_k), v));
+        out.push(word_claim("ram/final", r_k, v));
     }
-    claims
+    out
 }
 
 /// Prove the RAM trace with Twist v2. The trace must use one shared
@@ -526,8 +592,11 @@ pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, RamErr
         let _span = Span::new("ram.witness");
         build_witness(trace)
     };
-    prove_witness(config, n, &trace.initial, witness, schema)
+    prove_witness(config, n, &trace.initial, witness, schema, None)
 }
+
+/// Tests use `hook` to change the CPU claims before they are absorbed.
+pub(crate) type ClaimsHook<'a> = Option<&'a dyn Fn(&mut CpuClaims)>;
 
 pub(crate) fn prove_witness(
     config: &Config,
@@ -535,6 +604,7 @@ pub(crate) fn prove_witness(
     initial: &[u64],
     witness: Witness,
     schema: Schema,
+    hook: ClaimsHook<'_>,
 ) -> Result<ProveResult, RamError> {
     let d = config.components();
     let statement = Statement {
@@ -559,11 +629,6 @@ pub(crate) fn prove_witness(
             "ram/inc",
             &pack_words(&witness.inc, config.word_log_bits),
         );
-        schema.place(
-            &mut g,
-            "input/rv0",
-            &pack_words(&witness.rv, config.word_log_bits),
-        );
         if !config.public_final {
             schema.place(
                 &mut g,
@@ -577,23 +642,57 @@ pub(crate) fn prove_witness(
         let _span = Span::new("pcs.commit");
         schema.pcs.commit_packed(&g, &mut tr)
     };
-    let (r_o, r_c) = post_commit_points(&mut tr, config.word_log_bits, n);
-    let (rv_e, inc_e, m0_e, store, rv) = {
+    let r_c = cpu_point(&mut tr, n);
+    let computed = {
+        let _span = Span::new("twist.interface");
+        cpu_claims(&witness, &r_c)
+    };
+    // The claims sent. They equal `computed` unless a test hook changes them;
+    // the Mosaic claims below use `computed`, so that a test's wrong claim
+    // reaches the verifier's checks instead of the Mosaic prover's
+    // consistency assertion.
+    let mut claims = computed;
+    if let Some(hook) = hook {
+        hook(&mut claims);
+    }
+    absorb_claims(&mut tr, &claims);
+    let gamma_a = tr.challenge_k(b"ram/address_batch");
+    let (rv_e, inc_e, m0_e, store) = {
+        // The read check runs on V' = V + gamma_a enc(k): the memory table
+        // built from M0'(k) = enc(M0[k]) + gamma_a enc(k) with the same
+        // increments. Its claim is v_rv + gamma_a v_addr.
         let _span = Span::new("ram.claims");
-        let we = WordEval::new(&r_o);
-        let rv_e = we.eval_all(&witness.rv);
-        let inc_e = we.eval_all(&witness.inc);
-        let m0_e = we.eval_all(initial);
-        let store: Vec<bool> = witness.inc.par_iter().map(|&x| x != 0).collect();
-        let eq = SplitEq::new(&r_c);
-        let rv = (0..rv_e.len())
+        let shift: Vec<K> = (0..cells_of(config))
             .into_par_iter()
             .with_min_len(1 << 12)
-            .map(|j| eq.at(j) * rv_e[j])
-            .reduce(|| K::ZERO, |a, b| a + b);
-        (rv_e, inc_e, m0_e, store, rv)
+            .map(|k| gamma_a * word::enc(k as u64))
+            .collect();
+        let m0_e: Vec<K> = initial
+            .par_iter()
+            .zip(&shift)
+            .with_min_len(1 << 12)
+            .map(|(&x, &t)| word::enc(x) + t)
+            .collect();
+        // Only the cycle-first prover reads per-cycle values.
+        let rv_e: Vec<K> = match config.order {
+            ReadOrder::CycleFirst => witness
+                .rv
+                .par_iter()
+                .zip(&witness.addr)
+                .with_min_len(1 << 12)
+                .map(|(&x, &k)| word::enc(x) + shift[k as usize])
+                .collect(),
+            ReadOrder::AddressFirst => Vec::new(),
+        };
+        let inc_e: Vec<K> = witness
+            .inc
+            .par_iter()
+            .with_min_len(1 << 12)
+            .map(|&x| word::enc(x))
+            .collect();
+        let store: Vec<bool> = witness.inc.par_iter().map(|&x| x != 0).collect();
+        (rv_e, inc_e, m0_e, store)
     };
-    tr.absorb_k(b"ram/rv", rv);
     let read = {
         let _span = Span::new("twist.read");
         read::prove(
@@ -606,20 +705,20 @@ pub(crate) fn prove_witness(
                 a: config.address_bits,
             },
             &r_c,
-            rv,
+            claims.read + gamma_a * claims.address,
             config.order,
             config.merge_loads,
             &mut tr,
         )
     };
+    drop((rv_e, m0_e, store));
     let r_k = read.r_k.clone();
     let (m0_at, final_at) = {
         let _span = Span::new("twist.memory");
-        let eq = SplitEq::new(&r_k);
-        let m0_at = (0..cells_of(config))
-            .map(|k| eq.at(k) * m0_e[k])
-            .fold(K::ZERO, |a, b| a + b);
-        (m0_at, word_mle(&witness.final_memory, &r_o, &r_k))
+        (
+            word::mle(initial, &r_k),
+            word::mle(&witness.final_memory, &r_k),
+        )
     };
     let final_eval = (!config.public_final).then_some(final_at);
     if let Some(v) = final_eval {
@@ -628,9 +727,11 @@ pub(crate) fn prove_witness(
     let cycle = {
         let _span = Span::new("twist.cycle");
         let ch = cycle::challenges(&mut tr, d);
+        // V(r_k, r_j) = V'(r_k, r_j) + gamma_a enc~(r_k).
+        let val = read.proof.val + gamma_a * word::enc_mle(&r_k);
         let claim = cycle::claimed_sum(
             &ch,
-            read.proof.val + m0_at,
+            val + m0_at,
             final_at + m0_at,
             read.proof.ra,
             &r_k,
@@ -650,12 +751,11 @@ pub(crate) fn prove_witness(
             &mut tr,
         )
     };
-    let claims = output_claims(
+    let mosaic_claims = output_claims(
         &schema,
         config,
-        &r_o,
         &r_c,
-        rv,
+        &computed,
         &r_k,
         &cycle.z,
         &cycle.proof,
@@ -663,7 +763,7 @@ pub(crate) fn prove_witness(
     );
     let (mosaic, r_g, v_g) = {
         let _span = Span::new("mosaic.batch");
-        batch_prove_packed(&schema.layout, &claims, &g, &mut tr)
+        batch_prove_packed(&schema.layout, &mosaic_claims, &g, &mut tr)
     };
     let (opened, opening) = {
         let _span = Span::new("pcs.open");
@@ -677,7 +777,7 @@ pub(crate) fn prove_witness(
         chunk_bits: config.chunk_bits,
         committed_bits: g.len(),
         packed_field_elements: g.len() / 128,
-        mosaic_claims: claims.len(),
+        mosaic_claims: mosaic_claims.len(),
         commitment_components: schema.components,
     };
     Ok(ProveResult {
@@ -685,12 +785,16 @@ pub(crate) fn prove_witness(
         final_memory: witness.final_memory,
         proof: Proof {
             commitment,
-            rv,
+            claims,
             read: read.proof,
             final_eval,
             cycle: cycle.proof,
             mosaic,
             opening,
+        },
+        interface: Interface {
+            point: r_c,
+            claims,
         },
         metrics: profiling::take(),
         summary,
@@ -701,7 +805,7 @@ fn cells_of(config: &Config) -> usize {
     1usize << config.address_bits
 }
 
-fn verify_inner(statement: &Statement, proof: &Proof) -> Result<(), RamError> {
+fn verify_inner(statement: &Statement, proof: &Proof) -> Result<Interface, RamError> {
     let config = &statement.config;
     let n = statement.log_cycles;
     validate_config(config, n)?;
@@ -741,12 +845,13 @@ fn verify_inner(statement: &Statement, proof: &Proof) -> Result<(), RamError> {
         statement_transcript(statement, &schema)
     };
     schema.pcs.absorb_commitment(&proof.commitment, &mut tr);
-    let (r_o, r_c) = post_commit_points(&mut tr, config.word_log_bits, n);
-    tr.absorb_k(b"ram/rv", proof.rv);
+    let r_c = cpu_point(&mut tr, n);
+    absorb_claims(&mut tr, &proof.claims);
+    let gamma_a = tr.challenge_k(b"ram/address_batch");
     let read = {
         let _span = Span::new("verify.read");
         read::verify(
-            proof.rv,
+            proof.claims.read + gamma_a * proof.claims.address,
             &r_c,
             config.address_bits,
             config.order,
@@ -757,7 +862,7 @@ fn verify_inner(statement: &Statement, proof: &Proof) -> Result<(), RamError> {
     let (m0_at, final_minus_m0) = {
         // Word-level evaluation of M0 and Mf + M0 over 2^a words (issue §2).
         let _span = Span::new("verify.memory");
-        let m0_at = word_mle(&statement.initial_memory, &r_o, &read.r_k);
+        let m0_at = word::mle(&statement.initial_memory, &read.r_k);
         let diff = match (&statement.final_memory, proof.final_eval) {
             (Some(f), _) => {
                 let x: Vec<u64> = f
@@ -765,7 +870,7 @@ fn verify_inner(statement: &Statement, proof: &Proof) -> Result<(), RamError> {
                     .zip(&statement.initial_memory)
                     .map(|(a, b)| a ^ b)
                     .collect();
-                word_mle(&x, &r_o, &read.r_k)
+                word::mle(&x, &read.r_k)
             }
             (None, Some(v)) => v + m0_at,
             (None, None) => unreachable!(),
@@ -778,9 +883,10 @@ fn verify_inner(statement: &Statement, proof: &Proof) -> Result<(), RamError> {
     let z = {
         let _span = Span::new("verify.cycle");
         let ch = cycle::challenges(&mut tr, d);
+        let val = read.val + gamma_a * word::enc_mle(&read.r_k);
         let claim = cycle::claimed_sum(
             &ch,
-            read.val + m0_at,
+            val + m0_at,
             final_minus_m0,
             read.ra,
             &read.r_k,
@@ -791,9 +897,8 @@ fn verify_inner(statement: &Statement, proof: &Proof) -> Result<(), RamError> {
     let claims = output_claims(
         &schema,
         config,
-        &r_o,
         &r_c,
-        proof.rv,
+        &proof.claims,
         &read.r_k,
         &z,
         &proof.cycle,
@@ -807,11 +912,17 @@ fn verify_inner(statement: &Statement, proof: &Proof) -> Result<(), RamError> {
     schema
         .pcs
         .verify(&proof.commitment, &r_g, v_g, &proof.opening, &mut tr)?;
-    Ok(())
+    Ok(Interface {
+        point: r_c,
+        claims: proof.claims,
+    })
 }
 
-/// Verify a Twist v2 proof against the public statement.
-pub fn verify(statement: &Statement, proof: &Proof) -> Result<(), RamError> {
+/// Verify a Twist v2 proof against the public statement. On success, return
+/// the CPU point and the claims at it, which the caller must check against
+/// its own columns: the RAM argument proves them only relative to the
+/// committed trace.
+pub fn verify(statement: &Statement, proof: &Proof) -> Result<Interface, RamError> {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         verify_inner(statement, proof)
     }))

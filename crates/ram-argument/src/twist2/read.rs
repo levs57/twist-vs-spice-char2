@@ -1,10 +1,14 @@
 //! The read check of Twist v2.
 //!
-//! It proves `RV(r_o, r_c) = Σ_{k,j} eq(r_c, j) · ra(k, j) · V(r_o, k, j)`,
-//! where `ra(k, j) = Π_i A_i(k_i, j)` and `V(o, k, j)` is bit `o` of cell `k`
-//! before cycle `j`'s write. There is no write term: with a shared
-//! read/write address, the written value is `RV + Inc` by definition, so
-//! nothing else needs to be proved about it (issue item 3).
+//! It proves `v_rv + γ_a v_addr = Σ_{k,j} eq(r_c, j) · ra(k, j) · V'(k, j)`,
+//! where `ra(k, j) = Π_i A_i(k_i, j)`, `V(k, j)` is the word-level value
+//! `enc(M_j[k])` of cell `k` before cycle `j`'s write, and
+//! `V'(k, j) = V(k, j) + γ_a enc(k)` folds the address claim into the same
+//! sum. `V'` is the memory table built from `M0'(k) = enc(M0[k]) + γ_a enc(k)`
+//! with the same increments, so the provers only see shifted inputs. There is
+//! no write term: with a shared read/write address, the written value is
+//! `rv ⊕ Inc` by definition, and the write claim is one opening of `Inc`
+//! (issue item 3).
 //!
 //! The sum-check has `n` cycle rounds and `a` address rounds, in either order
 //! (issue items 1 and 2). Both orders produce the same proof shape and the
@@ -55,20 +59,23 @@ pub struct ReadProof {
     pub address: Vec<[K; 2]>,
     /// `ra(r_k, r_j)`.
     pub ra: K,
-    /// `V(r_o, r_k, r_j)`.
+    /// `V'(r_k, r_j) = V(r_k, r_j) + γ_a enc~(r_k)`.
     pub val: K,
 }
 
-/// The prover's per-cycle data, already evaluated at `r_o` where needed.
+/// The prover's per-cycle data as field elements, shifted by the address
+/// fold.
 pub(crate) struct ReadWitness<'a> {
     pub addr: &'a [u32],
-    /// `WE(rv_j)`: the value each cycle reads.
+    /// `enc(rv_j) + γ_a enc(addr_j)`: the shifted value each cycle reads.
+    /// Only the cycle-first prover reads it; the address-first prover may
+    /// get an empty slice.
     pub rv_e: &'a [K],
-    /// `WE(inc_j)`: the change each cycle makes to its cell.
+    /// `enc(inc_j)`: the change each cycle makes to its cell.
     pub inc_e: &'a [K],
     /// `inc_j != 0`: the cycle changes memory.
     pub store: &'a [bool],
-    /// `WE(M0[k])` for every cell.
+    /// `enc(M0[k]) + γ_a enc(k)` for every cell.
     pub m0_e: &'a [K],
     pub a: usize,
 }

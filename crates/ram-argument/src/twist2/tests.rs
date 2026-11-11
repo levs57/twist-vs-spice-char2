@@ -186,12 +186,102 @@ fn load_merging_does_not_change_the_proof() {
 
 #[test]
 fn mosaic_claim_count() {
-    // RV, Inc and two claims per component; no address-bit claims.
+    // Two claims per component and two on Inc (at z and at r_c), plus final
+    // memory when it is committed; no read-value or address-bit claims.
     let tr = trace(6, 8, 8, 6, 1);
-    let result = prove(&config(8, 4, ReadOrder::CycleFirst, true, true), &tr).unwrap();
-    assert_eq!(result.summary.mosaic_claims, 2 * 2 + 2);
-    let result = prove(&config(8, 4, ReadOrder::CycleFirst, true, false), &tr).unwrap();
-    assert_eq!(result.summary.mosaic_claims, 2 * 2 + 3);
+    for public_final in [true, false] {
+        let cfg = config(8, 4, ReadOrder::CycleFirst, true, public_final);
+        let result = prove(&cfg, &tr).unwrap();
+        let schema = Schema::new(&cfg, 6);
+        let rk = vec![K::ZERO; 8];
+        let claims = output_claims(
+            &schema,
+            &cfg,
+            &[K::ZERO; 6],
+            &CpuClaims::default(),
+            &rk,
+            &[K::ZERO; 6],
+            &result.proof.cycle,
+            result.proof.final_eval,
+        );
+        let name = |id: i64| {
+            schema
+                .ids
+                .iter()
+                .find(|(_, v)| **v == id)
+                .map(|(k, _)| k.clone())
+                .unwrap()
+        };
+        let mut names: Vec<String> = claims.iter().map(|c| name(c.comp_id)).collect();
+        names.sort();
+        let mut expected = vec![
+            "ram/inc".to_string(),
+            "ram/inc".into(),
+            "ram/ra0/1".into(),
+            "ram/ra0/1".into(),
+            "ram/ra0/2".into(),
+            "ram/ra0/2".into(),
+        ];
+        if !public_final {
+            expected.push("ram/final".into());
+            expected.sort();
+        }
+        assert_eq!(names, expected);
+        assert_eq!(result.summary.mosaic_claims, expected.len());
+    }
+}
+
+#[test]
+fn schema_commits_only_ra_and_inc() {
+    let cfg = config(16, 4, ReadOrder::AddressFirst, true, true);
+    let schema = Schema::new(&cfg, 20);
+    let mut names: Vec<&str> = schema.components.iter().map(|c| c.name.as_str()).collect();
+    names.sort();
+    assert_eq!(
+        names,
+        ["ram/inc", "ram/ra0/1", "ram/ra0/2", "ram/ra0/3", "ram/ra0/4"]
+    );
+    let populated: usize = schema.components.iter().map(|c| 1usize << c.log_size).sum();
+    assert_eq!(populated, 1 << 27);
+    assert_eq!(schema.layout.ell, 27);
+    let private = Schema::new(&config(16, 4, ReadOrder::AddressFirst, true, false), 20);
+    assert_eq!(private.layout.ell, 28);
+}
+
+/// The CPU columns of a trace at `point`, by brute force from a replay of the
+/// trace, independent of the prover's witness code.
+fn brute_claims(tr: &AccessTrace, point: &[K]) -> CpuClaims {
+    let eq = eq_table(point);
+    let mut memory = tr.initial.clone();
+    let mut out = CpuClaims::default();
+    for (j, (&k, &w)) in tr.writes.iter().zip(&tr.new_values).enumerate() {
+        let rv = memory[k as usize];
+        memory[k as usize] = w;
+        out.address += eq[j] * K::from_u128(k as u128);
+        out.read += eq[j] * K::from_u128(rv as u128);
+        out.write += eq[j] * K::from_u128(w as u128);
+    }
+    out
+}
+
+#[test]
+fn cpu_claims_match_trace() {
+    for (n, a, c, hot) in [(1, 4, 2, 4), (6, 8, 4, 3), (9, 8, 2, 8), (10, 6, 3, 6)] {
+        for order in ORDERS {
+            for public_final in [true, false] {
+                let tr = trace(n, a, hot, 6, (n * 7 + a) as u64);
+                let result = prove(&config(a, c, order, true, public_final), &tr).unwrap();
+                let i = verify(&result.statement, &result.proof).unwrap();
+                assert_eq!(i, result.interface);
+                assert_eq!(i.point.len(), n);
+                assert_eq!(
+                    i.claims,
+                    brute_claims(&tr, &i.point),
+                    "n={n} a={a} {order:?} public={public_final}"
+                );
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -203,11 +293,22 @@ fn prove_tampered(
     tr: &AccessTrace,
     tamper: impl FnOnce(&mut Witness),
 ) -> ProveResult {
+    prove_tampered_with(cfg, tr, tamper, None)
+}
+
+/// A tampered witness, and optionally CPU claims changed before they are
+/// absorbed, so that the verifier's later checks are what reject them.
+fn prove_tampered_with(
+    cfg: &Config,
+    tr: &AccessTrace,
+    tamper: impl FnOnce(&mut Witness),
+    hook: ClaimsHook<'_>,
+) -> ProveResult {
     util::set_lenient();
     let n = tr.writes.len().trailing_zeros() as usize;
     let mut w = build_witness(tr);
     tamper(&mut w);
-    prove_witness(cfg, n, &tr.initial, w, Schema::new(cfg, n)).unwrap()
+    prove_witness(cfg, n, &tr.initial, w, Schema::new(cfg, n), hook).unwrap()
 }
 
 fn honest_final(tr: &AccessTrace) -> Vec<u64> {
@@ -265,16 +366,139 @@ fn rejects_wrong_inc_with_matching_final_memory() {
 }
 
 #[test]
-fn rejects_wrong_read_value() {
+fn rejects_wrong_read_claim() {
     let tr = trace(8, 6, 3, 6, 25);
     for order in ORDERS {
         let cfg = config(6, 3, order, false, true);
-        let result = prove_tampered(&cfg, &tr, |w| {
-            // Keep the written value, change what is read.
-            w.rv[5] ^= 2;
-            w.inc[5] ^= 2;
-        });
+        let hook = |c: &mut CpuClaims| c.read += K::ONE;
+        let result = prove_tampered_with(&cfg, &tr, |_| {}, Some(&hook));
         assert!(verify(&result.statement, &result.proof).is_err());
+    }
+}
+
+#[test]
+fn rejects_wrong_write_claim() {
+    let tr = trace(8, 6, 3, 6, 26);
+    for order in ORDERS {
+        let cfg = config(6, 3, order, false, true);
+        let hook = |c: &mut CpuClaims| c.write += K::ONE;
+        let result = prove_tampered_with(&cfg, &tr, |_| {}, Some(&hook));
+        assert!(verify(&result.statement, &result.proof).is_err());
+    }
+}
+
+#[test]
+fn rejects_wrong_address_claim() {
+    // The claim for a trace whose cycle 5 has address bit 0 flipped.
+    let tr = trace(8, 6, 3, 6, 28);
+    for order in ORDERS {
+        let cfg = config(6, 3, order, false, true);
+        let n = 8;
+        let honest = prove(&cfg, &tr).unwrap();
+        let point = honest.interface.point.clone();
+        let mut addr: Vec<u64> = tr.writes.iter().map(|&k| k as u64).collect();
+        addr[5] ^= 1;
+        let wrong = word::mle(&addr, &point);
+        assert_ne!(wrong, honest.interface.claims.address);
+        let hook = move |c: &mut CpuClaims| c.address = wrong;
+        let result = prove_tampered_with(&cfg, &tr, |_| {}, Some(&hook));
+        assert_eq!(result.interface.point.len(), n);
+        assert!(verify(&result.statement, &result.proof).is_err());
+    }
+}
+
+/// A load `j` (`Inc_j = 0`) whose cell is accessed again later, and that
+/// next access `j'`.
+fn load_then_access(tr: &AccessTrace) -> (usize, usize) {
+    let w = build_witness(tr);
+    (0..w.addr.len())
+        .find_map(|j| {
+            if w.inc[j] != 0 {
+                return None;
+            }
+            let next = (j + 1..w.addr.len()).find(|&i| w.addr[i] == w.addr[j])?;
+            Some((j, next))
+        })
+        .expect("trace has a load whose cell is accessed later")
+}
+
+/// Write `delta` on load `j` and undo it at the next access `j'`, so the
+/// final memory is unchanged; `rv_{j'}` changes with it.
+fn tamper_inc_on_load(w: &mut Witness, j: usize, next: usize, delta: u64) {
+    w.inc[j] ^= delta;
+    w.inc[next] ^= delta;
+    w.rv[next] ^= delta;
+}
+
+#[test]
+fn rejects_tampered_inc_on_load_with_honest_claims() {
+    let tr = trace(8, 6, 3, 6, 33);
+    let (j, next) = load_then_access(&tr);
+    for order in ORDERS {
+        let cfg = config(6, 3, order, false, true);
+        let honest = prove(&cfg, &tr).unwrap();
+        let claims = honest.interface.claims;
+        // The transcript before the claims is the same, so the point is too.
+        let hook = move |c: &mut CpuClaims| *c = claims;
+        let result = prove_tampered_with(
+            &cfg,
+            &tr,
+            |w| tamper_inc_on_load(w, j, next, 1 << 33),
+            Some(&hook),
+        );
+        assert_eq!(result.statement, honest.statement);
+        assert!(verify(&result.statement, &result.proof).is_err());
+    }
+}
+
+#[test]
+fn tampered_inc_on_load_with_consistent_claims_fails_the_stand_in() {
+    // The RAM argument does not enforce Load => Inc = 0. With claims that
+    // follow the tampered witness it accepts, and the CPU's comparison with
+    // its own columns (here, the honest trace) rejects.
+    let tr = trace(8, 6, 3, 6, 35);
+    let (j, next) = load_then_access(&tr);
+    for order in ORDERS {
+        let cfg = config(6, 3, order, false, true);
+        let result = prove_tampered(&cfg, &tr, |w| tamper_inc_on_load(w, j, next, 1 << 33));
+        let i = verify(&result.statement, &result.proof).unwrap();
+        let honest = brute_claims(&tr, &i.point);
+        assert_eq!(i.claims.address, honest.address);
+        assert_ne!(i.claims.write, honest.write);
+        assert_ne!(i.claims.read, honest.read);
+    }
+}
+
+#[test]
+fn relabelled_load_address_fails_the_stand_in() {
+    // All cells start at zero and cycle 0 is a load of cell 0, so moving it
+    // to cell 1 (also zero) changes no value. The RAM argument accepts the
+    // relabelled trace, and the address claim no longer matches the CPU's.
+    let mut tr = trace(7, 6, 3, 6, 37);
+    tr.initial = vec![0; 1 << 6];
+    tr.writes[0] = 0;
+    let mut memory = tr.initial.clone();
+    let mut reads = Vec::new();
+    for (j, (&k, w)) in tr.writes.iter().zip(tr.new_values.iter_mut()).enumerate() {
+        if j == 0 {
+            *w = memory[k as usize];
+        }
+        reads.push(memory[k as usize]);
+        memory[k as usize] = *w;
+    }
+    tr.reads = vec![tr.writes.clone()];
+    tr.read_values = Some(vec![reads]);
+    for order in ORDERS {
+        let cfg = config(6, 3, order, false, true);
+        let result = prove_tampered(&cfg, &tr, |w| {
+            assert_eq!((w.inc[0], w.rv[0]), (0, 0));
+            w.addr[0] = 1;
+        });
+        let i = verify(&result.statement, &result.proof).unwrap();
+        let honest = brute_claims(&tr, &i.point);
+        assert_ne!(i.claims.address, honest.address);
+        assert_eq!(i.claims.read, honest.read);
+        assert_eq!(i.claims.write, honest.write);
     }
 }
 
@@ -306,9 +530,15 @@ fn rejects_modified_proof_and_statement() {
     let tr = trace(7, 6, 4, 6, 31);
     let cfg = config(6, 3, ReadOrder::CycleFirst, true, true);
     let result = prove(&cfg, &tr).unwrap();
-    let mut p = result.proof.clone();
-    p.rv += K::ONE;
-    assert!(verify(&result.statement, &p).is_err());
+    for edit in 0..3 {
+        let mut p = result.proof.clone();
+        match edit {
+            0 => p.claims.address += K::ONE,
+            1 => p.claims.read += K::ONE,
+            _ => p.claims.write += K::ONE,
+        }
+        assert!(verify(&result.statement, &p).is_err(), "claim edit {edit}");
+    }
     let mut p = result.proof.clone();
     p.read.cycle[2][1] += K::ONE;
     assert!(verify(&result.statement, &p).is_err());
@@ -439,10 +669,25 @@ fn soundness_terms_at_n20_a16() {
         final_memory: Some(vec![0; 1 << 16]),
     };
     let terms = soundness_terms(&statement);
+    let names: Vec<&str> = terms.iter().map(|t| t.0.as_str()).collect();
+    assert_eq!(
+        names,
+        [
+            "read.batch",
+            "read.sumcheck",
+            "final.point",
+            "cycle.batch",
+            "cycle.sumcheck",
+            "mirror.point",
+            "mosaic.batch",
+            "mosaic.sumcheck"
+        ]
+    );
     let numerator: f64 = terms.iter().map(|t| t.1).sum::<f64>() * 2f64.powi(128);
     let ell = Schema::new(&statement.config, 20).layout.ell;
-    // 26 + 92 + 22 + 1 + 120 + 28 + 9, plus the Mosaic rounds.
-    assert_eq!(numerator.round() as usize, 298 + 2 * ell);
+    assert_eq!(ell, 27);
+    // 1 + 92 + 16 + 1 + 120 + 28 + 9, plus the Mosaic rounds.
+    assert_eq!(numerator.round() as usize, 267 + 2 * ell);
     assert_eq!(statement.config.components(), 4);
 }
 
