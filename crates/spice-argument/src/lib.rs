@@ -9,6 +9,7 @@ pub mod masked_reduction;
 pub mod operations;
 pub mod order;
 pub mod order_flock;
+pub mod planes;
 
 use std::collections::BTreeMap;
 use std::fmt;

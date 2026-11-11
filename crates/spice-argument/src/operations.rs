@@ -9,19 +9,18 @@ use om_memcheck::onehot::EvalClaim;
 use om_mosaic::{BatchProof, batch_prove_packed, batch_verify, compute_layout};
 use om_pcs::ligerito::make_params;
 use om_pcs::{BitPCS, BitProof, Commitment};
-use om_sumcheck::PackedBits;
+use om_sumcheck::{PackedBits, SumcheckProof};
 use om_transcript::{
     Transcript,
     profiling::{self, Span},
 };
-use rayon::prelude::*;
 use std::collections::BTreeMap;
 
 use crate::{
     ComponentSummary, Config, Error, OrderingMode, Schema, Statement, Summary, combine_bits, dims,
-    eval_columns, eval_columns_weighted,
-    masked_reduction::{self, MaskClaims, MaskProof},
-    order, order_flock, pack_columns, pack_values, require, validate, word_claim, word_eval,
+    masked_reduction::{self, MaskClaims},
+    order, order_flock, pack_columns, pack_values, planes, require, validate, word_claim,
+    word_eval,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -147,24 +146,39 @@ fn check_products(proof: &GrandProductProof, options: &Options) -> Result<(), Er
     Ok(())
 }
 
+/// Every committed-plane evaluation, sent in one message after the GKR, the
+/// masked-reduction sum-check and the ordering zerocheck have fixed their
+/// points. One fused pass over the bitplanes computes all of them.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Inputs {
+pub struct Evaluations {
+    /// At the GKR leaf point's cycle prefix.
     pub address: Vec<K>,
     pub previous: Vec<K>,
+    /// `[is_write, next_is_write]`.
+    pub flags: [K; 2],
+    /// At the GKR leaf point's memory prefix.
     pub final_previous: Vec<K>,
-    pub is_write: K,
-    pub next_is_write: K,
     pub initial_next_is_write: K,
-    pub masked: MaskClaims,
+    /// At the masked-reduction point: the word value (from the sum-check's
+    /// last round), `[is_write, next_is_write]` and the initial flag.
+    pub mask_value: K,
+    pub mask_flags: [K; 2],
+    pub mask_initial_next_is_write: K,
+    /// At Flock's A/B point and C point.
+    pub previous_ab: Vec<K>,
+    pub carries_ab: Vec<K>,
+    pub carries_c: Vec<K>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Proof {
     pub commitment: Commitment,
     pub permutation: GrandProductProof,
-    pub inputs: Inputs,
-    pub masks: MaskProof,
-    pub order: order_flock::OrderProof,
+    /// Masked-value claims at the GKR leaf point, sent before the sum-check.
+    pub masked: MaskClaims,
+    pub masks: SumcheckProof,
+    pub order: order_flock::FlockProof,
+    pub evaluations: Evaluations,
     pub mosaic: BatchProof,
     pub opening: BitProof,
 }
@@ -297,7 +311,7 @@ enum Pending {
     Direct(EvalClaim),
 }
 
-fn planes(prefix: &'static str, point: &[K], values: &[K]) -> Pending {
+fn group(prefix: &'static str, point: &[K], values: &[K]) -> Pending {
     Pending::Planes {
         prefix,
         point: point.to_vec(),
@@ -371,75 +385,90 @@ fn scalar_claim(name: &str, point: &[K], value: K) -> EvalClaim {
     }
 }
 
-fn input_claims(s: &Statement, p: &[K], v: &Inputs) -> Vec<Pending> {
+/// All Mosaic claims before chunk combination: every plane group at every
+/// point where the protocol needs it, the word value and the initial flag.
+fn pending_claims(
+    s: &Statement,
+    leaf: &[K],
+    mask: &[K],
+    order: &order_flock::OrderClaims,
+    v: &Evaluations,
+) -> Vec<Pending> {
     let (n, a, _, _) = dims(s);
     vec![
-        planes("input/address", &p[..n], &v.address),
-        planes("input/previous", &p[..n], &v.previous),
-        planes("boundary/previous", &p[..a], &v.final_previous),
-        planes("input/flags", &p[..n], &[v.is_write, v.next_is_write]),
+        group("input/address", &leaf[..n], &v.address),
+        group("input/previous", &leaf[..n], &v.previous),
+        group("input/flags", &leaf[..n], &v.flags),
+        group("boundary/previous", &leaf[..a], &v.final_previous),
         Pending::Direct(scalar_claim(
             "initial/next_is_write",
-            &p[..a],
+            &leaf[..a],
             v.initial_next_is_write,
         )),
-    ]
-}
-
-fn mask_source_claims(s: &Statement, v: &masked_reduction::SourceClaims) -> Vec<Pending> {
-    let (n, a, _, _) = dims(s);
-    vec![
         Pending::Direct(word_claim(
             "input/value",
-            &v.point[..n],
-            v.value,
+            &mask[..n],
+            v.mask_value,
             s.config.word_log_bits,
         )),
-        planes("input/flags", &v.point[..n], &[v.is_write, v.next_is_write]),
+        group("input/flags", &mask[..n], &v.mask_flags),
         Pending::Direct(scalar_claim(
             "initial/next_is_write",
-            &v.point[..a],
-            v.initial_next_is_write,
+            &mask[..a],
+            v.mask_initial_next_is_write,
         )),
-    ]
-}
-
-fn order_claims(terminal: &order_flock::OrderClaims) -> Vec<Pending> {
-    vec![
-        planes("input/previous", &terminal.point_ab, &terminal.previous_ab),
-        planes("order/carry", &terminal.point_ab, &terminal.carries_ab),
+        group("input/previous", &order.point_ab, &order.previous_ab),
+        group("order/carry", &order.point_ab, &order.carries_ab),
         // Flock extracts the linear C column at a second cycle point.
-        planes("order/carry", &terminal.point_c, &terminal.carries_c),
+        group("order/carry", &order.point_c, &order.carries_c),
     ]
 }
 
-fn absorb_inputs(tr: &mut Transcript, v: &Inputs) {
+fn absorb_masked(tr: &mut Transcript, v: &MaskClaims) {
+    tr.absorb_ks(b"spice/typed/masked", &[v.cycle[0], v.cycle[1], v.initial]);
+}
+
+fn absorb_evaluations(tr: &mut Transcript, v: &Evaluations) {
     tr.absorb_ks(b"spice/typed/address", &v.address);
     tr.absorb_ks(b"spice/typed/previous", &v.previous);
+    tr.absorb_ks(b"spice/typed/flags", &v.flags);
     tr.absorb_ks(b"spice/typed/final-previous", &v.final_previous);
-    tr.absorb_ks(
-        b"spice/typed/flags",
-        &[v.is_write, v.next_is_write, v.initial_next_is_write],
+    tr.absorb_k(b"spice/typed/initial-flag", v.initial_next_is_write);
+    tr.absorb_k(b"spice/typed/mask/value", v.mask_value);
+    tr.absorb_ks(b"spice/typed/mask/flags", &v.mask_flags);
+    tr.absorb_k(
+        b"spice/typed/mask/initial-flag",
+        v.mask_initial_next_is_write,
     );
-    tr.absorb_ks(
-        b"spice/typed/masked",
-        &[v.masked.cycle[0], v.masked.cycle[1], v.masked.initial],
-    );
+    tr.absorb_ks(b"spice/typed/order/previous-ab", &v.previous_ab);
+    tr.absorb_ks(b"spice/typed/order/carries-ab", &v.carries_ab);
+    tr.absorb_ks(b"spice/typed/order/carries-c", &v.carries_c);
+}
+
+fn check_shapes(s: &Statement, v: &Evaluations) -> Result<(), Error> {
+    let (_, a, _, b) = dims(s);
+    require(
+        v.address.len() == a
+            && v.previous.len() == b
+            && v.final_previous.len() == b
+            && v.previous_ab.len() == b
+            && v.carries_ab.len() == b - 1
+            && v.carries_c.len() == b - 1,
+        "malformed typed evaluations",
+    )
 }
 
 fn check_leaves(
     s: &Statement,
     leaves: &LeafClaims,
-    v: &Inputs,
+    masked: &MaskClaims,
+    v: &Evaluations,
     fps: &[Fingerprint],
 ) -> Result<(), Error> {
-    let (n, a, l, b) = dims(s);
+    let (n, a, l, _) = dims(s);
     let log_f = fps.len().trailing_zeros() as usize;
     require(
-        leaves.point.len() == l + 1 + log_f
-            && v.address.len() == a
-            && v.previous.len() == b
-            && v.final_previous.len() == b,
+        leaves.point.len() == l + 1 + log_f,
         "malformed typed permutation terminals",
     )?;
     let p = &leaves.point;
@@ -462,15 +491,15 @@ fn check_leaves(
             delta,
         } = *fp;
         let cycles = [
-            gamma + previous + alpha * addr + beta * v.masked.cycle[0] + delta * v.is_write,
-            gamma + time + alpha * addr + beta * v.masked.cycle[1] + delta * v.next_is_write,
+            gamma + previous + alpha * addr + beta * masked.cycle[0] + delta * v.flags[0],
+            gamma + time + alpha * addr + beta * masked.cycle[1] + delta * v.flags[1],
         ];
         let memory = [
             gamma + final_previous + alpha * memory_addr + beta * final_value,
             gamma
                 + memory_addr
                 + alpha * memory_addr
-                + beta * v.masked.initial
+                + beta * masked.initial
                 + delta * v.initial_next_is_write,
         ];
         for side in 0..2 {
@@ -486,6 +515,37 @@ fn check_leaves(
         )?;
     }
     Ok(())
+}
+
+/// The verifier's checks on the evaluation message, in one place for the
+/// prover's self-check and the verifier.
+#[allow(clippy::too_many_arguments)]
+fn check_evaluations(
+    s: &Statement,
+    leaves: &LeafClaims,
+    masked: &MaskClaims,
+    mask: &masked_reduction::Deferred,
+    order: &order_flock::FlockClaim,
+    v: &Evaluations,
+    fps: &[Fingerprint],
+) -> Result<order_flock::OrderClaims, Error> {
+    let (n, a, _, _) = dims(s);
+    check_shapes(s, v)?;
+    check_leaves(s, leaves, masked, v, fps)?;
+    mask.check(
+        v.mask_value,
+        v.mask_flags[0],
+        v.mask_flags[1],
+        v.mask_initial_next_is_write,
+    )?;
+    Ok(order_flock::check_sources(
+        n,
+        a,
+        order,
+        &v.previous_ab,
+        &v.carries_ab,
+        &v.carries_c,
+    )?)
 }
 
 pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, Error> {
@@ -559,7 +619,7 @@ pub fn prove_with(
     };
     let schema = schema(&statement);
     let mut tr = transcript(&statement, &schema, options);
-    let (address_columns, previous_columns, last_columns, flags, initial_flags, g) = {
+    let (address_columns, previous_columns, carry_columns, last_columns, flags, initial_flags, g) = {
         let _span = Span::new("spice.pack");
         let address = pack_columns(&trace.addresses, a);
         let prev = pack_columns(&previous, b);
@@ -583,7 +643,7 @@ pub fn prove_with(
             place_planes(&mut g, &schema, prefix, cols);
         }
         schema.place(&mut g, "initial/next_is_write", &initial_flags);
-        (address, prev, last_columns, flags, initial_flags, g)
+        (address, prev, carry, last_columns, flags, initial_flags, g)
     };
     let (commitment, state) = {
         let _span = Span::new("pcs.commit");
@@ -656,68 +716,128 @@ pub fn prove_with(
         lean_grandproduct::prove(l + 1 + log_f, leaves, &mut tr, b"spice/typed/permutation")?
     };
     check_products(&permutation, options)?;
-    let inputs = {
-        let _span = Span::new("spice.claims");
-        let eq = om_sumcheck::eq_table(&leaves.point[..n]);
-        let fv = eval_columns_weighted(&flags, &eq);
-        let masked: Vec<u64> = trace
-            .values
-            .par_iter()
-            .zip(&trace.is_write)
-            .map(|(&v, &w)| v & 0u64.wrapping_sub(u64::from(!w)))
-            .collect();
-        let masked_next: Vec<u64> = trace
-            .values
-            .par_iter()
-            .zip(&next)
-            .map(|(&v, &w)| v & 0u64.wrapping_sub(u64::from(!w)))
-            .collect();
+    let masked = {
+        let _span = Span::new("spice.masked.claims");
+        let cycle = planes::masked_word_evals(
+            &trace.values,
+            [&trace.is_write, &next],
+            &leaves.point[..n],
+            config.word_log_bits,
+        );
         let initial: Vec<u64> = trace
             .initial
             .iter()
             .zip(&initial_next)
             .map(|(&v, &w)| v & 0u64.wrapping_sub(u64::from(!w)))
             .collect();
-        Inputs {
-            address: eval_columns_weighted(&address_columns, &eq),
-            previous: eval_columns_weighted(&previous_columns, &eq),
-            final_previous: eval_columns(&last_columns, &leaves.point[..a]),
-            is_write: fv[0],
-            next_is_write: fv[1],
-            initial_next_is_write: om_sumcheck::mle_eval_packed(&initial_flags, &leaves.point[..a]),
-            masked: MaskClaims {
-                cycle: [
-                    word_eval(&masked, &leaves.point[..n], config.word_log_bits),
-                    word_eval(&masked_next, &leaves.point[..n], config.word_log_bits),
-                ],
-                initial: word_eval(&initial, &leaves.point[..a], config.word_log_bits),
-            },
+        MaskClaims {
+            cycle,
+            initial: word_eval(&initial, &leaves.point[..a], config.word_log_bits),
         }
     };
-    check_leaves(&statement, &leaves, &inputs, &fps)?;
-    absorb_inputs(&mut tr, &inputs);
-    let mut claims = input_claims(&statement, &leaves.point, &inputs);
-    let (masks, mask_sources) = {
+    absorb_masked(&mut tr, &masked);
+    let (masks, mask_point, mask_weights, mask_value, folded) = {
         let _span = Span::new("spice.mask");
-        masked_reduction::prove(
+        masked_reduction::prove_sumcheck(
             &trace.values,
             &trace.is_write,
             &next,
             &trace.initial,
             &initial_next,
             &leaves.point[..l + 1],
-            &inputs.masked,
+            &masked,
             &mut tr,
             b"spice/typed/masks",
         )?
     };
-    claims.extend(mask_source_claims(&statement, &mask_sources));
-    let (order, order_sources) = {
+    let (order, order_terminal) = {
         let _span = Span::new("spice.order");
-        order_flock::prove(&previous, &carries, n, a, &mut tr, b"spice/typed/order")?
+        order_flock::prove_zerocheck(&previous, &carries, n, a, &mut tr, b"spice/typed/order")?
     };
-    claims.extend(order_claims(&order_sources));
-    let claims = finish_claims(claims, &group_rho(&mut tr));
+    let evaluations = {
+        let _span = Span::new("spice.claims");
+        let (point_ab, point_c) = order_flock::terminal_points(n, &order_terminal);
+        let cycle_points = [&leaves.point[..n], &mask_point[..n], &point_ab, &point_c];
+        fn request(columns: &[PackedBits], point: usize) -> planes::Request<'_> {
+            planes::Request {
+                planes: columns.iter().collect(),
+                point,
+            }
+        }
+        let mut cycle = planes::evaluate(
+            &cycle_points,
+            &[
+                request(&address_columns, 0),
+                request(&previous_columns, 0),
+                request(&flags, 0),
+                request(&flags, 1),
+                request(&previous_columns, 2),
+                request(&carry_columns, 2),
+                request(&carry_columns, 3),
+            ],
+        )
+        .into_iter();
+        let mut memory = planes::evaluate(
+            &[&leaves.point[..a], &mask_point[..a]],
+            &[
+                request(&last_columns, 0),
+                planes::Request {
+                    planes: vec![&initial_flags],
+                    point: 0,
+                },
+                planes::Request {
+                    planes: vec![&initial_flags],
+                    point: 1,
+                },
+            ],
+        )
+        .into_iter();
+        let take = |it: &mut std::vec::IntoIter<Vec<K>>| it.next().expect("request");
+        let pair = |v: Vec<K>| [v[0], v[1]];
+        Evaluations {
+            address: take(&mut cycle),
+            previous: take(&mut cycle),
+            flags: pair(take(&mut cycle)),
+            mask_flags: pair(take(&mut cycle)),
+            previous_ab: take(&mut cycle),
+            carries_ab: take(&mut cycle),
+            carries_c: take(&mut cycle),
+            final_previous: take(&mut memory),
+            initial_next_is_write: take(&mut memory)[0],
+            mask_initial_next_is_write: take(&mut memory)[0],
+            mask_value,
+        }
+    };
+    require(
+        folded[0]
+            == mask_weights[0]
+                + mask_weights[1]
+                + mask_weights[0] * evaluations.mask_flags[0]
+                + mask_weights[1] * evaluations.mask_flags[1]
+            && folded[1] == mask_weights[2] * (K::ONE + evaluations.mask_initial_next_is_write),
+        "typed masked reduction: folded masks disagree with flag sources",
+    )?;
+    absorb_evaluations(&mut tr, &evaluations);
+    check_shapes(&statement, &evaluations)?;
+    check_leaves(&statement, &leaves, &masked, &evaluations, &fps)?;
+    let order_claims = order_flock::check_sources(
+        n,
+        a,
+        &order_terminal,
+        &evaluations.previous_ab,
+        &evaluations.carries_ab,
+        &evaluations.carries_c,
+    )?;
+    let claims = finish_claims(
+        pending_claims(
+            &statement,
+            &leaves.point,
+            &mask_point,
+            &order_claims,
+            &evaluations,
+        ),
+        &group_rho(&mut tr),
+    );
     let (mosaic, r, value) = {
         let _span = Span::new("mosaic.batch");
         batch_prove_packed(&schema.layout, &schema.claims(&claims)?, &g, &mut tr)
@@ -742,9 +862,10 @@ pub fn prove_with(
         proof: Proof {
             commitment,
             permutation,
-            inputs,
+            masked,
             masks,
             order,
+            evaluations,
             mosaic,
             opening,
         },
@@ -772,21 +893,23 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error
         b"spice/typed/permutation",
     )?;
     check_products(&p.permutation, options)?;
-    check_leaves(s, &leaves, &p.inputs, &fps)?;
-    absorb_inputs(&mut tr, &p.inputs);
-    let mut claims = input_claims(s, &leaves.point, &p.inputs);
-    let sources = masked_reduction::verify(
+    absorb_masked(&mut tr, &p.masked);
+    let mask = masked_reduction::verify_sumcheck(
         &s.initial_memory,
         &leaves.point[..l + 1],
-        &p.inputs.masked,
+        &p.masked,
         &p.masks,
         &mut tr,
         b"spice/typed/masks",
     )?;
-    claims.extend(mask_source_claims(s, &sources));
-    let terminal = order_flock::verify(n, a, &p.order, &mut tr, b"spice/typed/order")?;
-    claims.extend(order_claims(&terminal));
-    let claims = finish_claims(claims, &group_rho(&mut tr));
+    let order = order_flock::verify_zerocheck_with(n, a, &p.order, &mut tr, b"spice/typed/order")?;
+    absorb_evaluations(&mut tr, &p.evaluations);
+    let order_claims =
+        check_evaluations(s, &leaves, &p.masked, &mask, &order, &p.evaluations, &fps)?;
+    let claims = finish_claims(
+        pending_claims(s, &leaves.point, &mask.point, &order_claims, &p.evaluations),
+        &group_rho(&mut tr),
+    );
     let (r, value) = batch_verify(&schema.layout, &schema.claims(&claims)?, &p.mosaic, &mut tr)?;
     schema
         .pcs
@@ -837,11 +960,7 @@ mod tests {
             final_memory: vec![0; 1 << 16],
         };
         let schema = schema(&s);
-        let populated: usize = schema
-            .components
-            .iter()
-            .map(|c| 1usize << c.log_size)
-            .sum();
+        let populated: usize = schema.components.iter().map(|c| 1usize << c.log_size).sum();
         // 124.375 populated bits per row; the padded commitment stays 2^27.
         assert_eq!(populated, 130_416_640);
         assert_eq!(schema.layout.ell, 27);

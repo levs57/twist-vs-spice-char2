@@ -192,7 +192,12 @@ fn absorb_sources(tr: &mut Transcript, base: &[u8], proof: &MaskProof) {
     );
 }
 
-pub fn prove(
+/// Run only the sum-check, returning `(proof, point, weights, value,
+/// folded masks)`. `value` is the word source at `point`. The caller sends it
+/// and the flag sources later, absorbs them before any challenge that depends
+/// on them, and the verifier then calls [`Deferred::check`].
+#[allow(clippy::too_many_arguments)]
+pub fn prove_sumcheck(
     values: &[u64],
     is_write: &[bool],
     next_is_write: &[bool],
@@ -202,7 +207,7 @@ pub fn prove(
     claims: &MaskClaims,
     tr: &mut Transcript,
     base: &[u8],
-) -> Result<(MaskProof, SourceClaims), Error> {
+) -> Result<(SumcheckProof, Vec<K>, [K; 3], K, [K; 2]), Error> {
     let (a, l) = public_shape(initial_memory, gp_point)?;
     require(
         values.len().is_power_of_two(),
@@ -255,17 +260,103 @@ pub fn prove(
         actual == initial,
         "masked reduction: incorrect zero-dimensional claim",
     )?;
+    // finals[1] and finals[3] are the folded mask columns; the caller can
+    // compare them with the flag sources as a prover-side self-check.
+    Ok((sc, point, weights, finals[0], [finals[1], finals[3]]))
+}
+
+/// The masked-reduction terminal relation, awaiting the flag sources.
+#[derive(Clone, Debug)]
+pub struct Deferred {
+    pub point: Vec<K>,
+    weights: [K; 3],
+    equality: K,
+    expected: K,
+    public_value: K,
+}
+
+impl Deferred {
+    /// Check the terminal product relation given the sources at `point`.
+    pub fn check(
+        &self,
+        value: K,
+        is_write: K,
+        next_is_write: K,
+        initial_next_is_write: K,
+    ) -> Result<(), Error> {
+        let w = self.weights;
+        let cofactor = value * (w[0] + w[1] + w[0] * is_write + w[1] * next_is_write)
+            + self.public_value * w[2] * (K::ONE + initial_next_is_write);
+        require(
+            self.equality * cofactor == self.expected,
+            "masked reduction: terminal product check failed",
+        )
+    }
+}
+
+/// Verifier half of [`prove_sumcheck`]. Initial memory is public and is
+/// evaluated here; nothing after the sum-check is absorbed.
+pub fn verify_sumcheck(
+    initial_memory: &[u64],
+    gp_point: &[K],
+    claims: &MaskClaims,
+    sc: &SumcheckProof,
+    tr: &mut Transcript,
+    base: &[u8],
+) -> Result<Deferred, Error> {
+    let (a, l) = public_shape(initial_memory, gp_point)?;
+    require(
+        sc.round_msgs.len() == l && sc.round_msgs.iter().all(|m| m.len() == 3),
+        "masked reduction: malformed sumcheck shape",
+    )?;
+    let weights = setup(a, l, gp_point, claims, tr, base);
+    let initial = batched_claim(claims, weights);
+    let (point, expected) = sumcheck_verify(initial, l, 3, sc, tr, &label(base, b"/sc"))?;
+    Ok(Deferred {
+        public_value: crate::word_eval(initial_memory, &point[..a], 6),
+        equality: eq_eval(&gp_point[..l], &point),
+        point,
+        weights,
+        expected,
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn prove(
+    values: &[u64],
+    is_write: &[bool],
+    next_is_write: &[bool],
+    initial_memory: &[u64],
+    initial_next_is_write: &[bool],
+    gp_point: &[K],
+    claims: &MaskClaims,
+    tr: &mut Transcript,
+    base: &[u8],
+) -> Result<(MaskProof, SourceClaims), Error> {
+    let (sc, point, weights, value, masks) = prove_sumcheck(
+        values,
+        is_write,
+        next_is_write,
+        initial_memory,
+        initial_next_is_write,
+        gp_point,
+        claims,
+        tr,
+        base,
+    )?;
+    let (a, _) = public_shape(initial_memory, gp_point)?;
+    let n = values.len().trailing_zeros() as usize;
     let _span = Span::new("spice.masked.claims");
     let [first, next, initial_next] =
         evaluate_flags(is_write, next_is_write, initial_next_is_write, &point, n, a);
     require(
-        finals[1] == weights[0] + weights[1] + weights[0] * first + weights[1] * next
-            && finals[3] == weights[2] * (K::ONE + initial_next),
+        masks[0] == weights[0] + weights[1] + weights[0] * first + weights[1] * next
+            && masks[1] == weights[2] * (K::ONE + initial_next),
         "masked reduction: linear source binding failed",
     )?;
     let proof = MaskProof {
         sc,
-        value: finals[0],
+        value,
         is_write: first,
         next_is_write: next,
         initial_next_is_write: initial_next,
@@ -292,28 +383,16 @@ pub fn verify(
     tr: &mut Transcript,
     base: &[u8],
 ) -> Result<SourceClaims, Error> {
-    let (a, l) = public_shape(initial_memory, gp_point)?;
-    require(
-        proof.sc.round_msgs.len() == l && proof.sc.round_msgs.iter().all(|m| m.len() == 3),
-        "masked reduction: malformed sumcheck shape",
-    )?;
-    let weights = setup(a, l, gp_point, claims, tr, base);
-    let initial = batched_claim(claims, weights);
-    let (point, expected) = sumcheck_verify(initial, l, 3, &proof.sc, tr, &label(base, b"/sc"))?;
-    let public_value = crate::word_eval(initial_memory, &point[..a], 6);
-    let cofactor = proof.value
-        * (weights[0]
-            + weights[1]
-            + weights[0] * proof.is_write
-            + weights[1] * proof.next_is_write)
-        + public_value * weights[2] * (K::ONE + proof.initial_next_is_write);
-    require(
-        eq_eval(&gp_point[..l], &point) * cofactor == expected,
-        "masked reduction: terminal product check failed",
+    let deferred = verify_sumcheck(initial_memory, gp_point, claims, &proof.sc, tr, base)?;
+    deferred.check(
+        proof.value,
+        proof.is_write,
+        proof.next_is_write,
+        proof.initial_next_is_write,
     )?;
     absorb_sources(tr, base, proof);
     Ok(SourceClaims {
-        point,
+        point: deferred.point,
         value: proof.value,
         is_write: proof.is_write,
         next_is_write: proof.next_is_write,

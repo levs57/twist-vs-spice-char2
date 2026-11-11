@@ -129,22 +129,22 @@ fn every_mask_and_flag_claim_is_authenticated() {
     for field in 0..6 {
         let mut p = r.proof.clone();
         match field {
-            0 => p.inputs.is_write += K::ONE,
-            1 => p.inputs.next_is_write += K::ONE,
-            2 => p.inputs.initial_next_is_write += K::ONE,
-            3 => p.inputs.masked.cycle[0] += K::ONE,
-            4 => p.inputs.masked.cycle[1] += K::ONE,
-            _ => p.inputs.masked.initial += K::ONE,
+            0 => p.evaluations.flags[0] += K::ONE,
+            1 => p.evaluations.flags[1] += K::ONE,
+            2 => p.evaluations.initial_next_is_write += K::ONE,
+            3 => p.masked.cycle[0] += K::ONE,
+            4 => p.masked.cycle[1] += K::ONE,
+            _ => p.masked.initial += K::ONE,
         };
         assert!(operations::verify(&r.statement, &p).is_err());
     }
     for field in 0..4 {
         let mut p = r.proof.clone();
         match field {
-            0 => p.masks.value += K::ONE,
-            1 => p.masks.is_write += K::ONE,
-            2 => p.masks.next_is_write += K::ONE,
-            _ => p.masks.initial_next_is_write += K::ONE,
+            0 => p.evaluations.mask_value += K::ONE,
+            1 => p.evaluations.mask_flags[0] += K::ONE,
+            2 => p.evaluations.mask_flags[1] += K::ONE,
+            _ => p.evaluations.mask_initial_next_is_write += K::ONE,
         };
         assert!(operations::verify(&r.statement, &p).is_err());
     }
@@ -160,13 +160,13 @@ fn ordering_boundaries_pointers_and_pcs_are_required() {
     s.final_memory[0] ^= 1;
     assert!(operations::verify(&s, &r.proof).is_err());
     let mut p = r.proof.clone();
-    p.inputs.previous[0] += K::ONE;
+    p.evaluations.previous[0] += K::ONE;
     assert!(operations::verify(&r.statement, &p).is_err());
     let mut p = r.proof.clone();
-    p.inputs.final_previous[0] += K::ONE;
+    p.evaluations.final_previous[0] += K::ONE;
     assert!(operations::verify(&r.statement, &p).is_err());
     let mut p = r.proof.clone();
-    p.order.carries_c[0] += K::ONE;
+    p.evaluations.carries_c[0] += K::ONE;
     assert!(operations::verify(&r.statement, &p).is_err());
     let mut p = r.proof.clone();
     p.mosaic.v_g += K::ONE;
@@ -189,14 +189,59 @@ fn inconsistent_typed_reads_and_malformed_proofs_reject() {
     t.is_write.pop();
     assert!(operations::prove(&config(2), &t).is_err());
     let mut p = r.proof.clone();
-    p.inputs.address.clear();
+    p.evaluations.address.clear();
     assert!(operations::verify(&r.statement, &p).is_err());
     let mut p = r.proof.clone();
-    p.order.previous_ab.clear();
+    p.evaluations.previous_ab.clear();
     assert!(operations::verify(&r.statement, &p).is_err());
     let mut p = r.proof.clone();
-    p.masks.sc.round_msgs.clear();
+    p.masks.round_msgs.clear();
     assert!(operations::verify(&r.statement, &p).is_err());
+    let mut p = r.proof.clone();
+    p.evaluations.carries_c.pop();
+    assert!(operations::verify(&r.statement, &p).is_err());
+}
+
+#[test]
+fn deferred_terminal_checks_bind_the_fused_evaluation_message() {
+    let r = fixture();
+    // Flock's terminal values are checked against the late source values.
+    let mut p = r.proof.clone();
+    p.order.final_a_eval.lo ^= 1;
+    assert!(operations::verify(&r.statement, &p).is_err());
+    let mut p = r.proof.clone();
+    p.order.final_c_eval.lo ^= 1;
+    assert!(operations::verify(&r.statement, &p).is_err());
+    // The masked sum-check's last message and the masked claims.
+    let mut p = r.proof.clone();
+    p.masks.round_msgs.last_mut().unwrap()[0] += K::ONE;
+    assert!(operations::verify(&r.statement, &p).is_err());
+    let mut p = r.proof.clone();
+    p.masked.initial += K::ONE;
+    assert!(operations::verify(&r.statement, &p).is_err());
+    // Every field of the evaluation message.
+    let fields = 11;
+    for field in 0..fields {
+        let mut p = r.proof.clone();
+        let e = &mut p.evaluations;
+        match field {
+            0 => e.address[1] += K::ONE,
+            1 => e.previous[3] += K::ONE,
+            2 => e.flags[1] += K::ONE,
+            3 => e.final_previous[2] += K::ONE,
+            4 => e.initial_next_is_write += K::ONE,
+            5 => e.mask_value += K::ONE,
+            6 => e.mask_flags[0] += K::ONE,
+            7 => e.mask_initial_next_is_write += K::ONE,
+            8 => e.previous_ab[0] += K::ONE,
+            9 => e.carries_ab[2] += K::ONE,
+            _ => e.carries_c[1] += K::ONE,
+        }
+        assert!(
+            operations::verify(&r.statement, &p).is_err(),
+            "field {field}"
+        );
+    }
 }
 
 fn fixture_2fp() -> &'static ProveResult {
@@ -269,7 +314,7 @@ fn two_fingerprint_tampering_rejects() {
     p.permutation.layers.last_mut().unwrap().children[1][0] += K::ONE;
     assert!(operations::verify_with(&r.statement, &p, &two).is_err());
     let mut p = r.proof.clone();
-    p.inputs.masked.cycle[0] += K::ONE;
+    p.masked.cycle[0] += K::ONE;
     assert!(operations::verify_with(&r.statement, &p, &two).is_err());
     let mut s = r.statement.clone();
     s.final_memory[2] ^= 4;
@@ -292,23 +337,23 @@ fn every_plane_of_a_chunk_is_bound_by_the_combined_claim() {
     let r = fixture();
     // Swapping two planes' values keeps their sum but not the rho combination.
     let mut p = r.proof.clone();
-    assert_ne!(p.inputs.address[0], p.inputs.address[1]);
-    p.inputs.address.swap(0, 1);
+    assert_ne!(p.evaluations.address[0], p.evaluations.address[1]);
+    p.evaluations.address.swap(0, 1);
     assert!(operations::verify(&r.statement, &p).is_err());
     for plane in 0..4 {
         let mut p = r.proof.clone();
-        p.inputs.previous[plane] += K::ONE;
+        p.evaluations.previous[plane] += K::ONE;
         assert!(operations::verify(&r.statement, &p).is_err());
         let mut p = r.proof.clone();
-        p.order.previous_ab[plane] += K::ONE;
+        p.evaluations.previous_ab[plane] += K::ONE;
         assert!(operations::verify(&r.statement, &p).is_err());
     }
     for plane in 0..3 {
         let mut p = r.proof.clone();
-        p.order.carries_ab[plane] += K::ONE;
+        p.evaluations.carries_ab[plane] += K::ONE;
         assert!(operations::verify(&r.statement, &p).is_err());
         let mut p = r.proof.clone();
-        p.order.carries_c[plane] += K::ONE;
+        p.evaluations.carries_c[plane] += K::ONE;
         assert!(operations::verify(&r.statement, &p).is_err());
     }
 }
