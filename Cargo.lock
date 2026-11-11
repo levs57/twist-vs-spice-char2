@@ -410,6 +410,10 @@ dependencies = [
 name = "ram-compare"
 version = "0.1.0"
 dependencies = [
+ "lean-grandproduct",
+ "om-mosaic",
+ "om-pcs",
+ "om-sumcheck",
  "om-transcript",
  "ram-argument",
  "ram-payload",

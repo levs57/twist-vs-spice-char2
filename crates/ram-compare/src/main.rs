@@ -13,6 +13,8 @@ use std::{
 };
 
 mod platform;
+mod proof_size;
+use proof_size::ProofSize;
 use platform::{LoadWindow, load_average};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -23,6 +25,7 @@ const SOURCES: &[(&str, &[u8])] = &[
     ("crates/ram-compare/build.rs", include_bytes!("../build.rs")),
     ("crates/ram-compare/src/main.rs", include_bytes!("main.rs")),
     ("crates/ram-compare/src/platform.rs", include_bytes!("platform.rs")),
+    ("crates/ram-compare/src/proof_size.rs", include_bytes!("proof_size.rs")),
 ];
 fn sources_sha256() -> String {
     let mut bytes = Vec::new();
@@ -500,6 +503,8 @@ struct Sample {
     /// Exclusive verifier spans: the profiler is cleared before `verify`
     /// and read right after it. Empty when the verifier has no spans.
     verifier_stages_ms: BTreeMap<String, f64>,
+    /// Structural proof size of this sample's proof.
+    proof_size: ProofSize,
     /// Load averages immediately before proving and after verifying.
     load: LoadWindow,
 }
@@ -595,6 +600,7 @@ impl Sample {
             stages_ms,
             padding_adjusted_estimate,
             verifier_stages_ms: BTreeMap::new(),
+            proof_size: ProofSize::default(),
             load: LoadWindow {
                 start: None,
                 end: None,
@@ -699,6 +705,7 @@ fn observed(
     prover_ms: f64,
     verifier_ms: f64,
     verifier_metrics: Vec<(&'static str, Duration)>,
+    proof_size: ProofSize,
     statement: &Statement,
     metrics: Vec<(&'static str, Duration)>,
     summary: &Summary,
@@ -718,6 +725,7 @@ fn observed(
         area.populated_fraction,
     )?;
     sample.verifier_stages_ms = stage_map(verifier_metrics);
+    sample.proof_size = proof_size;
     Ok((
         sample,
         area,
@@ -762,6 +770,7 @@ fn measure(
             prover_ms,
             verifier_ms,
             verifier_metrics,
+            proof_size::twist(&result.proof),
             &result.statement,
             result.metrics,
             &result.summary,
@@ -783,6 +792,7 @@ fn measure(
             prover_ms,
             verifier_ms,
             verifier_metrics,
+            proof_size::spice_typed(&result.proof),
             &result.statement,
             result.metrics,
             &result.summary,
@@ -810,6 +820,7 @@ fn measure(
             prover_ms,
             verifier_ms,
             verifier_metrics,
+            proof_size::spice(&result.proof),
             &result.statement,
             result.metrics,
             &result.summary,
@@ -832,6 +843,7 @@ struct Case {
     /// Load averages at the start and end of this case's measurements.
     load: LoadWindow,
     area: Area,
+    proof_size: ProofSize,
     grand_product_extra_bound: Option<serde_json::Value>,
     samples: Vec<Sample>,
     median: Medians,
@@ -925,6 +937,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             };
             let median = Medians::new(&samples);
             let area = area.ok_or("missing proof")?;
+            let proof_size = samples[0].proof_size;
             println!(
                 "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",
                 median.times["prover_ms"],
@@ -943,6 +956,13 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 median.times["mask_ms"],
                 median.times["mosaic_ms"],
                 median.times["unattributed_ms"]
+            );
+            println!(
+                "  proof={}B (pcs={}B mosaic={}B iop={}B; field=16B hash=32B index=4B)",
+                proof_size.total_bytes,
+                proof_size.pcs_bytes,
+                proof_size.mosaic_bytes,
+                proof_size.iop_bytes
             );
             println!("  load(1/5/15m) start={} end={}", fmt_load(load.start), fmt_load(load.end));
             let adjusted = &median.padding_adjusted_estimate;
@@ -982,6 +1002,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 metadata: metadata.clone(),
                 load,
                 area,
+                proof_size,
                 grand_product_extra_bound: bound,
                 samples,
                 median,
@@ -1094,6 +1115,10 @@ fn csv(report: &Report) -> String {
         "mosaic_claims",
         "load1_start",
         "load1_end",
+        "pcs_bytes",
+        "mosaic_bytes",
+        "iop_bytes",
+        "proof_bytes",
     ]
     .into_iter()
     .map(str::to_owned)
@@ -1135,6 +1160,10 @@ fn csv(report: &Report) -> String {
             row.push(c.area.mosaic_claims.to_string());
             for load in [s.load.start, s.load.end] {
                 row.push(load.map(|l| format!("{:.2}", l.one)).unwrap_or_default());
+            }
+            let size = &s.proof_size;
+            for bytes in [size.pcs_bytes, size.mosaic_bytes, size.iop_bytes, size.total_bytes] {
+                row.push(bytes.to_string());
             }
             row.extend(s.times().into_iter().map(|v| format!("{v:.9}")));
             row.extend(
@@ -1593,6 +1622,9 @@ mod tests {
                 assert!(case.load.start.is_some() && case.load.end.is_some());
                 assert!(case.samples.iter().all(|s| s.load.start.is_some()));
             }
+            let size = case.proof_size;
+            assert!(size.pcs_bytes > 0 && size.mosaic_bytes > 0 && size.iop_bytes > 0);
+            assert_eq!(size.total_bytes, size.pcs_bytes + size.mosaic_bytes + size.iop_bytes);
         }
         assert_eq!(
             cases[0].area.populated_bits,
@@ -1628,6 +1660,7 @@ mod tests {
         assert_eq!(rows.len(), 5);
         assert!(rows[0].contains("operation_trace_sha256"));
         assert!(rows[0].contains("mask_ms"));
+        assert!(rows[0].contains("pcs_bytes") && rows[0].contains("proof_bytes"));
         assert!(rows[0].contains("populated_fraction"));
         assert!(!rows[0].contains("ordering_gate_fraction"));
         assert!(!rows[0].contains("padding_adjusted_estimate:ordering_ms"));
