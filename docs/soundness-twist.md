@@ -54,6 +54,15 @@ Once every `A_i` row is a unit vector, every `ra(·, j)` is the unit vector of c
 
 **Private final memory (§5).** `Mf` is committed as `ram/final`. The prover sends `Mf(r_o, r_k)` before the cycle check's challenges, the verifier uses it in the cycle check's claim, and Mosaic checks it against the commitment. A wrong value either makes the cycle check's claim false or the Mosaic claim false.
 
+**Cycle prover (second round of changes).** The cycle check's prover (`cycle_prover.rs`) changed in four ways, and none of them changes the protocol. The verifier, the transcript and the proof are the same, and `soundness_terms` is unchanged.
+
+- *Split eq.* The prover no longer stores `δ eq(r_j, ·)`. In round `i` it uses `eq(r_j, (z_{<i}, X, m)) = eq(r_{<i}, z_{<i}) · eq(r_i, X) · eq(r_{>i}, m)`, accumulates the eq-weighted part (degree `d` in `X`) over split tables for `eq(r_{>i}, ·)` and multiplies by the known linear factor once per round.
+- *Split LT.* The prover no longer stores `LT(·, r_j) + γ`. With the low variables least significant, `LT((z_{<i}, X, m), r_j) = LT(m, r_{>i}) + eq(m, r_{>i}) · LT((z_{<i}, X), r_{≤i})`, and the last factor is a linear polynomial in `X` that the prover tracks with one running scalar.
+- *Round-0 tables.* Before binding, `A_i(r_k^i, j)` and `A_i(1 + r_k^i, j)` take one of `2^c` values, so on a pair of rows they are fixed by the pair's two chunk values. For `c ≤ 5` the prover reads round 0 from per-component tables over all `2^{2c}` pairs.
+- *Inc skipping.* When `Inc` is zero on both rows of a pair, the `Inc` term vanishes at every node and the prover skips it.
+
+These are identities about the same round polynomials, so an honest prover sends exactly the messages it sent before. The test `cycle_prover_matches_the_reference_prover` checks that the new prover's messages and evaluations equal those of the reference row prover in `cycle.rs` (which keeps both columns), across shapes that cover the sequential and parallel paths, chunks with and without round-0 tables, and traces with about half loads. The test `rejects_tampered_cycle_messages_from_the_split_prover` changes each value of each round message and each final evaluation of a proof from the new prover and checks that the verifier rejects.
+
 **Nonzero `r_c`.** The cycle rounds of the read check divide by `r_c[i]`, so `r_c` is drawn from `K \ {0}`. The Schwartz–Zippel bound over `K \ {0}` is `deg / (|K| − 1)`. The terms below use `|K|` and ignore this factor of `1 + 2^-128`.
 
 ## Terms at n = 20, a = 16, c = 4, ℓ = 6

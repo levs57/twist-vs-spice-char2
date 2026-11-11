@@ -505,3 +505,30 @@ fn cycle_prover_matches_the_reference_prover() {
         );
     }
 }
+
+#[test]
+fn rejects_tampered_cycle_messages_from_the_split_prover() {
+    // At n = 8 the cycle check runs the split prover (round-0 tables, Inc
+    // skipping on load pairs). Changing any value of any round message, or
+    // any final evaluation, must make the verifier reject.
+    for (a, c) in [(8usize, 4usize), (12, 6)] {
+        let tr = trace(8, a, 8, 6, 77);
+        let cfg = config(a, c, ReadOrder::AddressFirst, true, true);
+        let result = prove(&cfg, &tr).unwrap();
+        verify(&result.statement, &result.proof).unwrap();
+        let rounds = result.proof.cycle.sumcheck.round_msgs.len();
+        assert_eq!(rounds, 8);
+        for i in 0..rounds {
+            for k in 0..result.proof.cycle.sumcheck.round_msgs[i].len() {
+                let mut p = result.proof.clone();
+                p.cycle.sumcheck.round_msgs[i][k] += K::ONE;
+                assert!(verify(&result.statement, &p).is_err(), "round {i} value {k}");
+            }
+        }
+        for i in 0..cfg.components() {
+            let mut p = result.proof.clone();
+            p.cycle.a[i] += K::ONE;
+            assert!(verify(&result.statement, &p).is_err());
+        }
+    }
+}
