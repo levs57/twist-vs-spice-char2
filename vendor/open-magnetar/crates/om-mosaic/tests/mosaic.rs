@@ -603,3 +603,56 @@ fn shared_suffix_parallel_regions_match_dense_transcript() {
         }
     }
 }
+
+/// Components large enough for the eight-row subset-sum scan (rows of at
+/// least 64 bits and at least eight rows per block), at densities from
+/// empty to full, give the dense definition's proof for every split.
+#[test]
+fn packed_scan_matches_dense_at_every_density() {
+    let comps: Vec<(i64, usize)> = vec![(0, 15), (1, 14), (2, 13), (3, 12), (4, 14)];
+    // Bit set with probability keep / 64; component 4 alternates dense and
+    // sparse stretches so both paths run within one region.
+    let keeps = [32u64, 4, 64, 0, 0];
+    let mut rng = Rng(0x5eed);
+    let lay = compute_layout(&comps, 0);
+    let tables: BTreeMap<i64, Vec<bool>> = comps
+        .iter()
+        .map(|&(cid, ls)| {
+            let bits = (0..1usize << ls)
+                .map(|i| {
+                    let keep = if cid == 4 {
+                        if (i >> 9) % 2 == 0 { 48 } else { 2 }
+                    } else {
+                        keeps[cid as usize]
+                    };
+                    rng.next_u64() % 64 < keep
+                })
+                .collect();
+            (cid, bits)
+        })
+        .collect();
+    let g = build_g(&lay, &tables);
+    let packed = om_sumcheck::PackedBits::from_bools(&g);
+    let mut cl = Vec::new();
+    for (i, &(cid, ls)) in comps.iter().enumerate() {
+        for _ in 0..1 + i % 3 {
+            let r = rng.ks(ls);
+            cl.push(Claim {
+                comp_id: cid,
+                value: mle_eval_bits(&tables[&cid], &r),
+                point: r,
+            });
+        }
+    }
+    let want = dense_batch_prove(&lay, &cl, &g, &mut Transcript::new_default(b"scan"));
+    for m in [5, 6, 7, 8, 10] {
+        let got = om_mosaic::batch_prove_packed_with(
+            &lay,
+            &cl,
+            &packed,
+            &mut Transcript::new_default(b"scan"),
+            m,
+        );
+        assert_eq!(got, want, "bit rounds {m}");
+    }
+}

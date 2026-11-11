@@ -114,3 +114,26 @@ fn malformed() {
     };
     assert!(rs_verify(&r, y, &bad, &mut fresh()).is_err());
 }
+
+/// The packed partial evaluations (dense groups by subset sums, sparse
+/// groups bit by bit) equal the bit-vector reference at every density.
+#[test]
+fn packed_partial_evals_match_reference_at_every_density() {
+    use om_pcs::ring_switch::{partial_evals, partial_evals_packed};
+    use om_sumcheck::PackedBits;
+    let mut rng = Rng(11);
+    for ell in [7usize, 9, 12, 16] {
+        for keep in [0u64, 1, 8, 32, 64] {
+            // Bit i is set with probability keep / 64.
+            let bits: Vec<bool> = (0..1usize << ell)
+                .map(|_| (rng.next_u64() % 64) < keep)
+                .collect();
+            let r_hi = rng.ks(ell - 7);
+            assert_eq!(
+                partial_evals_packed(&PackedBits::from_bools(&bits), &r_hi),
+                partial_evals(&bits, &r_hi),
+                "ell {ell}, density {keep}/64"
+            );
+        }
+    }
+}

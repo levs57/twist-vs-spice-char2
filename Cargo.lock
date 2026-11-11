@@ -392,6 +392,7 @@ dependencies = [
  "om-sumcheck",
  "om-transcript",
  "ram-payload",
+ "rayon",
 ]
 
 [[package]]
@@ -410,6 +411,11 @@ dependencies = [
 name = "ram-compare"
 version = "0.1.0"
 dependencies = [
+ "lean-grandproduct",
+ "om-field",
+ "om-mosaic",
+ "om-pcs",
+ "om-sumcheck",
  "om-transcript",
  "ram-argument",
  "ram-payload",

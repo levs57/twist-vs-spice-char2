@@ -1,5 +1,7 @@
 use om_transcript::Hasher;
+use om_transcript::profiling;
 use ram_argument::{AccessTrace, Config, Statement, Summary, VirtualizationMode};
+use ram_payload::locality::{locality_operations, reuse_distance};
 use ram_payload::operations::{OperationPayload, guest_operations, random_operations};
 use ram_payload::{GuestFill, GuestOptions, GuestProgram, GuestRows, RamPayload};
 use serde::Serialize;
@@ -11,16 +13,96 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod interface;
+mod platform;
+mod proof_size;
+mod soundness;
+mod stats;
+use platform::{LoadWindow, load_average};
+use proof_size::ProofSize;
+use soundness::Soundness;
+use stats::{RatioInterval, paired_ratio};
+
+const SCHEMA_VERSION: usize = 5;
+const IMPLEMENTATION: &str = "typed-spice-vs-twist-gf128-v5";
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-const HELP: &str = "Chronological shared-address RAM: BinaryTwist Flat versus ordered Spice
-  --methods twist,spice,spice-ripple,spice-typed|both
-                                  Ordered methods; both=twist,spice (default)
+/// The harness's own sources, hashed into every report so a result names the
+/// exact comparison code that produced it.
+const SOURCES: &[(&str, &[u8])] = &[
+    (
+        "crates/ram-compare/Cargo.toml",
+        include_bytes!("../Cargo.toml"),
+    ),
+    ("crates/ram-compare/build.rs", include_bytes!("../build.rs")),
+    ("crates/ram-compare/src/main.rs", include_bytes!("main.rs")),
+    (
+        "crates/ram-compare/src/platform.rs",
+        include_bytes!("platform.rs"),
+    ),
+    (
+        "crates/ram-compare/src/proof_size.rs",
+        include_bytes!("proof_size.rs"),
+    ),
+    (
+        "crates/ram-compare/src/soundness.rs",
+        include_bytes!("soundness.rs"),
+    ),
+    (
+        "crates/ram-compare/src/stats.rs",
+        include_bytes!("stats.rs"),
+    ),
+];
+fn sources_sha256() -> String {
+    let mut bytes = Vec::new();
+    for (name, contents) in SOURCES {
+        bytes.extend_from_slice(name.as_bytes());
+        bytes.push(0);
+        bytes.extend_from_slice(&Hasher::sha256().digest(contents));
+    }
+    hex(&Hasher::sha256().digest(&bytes))
+}
+/// The argument crates' sources and Cargo.lock as build.rs found them, so a
+/// report names the prover code it measured.
+const ARGUMENT_SOURCES: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/argument-sources.bin"));
+fn argument_sources_sha256() -> String {
+    let mut bytes = Vec::new();
+    let mut rest = ARGUMENT_SOURCES;
+    while !rest.is_empty() {
+        let nul = rest
+            .iter()
+            .position(|&b| b == 0)
+            .expect("argument source name");
+        let (name, tail) = rest.split_at(nul);
+        let len = u64::from_le_bytes(tail[1..9].try_into().expect("length")) as usize;
+        let contents = &tail[9..9 + len];
+        bytes.extend_from_slice(name);
+        bytes.push(0);
+        bytes.extend_from_slice(&Hasher::sha256().digest(contents));
+        rest = &tail[9 + len..];
+    }
+    hex(&Hasher::sha256().digest(&bytes))
+}
+const HELP: &str = "Chronological shared-address RAM: Twist versus ordered Spice
+  --methods twist,twist-legacy,spice,spice-ripple,spice-typed,spice-typed-2fp|both
+                                  Ordered methods; both=twist,spice (default).
+                                  twist is Twist v2 (ram_argument::twist2);
+                                  twist-legacy is BinaryTwist Flat at 632855e;
+                                  spice-typed-2fp uses two fingerprints
+  --read-order address|cycle       Twist v2 read-check order (default address)
+  --final-memory public|private    Final memory in the statement or committed;
+                                  applies to twist and typed Spice (default public)
   --trace-format rmw|operations    Default rmw; spice-typed requires operations
-  --patterns random,guest|both     Alias --payload; default both
+  --patterns random,guest,locality|both
+                                  Alias --payload; default both=random,guest.
+                                  locality: seeded synthetic trace with stack,
+                                  scan and Zipf-heap locality (needs A >= 6)
   --address-bits A                 2^A public 64-bit words (default 12)
   --log-cycles N                   2^N rows in the chosen trace format (default 12)
-  --chunk-bits C[,C...]             Twist Flat only; Spice runs once/pattern (default 4)
+  --chunk-bits C[,C...]             Twist only; Spice runs once/pattern (default 4)
   --threads N --warmup N --repeat N (defaults 8,1,3)
+                                  Per workload: warmups for every configuration,
+                                  then --repeat rounds; each round runs every
+                                  configuration once, order reversed every round
   --seed N --profile NAME --log-rate N (defaults 1,provable-120,2)
   --guest-program NAME[,NAME...]   binary-search,erc20-mixed-block,pointer-chase,all
   --guest-rows all|memory|both      Ordered lists accepted (default all)
@@ -62,6 +144,10 @@ struct Options {
     guest_operations: usize,
     guest_keys: usize,
     guest_queries: usize,
+    /// Twist v2 read-check order: `address` (default) or `cycle`.
+    read_order: String,
+    /// Final memory in the statement (`public`) or committed (`private`).
+    final_memory: String,
     output: Option<PathBuf>,
     csv: Option<PathBuf>,
 }
@@ -87,6 +173,8 @@ impl Default for Options {
             guest_operations: 256,
             guest_keys: 64,
             guest_queries: 16,
+            read_order: "address".into(),
+            final_memory: "public".into(),
             output: None,
             csv: None,
         }
@@ -127,13 +215,26 @@ fn options() -> Result<Option<Options>> {
             "--methods" => {
                 o.methods = select(
                     &value,
-                    &["twist", "spice", "spice-ripple", "spice-typed"],
+                    &[
+                        "twist",
+                        "twist-legacy",
+                        "spice",
+                        "spice-ripple",
+                        "spice-typed",
+                        "spice-typed-2fp",
+                    ],
                     &["twist", "spice"],
                 )?
             }
+            "--read-order" => o.read_order = value,
+            "--final-memory" => o.final_memory = value,
             "--trace-format" => o.trace_format = value,
             "--patterns" | "--payload" => {
-                o.patterns = select(&value, &["random", "guest"], &["random", "guest"])?
+                o.patterns = select(
+                    &value,
+                    &["random", "guest", "locality"],
+                    &["random", "guest"],
+                )?
             }
             "--address-bits" => o.address_bits = number()?,
             "--log-cycles" => o.log_cycles = number()?,
@@ -177,7 +278,7 @@ fn validate_options(o: &Options) -> Result<()> {
     if !["rmw", "operations"].contains(&o.trace_format.as_str()) {
         return Err("trace format must be rmw or operations".into());
     }
-    if o.methods.iter().any(|m| m == "spice-typed") && o.trace_format != "operations" {
+    if o.methods.iter().any(|m| m.starts_with("spice-typed")) && o.trace_format != "operations" {
         return Err("spice-typed requires --trace-format operations".into());
     }
     if !(1..=31).contains(&o.address_bits) || o.log_cycles > 31 || o.threads == 0 || o.repeat == 0 {
@@ -192,7 +293,7 @@ fn validate_options(o: &Options) -> Result<()> {
         return Err("invalid log rate".into());
     }
     if o.chunk_bits.is_empty()
-        || o.methods.iter().any(|m| m == "twist")
+        || o.methods.iter().any(|m| m.starts_with("twist"))
             && o.chunk_bits.iter().enumerate().any(|(i, &c)| {
                 c == 0
                     || c > o.address_bits
@@ -201,6 +302,20 @@ fn validate_options(o: &Options) -> Result<()> {
             })
     {
         return Err("distinct positive chunk sizes must divide address bits".into());
+    }
+    if !["address", "cycle"].contains(&o.read_order.as_str()) {
+        return Err("--read-order must be address or cycle".into());
+    }
+    if !["public", "private"].contains(&o.final_memory.as_str()) {
+        return Err("--final-memory must be public or private".into());
+    }
+    if o.final_memory == "private" {
+        if let Some(m) = o.methods.iter().find(|m| !supports_private_final_memory(m)) {
+            return Err(format!(
+                "--final-memory private applies to twist, spice-typed and spice-typed-2fp only, not {m}"
+            )
+            .into());
+        }
     }
     if !["repeat", "halt"].contains(&o.guest_fill.as_str()) {
         return Err("guest fill must be repeat or halt".into());
@@ -227,7 +342,7 @@ fn program(name: &str) -> GuestProgram {
 fn workloads(o: &Options) -> Vec<(String, Option<(GuestProgram, GuestRows)>)> {
     let mut work = Vec::new();
     for pattern in &o.patterns {
-        if pattern == "random" {
+        if pattern == "random" || pattern == "locality" {
             work.push((pattern.clone(), None));
         } else {
             for p in &o.guest_program {
@@ -267,19 +382,26 @@ fn guest_options(o: &Options, program: GuestProgram, rows: GuestRows) -> GuestOp
     }
 }
 
-fn payload(o: &Options, guest: Option<(GuestProgram, GuestRows)>) -> Result<RamPayload> {
+fn payload(
+    o: &Options,
+    pattern: &str,
+    guest: Option<(GuestProgram, GuestRows)>,
+) -> Result<RamPayload> {
     Ok(if let Some((program, rows)) = guest {
         ram_payload::guest(
             o.log_cycles as u32,
             o.address_bits as u32,
             &guest_options(o, program, rows),
         )?
+    } else if pattern == "locality" {
+        locality_operations(o.log_cycles as u32, o.address_bits as u32, o.seed)?.into_rmw()?
     } else {
         ram_payload::random_ram(o.log_cycles as u32, o.address_bits as u32, o.seed)?
     })
 }
 fn operation_payload(
     o: &Options,
+    pattern: &str,
     guest: Option<(GuestProgram, GuestRows)>,
 ) -> Result<OperationPayload> {
     Ok(if let Some((program, rows)) = guest {
@@ -288,6 +410,8 @@ fn operation_payload(
             o.address_bits as u32,
             &guest_options(o, program, rows),
         )?
+    } else if pattern == "locality" {
+        locality_operations(o.log_cycles as u32, o.address_bits as u32, o.seed)?
     } else {
         random_operations(o.log_cycles as u32, o.address_bits as u32, o.seed)?
     })
@@ -309,11 +433,54 @@ fn configurations(o: &Options) -> Vec<(String, Option<usize>)> {
 }
 fn ordering_name(method: &str) -> Option<&'static str> {
     match method {
-        "twist" => None,
+        "twist" | "twist-legacy" => None,
         "spice" => Some("flock-boolean"),
         "spice-ripple" => Some("ripple-eq-factor"),
         "spice-typed" => Some("single-value-flock"),
+        "spice-typed-2fp" => Some("single-value-flock-2fp"),
         _ => unreachable!("validated method"),
+    }
+}
+/// Which prover a method name runs in this binary, without commas so CSV
+/// readers that split on commas keep their columns. Baseline binaries built
+/// before schema 5 used `twist` for the prover that is now `twist-legacy`,
+/// so cross-binary comparisons read this field to label their rows.
+fn implementation_name(method: &str, o: &Options) -> String {
+    match method {
+        "twist" => format!("ram_argument::twist2 ({}-first read check)", o.read_order),
+        "twist-legacy" => "ram_argument BinaryTwist flat (as at 632855e)".into(),
+        "spice" => "untyped Spice with Flock ordering (as at 632855e)".into(),
+        "spice-ripple" => "untyped Spice with ripple eq-factor ordering (as at 632855e)".into(),
+        "spice-typed" => "spice_argument::operations (one fingerprint set)".into(),
+        "spice-typed-2fp" => "spice_argument::operations (two fingerprint sets)".into(),
+        _ => unreachable!("validated method"),
+    }
+}
+/// Whether this method's run committed final memory (`private`) or took it
+/// from the statement (`public`).
+fn final_memory_mode(method: &str, o: &Options) -> String {
+    if supports_private_final_memory(method) {
+        o.final_memory.clone()
+    } else {
+        "public".into()
+    }
+}
+fn supports_private_final_memory(method: &str) -> bool {
+    matches!(method, "twist" | "spice-typed" | "spice-typed-2fp")
+}
+/// Composed soundness bits for the console, marked when only the fingerprint
+/// term is derived, so a partial figure is not read as a full one.
+fn bits_label(s: &soundness::Soundness) -> String {
+    if s.iop_source == "partial" {
+        format!("{:.2} bits, fingerprint term only", s.bits)
+    } else {
+        format!("{:.2} bits", s.bits)
+    }
+}
+fn typed_options(method: &str, o: &Options) -> spice_argument::operations::Options {
+    spice_argument::operations::Options {
+        fingerprints: if method == "spice-typed-2fp" { 2 } else { 1 },
+        private_final_memory: o.final_memory == "private",
     }
 }
 fn hex(bytes: &[u8]) -> String {
@@ -393,13 +560,19 @@ impl Area {
         let populated_bits = components.iter().map(|c| c.bits).sum::<usize>();
         if method.starts_with("spice") {
             let b = o.address_bits.max(o.log_cycles) + 1;
-            let (cycle_bits, boundary_bits) = if method == "spice-typed" {
+            let (cycle_bits, boundary_bits) = if method.starts_with("spice-typed") {
                 (64 + o.address_bits + 2 * b + 1, b + 1)
             } else {
                 (128 + o.address_bits + 2 * b - 1, b)
             };
-            let expected =
-                cycle_bits * (1usize << o.log_cycles) + boundary_bits * (1usize << o.address_bits);
+            // Private final memory commits one more word per cell.
+            let final_bits = if method.starts_with("spice-typed") && o.final_memory == "private" {
+                64
+            } else {
+                0
+            };
+            let expected = cycle_bits * (1usize << o.log_cycles)
+                + (boundary_bits + final_bits) * (1usize << o.address_bits);
             if populated_bits != expected {
                 return Err("Spice component area differs from predecessor/carry formula".into());
             }
@@ -462,7 +635,10 @@ impl PaddingAdjustedEstimate {
 }
 #[derive(Debug, Serialize)]
 struct Sample {
+    /// Measured round; every configuration of the workload runs once per round.
     iteration: usize,
+    /// Position of this configuration within its round (0 = ran first).
+    position: usize,
     prover_ms: f64,
     verifier_ms: f64,
     commit_ms: f64,
@@ -476,6 +652,13 @@ struct Sample {
     unattributed_ms: f64,
     stages_ms: BTreeMap<String, f64>,
     padding_adjusted_estimate: PaddingAdjustedEstimate,
+    /// Exclusive verifier spans: the profiler is cleared before `verify`
+    /// and read right after it. Empty when the verifier has no spans.
+    verifier_stages_ms: BTreeMap<String, f64>,
+    /// Structural proof size of this sample's proof.
+    proof_size: ProofSize,
+    /// Load averages immediately before proving and after verifying.
+    load: LoadWindow,
 }
 const TIMES: [&str; 12] = [
     "prover_ms",
@@ -503,10 +686,7 @@ impl Sample {
         {
             return Err("invalid populated/committed fraction".into());
         }
-        let mut stages_ms = BTreeMap::new();
-        for (name, duration) in metrics {
-            *stages_ms.entry(name.to_owned()).or_insert(0.0) += duration.as_secs_f64() * 1000.0;
-        }
+        let stages_ms = stage_map(metrics);
         let get = |name| stages_ms.get(name).copied().unwrap_or(0.0);
         let commit_ms = get("pcs.commit");
         let opening_ms = get("pcs.open") + get("pcs.ringswitch") + get("pcs.ligerito_open");
@@ -558,6 +738,7 @@ impl Sample {
             PaddingAdjustedEstimate::new(prover_ms, commit_ms, populated_fraction);
         Ok(Self {
             iteration,
+            position: 0,
             prover_ms,
             verifier_ms,
             commit_ms,
@@ -571,6 +752,12 @@ impl Sample {
             unattributed_ms,
             stages_ms,
             padding_adjusted_estimate,
+            verifier_stages_ms: BTreeMap::new(),
+            proof_size: ProofSize::default(),
+            load: LoadWindow {
+                start: None,
+                end: None,
+            },
         })
     }
     fn times(&self) -> [f64; 12] {
@@ -590,6 +777,14 @@ impl Sample {
         ]
     }
 }
+/// Sums exclusive span durations by name, in milliseconds.
+fn stage_map(metrics: Vec<(&'static str, Duration)>) -> BTreeMap<String, f64> {
+    let mut stages = BTreeMap::new();
+    for (name, duration) in metrics {
+        *stages.entry(name.to_owned()).or_insert(0.0) += duration.as_secs_f64() * 1000.0;
+    }
+    stages
+}
 fn median(mut values: Vec<f64>) -> f64 {
     values.sort_by(f64::total_cmp);
     let m = values.len() / 2;
@@ -604,6 +799,7 @@ struct Medians {
     #[serde(flatten)]
     times: BTreeMap<String, f64>,
     stages_ms: BTreeMap<String, f64>,
+    verifier_stages_ms: BTreeMap<String, f64>,
     padding_adjusted_estimate: PaddingAdjustedEstimate,
 }
 fn stage_medians(
@@ -641,36 +837,81 @@ impl Medians {
         Self {
             times,
             stages_ms: stage_medians(samples, |s| &s.stages_ms),
+            verifier_stages_ms: stage_medians(samples, |s| &s.verifier_stages_ms),
             padding_adjusted_estimate: PaddingAdjustedEstimate::medians(samples),
         }
     }
+}
+/// Times one verification and collects the verifier's own profiling spans.
+/// The profiler is cleared first so no prover span leaks into the result.
+fn timed_verify(
+    verify: impl FnOnce() -> Result<()>,
+) -> Result<(f64, Vec<(&'static str, Duration)>)> {
+    profiling::clear();
+    let start = Instant::now();
+    verify()?;
+    let verifier_ms = start.elapsed().as_secs_f64() * 1000.0;
+    Ok((verifier_ms, profiling::take()))
 }
 fn observed(
     iteration: usize,
     prover_ms: f64,
     verifier_ms: f64,
-    statement: &Statement,
+    verifier_metrics: Vec<(&'static str, Duration)>,
+    proof_size: ProofSize,
+    statement: Public<'_>,
     metrics: Vec<(&'static str, Duration)>,
     summary: &Summary,
     trace: &AccessTrace,
     method: &str,
     o: &Options,
 ) -> Result<(Sample, Area, Vec<u64>)> {
-    if statement.initial_memory != trace.initial || statement.log_cycles != o.log_cycles {
+    if statement.initial_memory != trace.initial.as_slice() || statement.log_cycles != o.log_cycles
+    {
         return Err("prover returned a different public input".into());
     }
     let area = Area::new(summary, method, o)?;
-    Ok((
-        Sample::new(
-            iteration,
-            prover_ms,
-            verifier_ms,
-            metrics,
-            area.populated_fraction,
-        )?,
-        area,
-        statement.final_memory.clone(),
-    ))
+    let mut sample = Sample::new(
+        iteration,
+        prover_ms,
+        verifier_ms,
+        metrics,
+        area.populated_fraction,
+    )?;
+    sample.verifier_stages_ms = stage_map(verifier_metrics);
+    sample.proof_size = proof_size;
+    Ok((sample, area, statement.final_memory))
+}
+/// The public input a prover returned, and the final memory it computed.
+struct Public<'a> {
+    initial_memory: &'a [u64],
+    log_cycles: usize,
+    final_memory: Vec<u64>,
+}
+impl<'a> From<&'a Statement> for Public<'a> {
+    fn from(s: &'a Statement) -> Self {
+        Public {
+            initial_memory: &s.initial_memory,
+            log_cycles: s.log_cycles,
+            final_memory: s.final_memory.clone(),
+        }
+    }
+}
+/// The Twist v2 configuration for a run of `ram-compare`.
+fn twist2_config(config: &Config, o: &Options) -> Result<ram_argument::twist2::Config> {
+    use ram_argument::twist2::ReadOrder;
+    let mut c = ram_argument::twist2::Config::from_legacy(config);
+    c.order = match o.read_order.as_str() {
+        "address" => ReadOrder::AddressFirst,
+        "cycle" => ReadOrder::CycleFirst,
+        _ => return Err("--read-order must be address or cycle".into()),
+    };
+    c.public_final = match o.final_memory.as_str() {
+        "public" => true,
+        "private" => false,
+        _ => return Err("--final-memory must be public or private".into()),
+    };
+    Ok(c)
 }
 fn sample(
     method: &str,
@@ -680,37 +921,108 @@ fn sample(
     iteration: usize,
     o: &Options,
 ) -> Result<(Sample, Area, Vec<u64>)> {
+    let start = load_average();
+    let (mut sample, area, final_memory) =
+        measure(method, config, trace, operation_trace, iteration, o)?;
+    sample.load = LoadWindow {
+        start,
+        end: load_average(),
+    };
+    Ok((sample, area, final_memory))
+}
+fn measure(
+    method: &str,
+    config: &Config,
+    trace: &AccessTrace,
+    operation_trace: Option<&spice_argument::operations::AccessTrace>,
+    iteration: usize,
+    o: &Options,
+) -> Result<(Sample, Area, Vec<u64>)> {
     let start = Instant::now();
     if method == "twist" {
-        let result = ram_argument::prove(black_box(config), black_box(trace))?;
+        let config = twist2_config(config, o)?;
+        let start = Instant::now();
+        let result = ram_argument::twist2::prove(black_box(&config), black_box(trace))?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
-        let verify = Instant::now();
-        ram_argument::verify(black_box(&result.statement), black_box(&result.proof))?;
-        let verifier_ms = verify.elapsed().as_secs_f64() * 1000.0;
+        // The interface check runs after the verifier's timer stops.
+        let mut cpu = None;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            cpu = Some(ram_argument::twist2::verify(
+                black_box(&result.statement),
+                black_box(&result.proof),
+            )?);
+            Ok(())
+        })?;
+        interface::check_twist(trace, &cpu.expect("verified"))?;
         observed(
             iteration,
             prover_ms,
             verifier_ms,
-            &result.statement,
+            verifier_metrics,
+            proof_size::twist2(&result.proof),
+            Public {
+                initial_memory: &result.statement.initial_memory,
+                log_cycles: result.statement.log_cycles,
+                final_memory: result.final_memory,
+            },
             result.metrics,
             &result.summary,
             trace,
             method,
             o,
         )
-    } else if method == "spice-typed" {
-        let operation_trace = operation_trace.ok_or("spice-typed requires an operation trace")?;
-        let result =
-            spice_argument::operations::prove(black_box(config), black_box(operation_trace))?;
+    } else if method == "twist-legacy" {
+        let result = ram_argument::prove(black_box(config), black_box(trace))?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
-        let verify = Instant::now();
-        spice_argument::operations::verify(black_box(&result.statement), black_box(&result.proof))?;
-        let verifier_ms = verify.elapsed().as_secs_f64() * 1000.0;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            ram_argument::verify(black_box(&result.statement), black_box(&result.proof))?;
+            Ok(())
+        })?;
         observed(
             iteration,
             prover_ms,
             verifier_ms,
-            &result.statement,
+            verifier_metrics,
+            proof_size::twist(&result.proof),
+            (&result.statement).into(),
+            result.metrics,
+            &result.summary,
+            trace,
+            method,
+            o,
+        )
+    } else if method.starts_with("spice-typed") {
+        let operation_trace = operation_trace.ok_or("spice-typed requires an operation trace")?;
+        let options = typed_options(method, o);
+        let result = spice_argument::operations::prove_with(
+            black_box(config),
+            black_box(operation_trace),
+            &options,
+        )?;
+        let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let mut cpu = None;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            cpu = Some(spice_argument::operations::verify_with(
+                black_box(&result.statement),
+                black_box(&result.proof),
+                &options,
+            )?);
+            Ok(())
+        })?;
+        interface::check_spice(operation_trace, &cpu.expect("verified"))?;
+        observed(
+            iteration,
+            prover_ms,
+            verifier_ms,
+            verifier_metrics,
+            proof_size::spice_typed_crate(&result.proof),
+            // With private final memory the statement carries none, so the
+            // cross-method check uses the final memory the prover computed.
+            Public {
+                initial_memory: &result.statement.initial_memory,
+                log_cycles: result.statement.log_cycles,
+                final_memory: result.final_memory.clone(),
+            },
             result.metrics,
             &result.summary,
             trace,
@@ -728,14 +1040,17 @@ fn sample(
             spice_argument::prove(black_box(config), black_box(trace))?
         };
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
-        let verify = Instant::now();
-        spice_argument::verify(black_box(&result.statement), black_box(&result.proof))?;
-        let verifier_ms = verify.elapsed().as_secs_f64() * 1000.0;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            spice_argument::verify(black_box(&result.statement), black_box(&result.proof))?;
+            Ok(())
+        })?;
         observed(
             iteration,
             prover_ms,
             verifier_ms,
-            &result.statement,
+            verifier_metrics,
+            proof_size::spice(&result.proof),
+            (&result.statement).into(),
             result.metrics,
             &result.summary,
             trace,
@@ -747,6 +1062,10 @@ fn sample(
 #[derive(Debug, Serialize)]
 struct Case {
     method: String,
+    /// The prover this method name ran; see `implementation_name`.
+    implementation: String,
+    /// `public` or `private` final memory for this case.
+    final_memory: String,
     ordering: Option<String>,
     pattern: String,
     trace_format: String,
@@ -754,17 +1073,81 @@ struct Case {
     trace_sha256: String,
     operation_trace_sha256: Option<String>,
     metadata: serde_json::Value,
+    /// Load averages at the start and end of this case's measurements.
+    load: LoadWindow,
     area: Area,
+    proof_size: ProofSize,
+    /// Composed PCS + IOP soundness error for this case's parameters.
+    soundness: Soundness,
     grand_product_extra_bound: Option<serde_json::Value>,
+    /// Median prover time per trace row and, for guests, per source
+    /// memory instruction.
+    throughput: Throughput,
     samples: Vec<Sample>,
     median: Medians,
+}
+/// Prover time per unit of work, from the case's median prover time.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+struct Throughput {
+    /// Rows in the proved trace (T).
+    operations: usize,
+    prover_ns_per_operation: f64,
+    /// Guest traces only: the loads and stores among the proved rows, before
+    /// narrow-store expansion. Operations mode splits a narrow store into a
+    /// read and a write row; it counts once here. Dummy rows do not count.
+    source_memory_instructions: Option<usize>,
+    prover_ns_per_source_memory_instruction: Option<f64>,
+}
+impl Throughput {
+    fn new(operations: usize, source: Option<usize>, prover_ms: f64) -> Self {
+        let per = |count: usize| prover_ms * 1e6 / count as f64;
+        Self {
+            operations,
+            prover_ns_per_operation: per(operations),
+            source_memory_instructions: source,
+            prover_ns_per_source_memory_instruction: source.filter(|&c| c > 0).map(per),
+        }
+    }
+}
+/// Guest loads and stores in the proved rows, or `None` for synthetic traces.
+fn source_memory_instructions(trace_format: &str, metadata: &serde_json::Value) -> Option<usize> {
+    let guest = metadata.get("guest").filter(|g| !g.is_null())?;
+    let count = if trace_format == "operations" {
+        metadata["memory_operations"].as_u64()?
+            - metadata["narrow_store_write_operations"].as_u64()?
+    } else {
+        guest["memory_access_cycles"].as_u64()?
+    };
+    Some(count as usize)
+}
+fn fmt_load(load: Option<platform::LoadAverage>) -> String {
+    load.map_or("n/a".into(), |l| {
+        format!("{:.2}/{:.2}/{:.2}", l.one, l.five, l.fifteen)
+    })
+}
+/// One method/chunk configuration within a workload while it is measured.
+struct Run {
+    method: String,
+    chunk_bits: Option<usize>,
+    config: Config,
+    area: Option<Area>,
+    samples: Vec<Sample>,
+}
+/// Configuration order in measured round `round`: forward on even rounds,
+/// reversed on odd rounds.
+fn round_order(count: usize, round: usize) -> Box<dyn Iterator<Item = usize>> {
+    if round.is_multiple_of(2) {
+        Box::new(0..count)
+    } else {
+        Box::new((0..count).rev())
+    }
 }
 fn benchmark(o: &Options) -> Result<Vec<Case>> {
     let mut cases = Vec::new();
     for (pattern, guest) in workloads(o) {
         let (pattern, data, operation_trace, operation_digest, metadata, expected_final) =
             if o.trace_format == "operations" {
-                let data = operation_payload(o, guest)?;
+                let data = operation_payload(o, &pattern, guest)?;
                 let digest = operation_trace_hash(&data);
                 let final_memory = data.replay()?;
                 let metadata = serde_json::to_value(&data.metadata)?;
@@ -784,7 +1167,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                     Some(final_memory),
                 )
             } else {
-                let data = payload(o, guest)?;
+                let data = payload(o, &pattern, guest)?;
                 let metadata = serde_json::to_value(&data.metadata)?;
                 (pattern, data, None, None, metadata, None)
             };
@@ -796,54 +1179,115 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             read_values: Some(data.read_values),
         };
         let digest = trace_hash(&trace);
+        // Shared-address rows: each row's write address is its read address,
+        // so `writes` is the one address sequence of either trace format.
+        let mut metadata = metadata;
+        metadata["reuse_distance"] =
+            serde_json::to_value(reuse_distance(&trace.writes, 1 << o.address_bits))?;
         let mut expected_final = expected_final;
-        for (method, chunk_bits) in configurations(o) {
-            let config = Config {
-                address_bits: o.address_bits,
-                chunk_bits: chunk_bits.unwrap_or(o.chunk_bits[0]),
-                virtualization: VirtualizationMode::Flat,
-                read_ports: 1,
-                shared_address: true,
-                word_log_bits: 6,
-                profile: o.profile.clone(),
-                log_rate: o.log_rate,
-            };
-            eprintln!(
-                "{pattern}/{method}/chunk={chunk_bits:?}: T=2^{} N=2^{} threads={}",
-                o.log_cycles, o.address_bits, o.threads
-            );
-            let mut area = None;
-            let mut samples = Vec::new();
-            for i in 0..o.warmup + o.repeat {
-                let (sample, current, final_memory) = sample(
-                    &method,
-                    &config,
-                    &trace,
-                    operation_trace.as_ref(),
-                    i.saturating_sub(o.warmup),
-                    o,
-                )?;
-                if expected_final
-                    .as_ref()
-                    .is_some_and(|old| old != &final_memory)
-                {
-                    return Err("methods/repetitions disagree on public final memory".into());
-                }
-                expected_final = Some(final_memory);
-                if area.as_ref().is_some_and(|old| old != &current) {
-                    return Err("commitment summary changed across proofs".into());
-                }
-                area = Some(current);
-                if i >= o.warmup {
-                    samples.push(sample);
-                }
+        let mut runs = configurations(o)
+            .into_iter()
+            .map(|(method, chunk_bits)| Run {
+                config: Config {
+                    address_bits: o.address_bits,
+                    chunk_bits: chunk_bits.unwrap_or(o.chunk_bits[0]),
+                    virtualization: VirtualizationMode::Flat,
+                    read_ports: 1,
+                    shared_address: true,
+                    word_log_bits: 6,
+                    profile: o.profile.clone(),
+                    log_rate: o.log_rate,
+                },
+                method,
+                chunk_bits,
+                area: None,
+                samples: Vec::new(),
+            })
+            .collect::<Vec<_>>();
+        eprintln!(
+            "{pattern}: T=2^{} N=2^{} threads={} configurations={} warmup={} rounds={}",
+            o.log_cycles,
+            o.address_bits,
+            o.threads,
+            runs.len(),
+            o.warmup,
+            o.repeat
+        );
+        let workload_start = load_average();
+        // Warm every configuration before any measured round, then measure in
+        // rounds: each round runs every configuration once, and the order
+        // reverses every round so no method always follows the same one.
+        let mut schedule: Vec<(Option<usize>, usize)> = Vec::new();
+        for index in 0..runs.len() {
+            schedule.extend((0..o.warmup).map(|_| (None, index)));
+        }
+        for round in 0..o.repeat {
+            schedule.extend(round_order(runs.len(), round).map(|index| (Some(round), index)));
+        }
+        let count = runs.len();
+        for (round, index) in schedule {
+            let position = round.map_or(0, |r| {
+                round_order(count, r).position(|i| i == index).unwrap_or(0)
+            });
+            let run = &mut runs[index];
+            let (mut sample, current, final_memory) = sample(
+                &run.method,
+                &run.config,
+                &trace,
+                operation_trace.as_ref(),
+                round.unwrap_or(0),
+                o,
+            )?;
+            if expected_final
+                .as_ref()
+                .is_some_and(|old| old != &final_memory)
+            {
+                return Err("methods/repetitions disagree on public final memory".into());
             }
+            expected_final = Some(final_memory);
+            if run.area.as_ref().is_some_and(|old| old != &current) {
+                return Err("commitment summary changed across proofs".into());
+            }
+            run.area = Some(current);
+            if round.is_some() {
+                sample.position = position;
+                run.samples.push(sample);
+            }
+        }
+        let load = LoadWindow {
+            start: workload_start,
+            end: load_average(),
+        };
+        for Run {
+            method,
+            chunk_bits,
+            config,
+            area,
+            samples,
+        } in runs
+        {
             let median = Medians::new(&samples);
             let area = area.ok_or("missing proof")?;
+            let proof_size = samples[0].proof_size;
+            let soundness = soundness::compose(
+                &method,
+                &soundness::Dims {
+                    n: area.cycles.trailing_zeros() as usize,
+                    a: area.memory_cells.trailing_zeros() as usize,
+                    chunk_bits: chunk_bits.unwrap_or(o.chunk_bits[0]),
+                    word_log_bits: config.word_log_bits,
+                    ell: area.committed_bits.trailing_zeros() as usize,
+                    mosaic_claims: area.mosaic_claims,
+                },
+                &o.profile,
+                o.log_rate,
+                o.final_memory == "public",
+            );
             println!(
-                "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",
+                "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms [soundness {}] commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",
                 median.times["prover_ms"],
                 median.times["verifier_ms"],
+                bits_label(&soundness),
                 median.times["commit_ms"],
                 median.times["opening_ms"],
                 median.times["iop_and_prep_ms"],
@@ -859,6 +1303,39 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 median.times["mosaic_ms"],
                 median.times["unattributed_ms"]
             );
+            println!(
+                "  soundness: {:.2} bits composed (PCS {:.2}, IOP {:.2}; IOP terms {})",
+                soundness.bits, soundness.pcs_bits, soundness.iop_bits, soundness.iop_source
+            );
+            println!(
+                "  proof={}B (pcs={}B mosaic={}B iop={}B; field=16B hash=32B index=4B)",
+                proof_size.total_bytes,
+                proof_size.pcs_bytes,
+                proof_size.mosaic_bytes,
+                proof_size.iop_bytes
+            );
+            let throughput = Throughput::new(
+                area.cycles,
+                source_memory_instructions(&o.trace_format, &metadata),
+                median.times["prover_ms"],
+            );
+            match throughput.prover_ns_per_source_memory_instruction {
+                Some(per) => println!(
+                    "  prover per operation={:.1}ns per source memory instruction={per:.1}ns ({} instructions in {} rows)",
+                    throughput.prover_ns_per_operation,
+                    throughput.source_memory_instructions.unwrap_or(0),
+                    throughput.operations
+                ),
+                None => println!(
+                    "  prover per operation={:.1}ns",
+                    throughput.prover_ns_per_operation
+                ),
+            }
+            println!(
+                "  load(1/5/15m) start={} end={}",
+                fmt_load(load.start),
+                fmt_load(load.end)
+            );
             let adjusted = &median.padding_adjusted_estimate;
             println!(
                 "  commitment-padding-adjusted ESTIMATE (populated/padded={:.4}): prove={:.3}ms commit={:.3}ms; modeled commitment padding={:.3}ms; all other costs unchanged",
@@ -870,16 +1347,26 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             for (name, value) in &median.stages_ms {
                 println!("    {name:<38} {value:>10.3}ms");
             }
+            if !median.verifier_stages_ms.is_empty() {
+                println!("  verifier stages (exclusive medians):");
+                for (name, value) in &median.verifier_stages_ms {
+                    println!("    {name:<38} {value:>10.3}ms");
+                }
+            }
             let l = area.cycles + area.memory_cells;
+            // Independent fingerprint sets multiply the collision bound.
+            let sets = if method == "spice-typed-2fp" { 2 } else { 1 };
+            let fingerprint_bits = sets as f64 * (128.0 - (l as f64).log2());
             if method.starts_with("spice") {
                 println!(
-                    "  fingerprint_bound_bits≈{:.3} (GP term only; excludes other checks)",
-                    128.0 - (l as f64).log2()
+                    "  fingerprint_bound_bits≈{fingerprint_bits:.3} (GP term only; excludes other checks)"
                 );
             }
-            let bound = method.starts_with("spice").then(|| serde_json::json!({"field_bits":128,"degree_numerator":l,"probability_bound":(l as f64)*2f64.powi(-128),"fingerprint_bound_bits":128.0-(l as f64).log2(),"scope":"GP fingerprint term only; excludes order/mask/GKR/batching/PCS/hash errors; not an equal-security claim"}));
+            let bound = method.starts_with("spice").then(|| serde_json::json!({"field_bits":128,"degree_numerator":l,"fingerprint_sets":sets,"probability_bound":2f64.powf(-fingerprint_bits),"fingerprint_bound_bits":fingerprint_bits,"scope":"GP fingerprint term only; excludes order/mask/GKR/batching/PCS/hash errors; not an equal-security claim"}));
             let ordering = ordering_name(&method).map(str::to_owned);
             cases.push(Case {
+                implementation: implementation_name(&method, o),
+                final_memory: final_memory_mode(&method, o),
                 method,
                 ordering,
                 pattern: pattern.clone(),
@@ -888,8 +1375,12 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 trace_sha256: digest.clone(),
                 operation_trace_sha256: operation_digest.clone(),
                 metadata: metadata.clone(),
+                load,
                 area,
+                proof_size,
+                soundness,
                 grand_product_extra_bound: bound,
+                throughput,
                 samples,
                 median,
             });
@@ -909,6 +1400,67 @@ struct Pair {
     spice_verifier_speedup: f64,
     twist_to_spice_populated_ratio: f64,
     twist_to_spice_committed_ratio: f64,
+    twist_soundness_bits: f64,
+    spice_soundness_bits: f64,
+    /// Paired-bootstrap 95% intervals for the two speedups above.
+    spice_prover_speedup_ci95: Option<RatioInterval>,
+    spice_verifier_speedup_ci95: Option<RatioInterval>,
+}
+/// Ratio of medians between two configurations measured on the same trace,
+/// with a paired bootstrap interval over rounds.
+#[derive(Debug, Serialize)]
+struct PairedRatio {
+    pattern: String,
+    numerator_case: usize,
+    denominator_case: usize,
+    numerator: String,
+    denominator: String,
+    prover: Option<RatioInterval>,
+    verifier: Option<RatioInterval>,
+}
+fn label(case: &Case) -> String {
+    match case.chunk_bits {
+        Some(c) => format!("{}(chunk={c})", case.method),
+        None => case.method.clone(),
+    }
+}
+fn by_round(case: &Case, get: impl Fn(&Sample) -> f64) -> Vec<f64> {
+    let mut values: Vec<_> = case.samples.iter().map(|s| (s.iteration, get(s))).collect();
+    values.sort_by_key(|v| v.0);
+    values.into_iter().map(|v| v.1).collect()
+}
+fn paired_interval(
+    a: &Case,
+    b: &Case,
+    get: impl Fn(&Sample) -> f64 + Copy,
+) -> Option<RatioInterval> {
+    paired_ratio(&by_round(a, get), &by_round(b, get))
+}
+fn same_trace(a: &Case, b: &Case) -> bool {
+    a.pattern == b.pattern
+        && a.trace_format == b.trace_format
+        && a.trace_sha256 == b.trace_sha256
+        && a.operation_trace_sha256 == b.operation_trace_sha256
+}
+/// Every pair of configurations within a workload, in configuration order.
+fn paired_ratios(cases: &[Case]) -> Vec<PairedRatio> {
+    let mut out = Vec::new();
+    for (i, a) in cases.iter().enumerate() {
+        for (j, b) in cases.iter().enumerate().skip(i + 1) {
+            if same_trace(a, b) {
+                out.push(PairedRatio {
+                    pattern: a.pattern.clone(),
+                    numerator_case: i,
+                    denominator_case: j,
+                    numerator: label(a),
+                    denominator: label(b),
+                    prover: paired_interval(a, b, |s| s.prover_ms),
+                    verifier: paired_interval(a, b, |s| s.verifier_ms),
+                });
+            }
+        }
+    }
+    out
 }
 fn pairs(cases: &[Case]) -> Vec<Pair> {
     cases
@@ -945,6 +1497,10 @@ fn pairs(cases: &[Case]) -> Vec<Pair> {
                         / spice.area.populated_bits as f64,
                     twist_to_spice_committed_ratio: twist.area.committed_bits as f64
                         / spice.area.committed_bits as f64,
+                    twist_soundness_bits: twist.soundness.bits,
+                    spice_soundness_bits: spice.soundness.bits,
+                    spice_prover_speedup_ci95: paired_interval(twist, spice, |s| s.prover_ms),
+                    spice_verifier_speedup_ci95: paired_interval(twist, spice, |s| s.verifier_ms),
                 })
         })
         .collect()
@@ -959,6 +1515,7 @@ struct Report {
     notes: Vec<String>,
     cases: Vec<Case>,
     comparisons: Vec<Pair>,
+    paired_ratios: Vec<PairedRatio>,
     verified_proofs: usize,
 }
 fn escaped(value: &str) -> String {
@@ -970,16 +1527,22 @@ fn escaped(value: &str) -> String {
 }
 fn csv(report: &Report) -> String {
     let mut stages = BTreeMap::new();
+    let mut verifier_stages = BTreeMap::new();
     for c in &report.cases {
         for s in &c.samples {
             for name in s.stages_ms.keys() {
                 stages.insert(name.clone(), ());
+            }
+            for name in s.verifier_stages_ms.keys() {
+                verifier_stages.insert(name.clone(), ());
             }
         }
     }
     let mut header: Vec<_> = [
         "case",
         "method",
+        "implementation",
+        "final_memory",
         "ordering",
         "pattern",
         "trace_format",
@@ -987,6 +1550,7 @@ fn csv(report: &Report) -> String {
         "trace_sha256",
         "operation_trace_sha256",
         "iteration",
+        "position",
         "address_bits",
         "log_cycles",
         "threads",
@@ -995,6 +1559,16 @@ fn csv(report: &Report) -> String {
         "padding_bits",
         "populated_fraction",
         "mosaic_claims",
+        "load1_start",
+        "load1_end",
+        "pcs_bytes",
+        "mosaic_bytes",
+        "iop_bytes",
+        "proof_bytes",
+        "soundness_bits",
+        "source_memory_instructions",
+        "prover_ns_per_operation",
+        "prover_ns_per_source_memory_instruction",
     ]
     .into_iter()
     .map(str::to_owned)
@@ -1006,6 +1580,7 @@ fn csv(report: &Report) -> String {
             .map(|name| format!("padding_adjusted_estimate:{name}")),
     );
     header.extend(stages.keys().map(|s| format!("exclusive:{s}")));
+    header.extend(verifier_stages.keys().map(|s| format!("verifier:{s}")));
     let mut output = header
         .iter()
         .map(|s| escaped(s))
@@ -1017,6 +1592,8 @@ fn csv(report: &Report) -> String {
             let mut row = vec![
                 i.to_string(),
                 c.method.clone(),
+                c.implementation.clone(),
+                c.final_memory.clone(),
                 c.ordering.clone().unwrap_or_default(),
                 c.pattern.clone(),
                 c.trace_format.clone(),
@@ -1024,6 +1601,7 @@ fn csv(report: &Report) -> String {
                 c.trace_sha256.clone(),
                 c.operation_trace_sha256.clone().unwrap_or_default(),
                 s.iteration.to_string(),
+                s.position.to_string(),
                 report.options.address_bits.to_string(),
                 report.options.log_cycles.to_string(),
                 report.options.threads.to_string(),
@@ -1033,6 +1611,37 @@ fn csv(report: &Report) -> String {
                 format!("{:.12}", c.area.populated_fraction),
             ];
             row.push(c.area.mosaic_claims.to_string());
+            for load in [s.load.start, s.load.end] {
+                row.push(load.map(|l| format!("{:.2}", l.one)).unwrap_or_default());
+            }
+            let size = &s.proof_size;
+            for bytes in [
+                size.pcs_bytes,
+                size.mosaic_bytes,
+                size.iop_bytes,
+                size.total_bytes,
+            ] {
+                row.push(bytes.to_string());
+            }
+            row.push(format!("{:.4}", c.soundness.bits));
+            let per_sample = Throughput::new(
+                c.throughput.operations,
+                c.throughput.source_memory_instructions,
+                s.prover_ms,
+            );
+            row.push(
+                per_sample
+                    .source_memory_instructions
+                    .map(|v| v.to_string())
+                    .unwrap_or_default(),
+            );
+            row.push(format!("{:.3}", per_sample.prover_ns_per_operation));
+            row.push(
+                per_sample
+                    .prover_ns_per_source_memory_instruction
+                    .map(|v| format!("{v:.3}"))
+                    .unwrap_or_default(),
+            );
             row.extend(s.times().into_iter().map(|v| format!("{v:.9}")));
             row.extend(
                 s.padding_adjusted_estimate
@@ -1045,6 +1654,12 @@ fn csv(report: &Report) -> String {
                     .keys()
                     .map(|name| format!("{:.9}", s.stages_ms.get(name).copied().unwrap_or(0.0))),
             );
+            row.extend(verifier_stages.keys().map(|name| {
+                format!(
+                    "{:.9}",
+                    s.verifier_stages_ms.get(name).copied().unwrap_or(0.0)
+                )
+            }));
             output.push_str(&row.iter().map(|s| escaped(s)).collect::<Vec<_>>().join(","));
             output.push('\n');
         }
@@ -1067,16 +1682,22 @@ fn main() -> Result<()> {
         .build()?;
     let cases = pool.install(|| benchmark(&o).map_err(|e| e.to_string()))?;
     let comparisons = pairs(&cases);
+    let paired_ratios = paired_ratios(&cases);
     let verified_proofs = cases.len() * (o.warmup + o.repeat);
-    let environment = serde_json::json!({"architecture":env::consts::ARCH,"executable_sha256":hex(&Hasher::sha256().digest(&fs::read(env::current_exe()?)?)),"native_features":{"avx2":cfg!(target_feature="avx2"),"pclmulqdq":cfg!(target_feature="pclmulqdq"),"vpclmulqdq":cfg!(target_feature="vpclmulqdq"),"sha":cfg!(target_feature="sha")}});
+    let environment = platform::environment(
+        hex(&Hasher::sha256().digest(&fs::read(env::current_exe()?)?)),
+        sources_sha256(),
+        argument_sources_sha256(),
+    );
     let provenance = serde_json::json!({
         "open_magnetar":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/open-magnetar/UPSTREAM.json"))?,
         "lean_grandproduct":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/lean-grandproduct/UPSTREAM.json"))?,
         "flock_boolean":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/flock-boolean/UPSTREAM.json"))?,
-        "adapter":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage14-implementation.json"))?,
-        "typed_adapter":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage15-implementation.json"))?,
+        // Regenerated from the tree by scripts/write_manifest.py; earlier
+        // stage manifests are not embedded because they describe older trees.
+        "implementation_manifest":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage16-implementation.json"))?,
     });
-    let report = Report { schema_version:4,implementation:"typed-spice-vs-twist-gf128-v4".into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods.".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial/final memory are public and transcript-bound.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,verified_proofs };
+    let report = Report { schema_version:SCHEMA_VERSION,implementation:IMPLEMENTATION.into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods. With public final memory each verifier checks the statement's final memory; with private final memory the cross-method check compares the final memories the provers computed, which the verifiers bind only through the commitment.".into(),"Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).".into(),"Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; soundness.iop_source says whether the IOP terms come from the argument crate, a local fallback derived from the verifier, or only the fingerprint term), load averages per case and sample, host metadata, cases[].throughput (median prover ns per trace row and, for guests, per source load/store before narrow-store expansion) and metadata.reuse_distance (log2 buckets of operations since the previous access to the same word).".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial memory is public and transcript-bound. Final memory is public and transcript-bound unless cases[].final_memory is private, in which case it is committed and bound by a Mosaic claim.".into(),"cases[].implementation names the prover a method name ran. In this binary twist is Twist v2 (ram_argument::twist2); binaries before schema 5 used twist for the prover now called twist-legacy.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
     if let Some(path) = &report.options.output {
         write(path, &serde_json::to_vec_pretty(&report)?)?;
         println!("JSON: {}", path.display());
@@ -1088,7 +1709,7 @@ fn main() -> Result<()> {
     for pair in &report.comparisons {
         let twist = &report.cases[pair.twist_case];
         println!(
-            "{} Twist({:?})/{} ratios: prover={:.3}× commitment-padding-adjusted ESTIMATE={:.3}× verifier={:.3}× populated={:.3}× committed={:.3}×",
+            "{} Twist({:?})/{} ratios: prover={:.3}× commitment-padding-adjusted ESTIMATE={:.3}× verifier={:.3}× populated={:.3}× committed={:.3}× [soundness {} vs {}]",
             twist.pattern,
             twist.chunk_bits,
             pair.spice_method,
@@ -1096,7 +1717,30 @@ fn main() -> Result<()> {
             pair.spice_prover_speedup_padding_adjusted_estimate,
             pair.spice_verifier_speedup,
             pair.twist_to_spice_populated_ratio,
-            pair.twist_to_spice_committed_ratio
+            pair.twist_to_spice_committed_ratio,
+            bits_label(&twist.soundness),
+            bits_label(&report.cases[pair.spice_case].soundness),
+        );
+    }
+    for r in &report.paired_ratios {
+        let show = |name: &str, v: &Option<RatioInterval>| {
+            v.map_or(format!("{name}=n/a"), |v| {
+                format!(
+                    "{name}={:.3}× [{:.3}, {:.3}]",
+                    v.ratio, v.ci95_low, v.ci95_high
+                )
+            })
+        };
+        println!(
+            "{} {}/{} median ratios, 95% paired bootstrap over {} rounds: {} {} [soundness {} vs {}]",
+            r.pattern,
+            r.numerator,
+            r.denominator,
+            r.prover.map_or(0, |v| v.rounds),
+            show("prover", &r.prover),
+            show("verifier", &r.verifier),
+            bits_label(&report.cases[r.numerator_case].soundness),
+            bits_label(&report.cases[r.denominator_case].soundness),
         );
     }
     println!(
@@ -1346,6 +1990,76 @@ mod tests {
         assert_eq!(flock.mosaic_claims - ripple.mosaic_claims, 2);
     }
     #[test]
+    fn rounds_alternate_order_and_pair_samples_by_round() {
+        assert_eq!(round_order(3, 0).collect::<Vec<_>>(), vec![0, 1, 2]);
+        assert_eq!(round_order(3, 1).collect::<Vec<_>>(), vec![2, 1, 0]);
+        let options = Options {
+            methods: vec!["spice-typed".into(), "spice".into()],
+            trace_format: "operations".into(),
+            patterns: vec!["random".into()],
+            address_bits: 2,
+            log_cycles: 2,
+            chunk_bits: vec![1],
+            threads: 2,
+            warmup: 1,
+            repeat: 4,
+            ..Default::default()
+        };
+        let cases = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap()
+            .install(|| benchmark(&options).map_err(|e| e.to_string()))
+            .unwrap();
+        assert_eq!(cases.len(), 2);
+        for (k, case) in cases.iter().enumerate() {
+            assert_eq!(
+                case.samples.iter().map(|s| s.iteration).collect::<Vec<_>>(),
+                vec![0, 1, 2, 3]
+            );
+            // Case 0 runs first in even rounds and last in odd rounds.
+            assert_eq!(
+                case.samples.iter().map(|s| s.position).collect::<Vec<_>>(),
+                if k == 0 {
+                    vec![0, 1, 0, 1]
+                } else {
+                    vec![1, 0, 1, 0]
+                }
+            );
+        }
+        let ratios = paired_ratios(&cases);
+        assert_eq!(ratios.len(), 1);
+        let prover = ratios[0].prover.unwrap();
+        assert_eq!(prover.rounds, 4);
+        assert!(prover.ci95_low <= prover.ratio && prover.ratio <= prover.ci95_high);
+        assert_eq!(
+            (ratios[0].numerator.as_str(), ratios[0].denominator.as_str()),
+            ("spice-typed", "spice")
+        );
+    }
+    #[test]
+    fn verifier_spans_are_isolated_from_prover_spans() {
+        drop(profiling::Span::new("prove.leftover"));
+        let (ms, metrics) = timed_verify(|| {
+            let _outer = profiling::Span::new("verify.outer");
+            drop(profiling::Span::new("verify.inner"));
+            Ok(())
+        })
+        .unwrap();
+        assert!(ms >= 0.0);
+        let stages = stage_map(metrics);
+        assert_eq!(
+            stages.keys().map(String::as_str).collect::<Vec<_>>(),
+            vec!["verify.inner", "verify.outer"]
+        );
+        let mut a = padding_sample(1.0);
+        let mut b = padding_sample(1.0);
+        a.verifier_stages_ms = BTreeMap::from([("verify.x".into(), 1.0)]);
+        b.verifier_stages_ms = BTreeMap::from([("verify.x".into(), 3.0)]);
+        let medians = Medians::new(&[a, b]);
+        assert_eq!(medians.verifier_stages_ms["verify.x"], 2.0);
+    }
+    #[test]
     fn guest_order_and_csv_quoting() {
         let o = Options {
             patterns: vec!["guest".into()],
@@ -1422,6 +2136,130 @@ mod tests {
     }
 
     #[test]
+    fn throughput_counts_a_narrow_store_once_and_skips_synthetic_traces() {
+        let operations = serde_json::json!({
+            "memory_operations": 40, "narrow_store_write_operations": 6, "guest": {}
+        });
+        assert_eq!(
+            source_memory_instructions("operations", &operations),
+            Some(34)
+        );
+        let rmw = serde_json::json!({"guest": {"memory_access_cycles": 25}});
+        assert_eq!(source_memory_instructions("rmw", &rmw), Some(25));
+        let random = serde_json::json!({"memory_operations": 64, "guest": null});
+        assert_eq!(source_memory_instructions("operations", &random), None);
+        let t = Throughput::new(64, Some(32), 2.0);
+        assert_eq!(t.prover_ns_per_operation, 31_250.0);
+        assert_eq!(t.prover_ns_per_source_memory_instruction, Some(62_500.0));
+        assert_eq!(
+            Throughput::new(64, Some(0), 2.0).prover_ns_per_source_memory_instruction,
+            None
+        );
+    }
+
+    #[test]
+    fn guest_cases_report_time_per_source_memory_instruction() {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        for format in ["operations", "rmw"] {
+            let options = Options {
+                methods: vec!["spice".into()],
+                trace_format: format.into(),
+                patterns: vec!["guest".into(), "random".into()],
+                guest_program: vec!["erc20-mixed-block".into()],
+                guest_rows: vec!["all".into()],
+                log_cycles: 10,
+                warmup: 0,
+                repeat: 1,
+                threads: 2,
+                ..Default::default()
+            };
+            let report_cases = pool
+                .install(|| benchmark(&options).map_err(|e| e.to_string()))
+                .unwrap();
+            let guest = &report_cases[0].throughput;
+            let source = guest.source_memory_instructions.unwrap();
+            assert!(source > 0 && source < 1 << 10, "{format}: {source}");
+            assert_eq!(guest.operations, 1 << 10);
+            let per = guest.prover_ns_per_source_memory_instruction.unwrap();
+            assert!(per > guest.prover_ns_per_operation);
+            assert_eq!(report_cases[1].throughput.source_memory_instructions, None);
+            let report = Report {
+                schema_version: SCHEMA_VERSION,
+                implementation: IMPLEMENTATION.into(),
+                options: options.clone(),
+                environment: serde_json::Value::Null,
+                provenance: serde_json::Value::Null,
+                notes: vec![],
+                comparisons: vec![],
+                paired_ratios: vec![],
+                verified_proofs: 0,
+                cases: report_cases,
+            };
+            let text = csv(&report);
+            let header: Vec<_> = text.lines().next().unwrap().split(',').collect();
+            let column = header
+                .iter()
+                .position(|h| *h == "prover_ns_per_source_memory_instruction")
+                .unwrap();
+            let rows: Vec<Vec<&str>> = text
+                .lines()
+                .skip(1)
+                .map(|l| l.split(',').collect())
+                .collect();
+            assert!(rows[0][column].parse::<f64>().unwrap() > 0.0);
+            assert_eq!(rows[1][column], "");
+        }
+    }
+
+    #[test]
+    fn locality_pattern_runs_in_both_formats_and_records_reuse_distance() {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        for (format, methods) in [
+            ("operations", vec!["twist", "spice-typed"]),
+            ("rmw", vec!["spice"]),
+        ] {
+            let options = Options {
+                methods: methods.into_iter().map(Into::into).collect(),
+                trace_format: format.into(),
+                patterns: vec!["locality".into(), "random".into()],
+                address_bits: 6,
+                log_cycles: 8,
+                chunk_bits: vec![2],
+                threads: 2,
+                warmup: 0,
+                repeat: 1,
+                ..Default::default()
+            };
+            let cases = pool
+                .install(|| benchmark(&options).map_err(|e| e.to_string()))
+                .unwrap();
+            for case in &cases {
+                let reuse = &case.metadata["reuse_distance"];
+                let buckets: u64 = reuse["buckets"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|b| b.as_u64().unwrap())
+                    .sum();
+                assert_eq!(buckets + reuse["first_accesses"].as_u64().unwrap(), 256);
+            }
+            let locality = &cases[0];
+            assert!(
+                locality.pattern.starts_with("locality"),
+                "{}",
+                locality.pattern
+            );
+            assert_eq!(locality.metadata["kind"], "synthetic-locality-operations");
+        }
+    }
+
+    #[test]
     fn typed_and_baseline_cases_use_the_same_operation_rows_and_final_memory() {
         let options = Options {
             methods: vec![
@@ -1455,6 +2293,18 @@ mod tests {
             assert_eq!(case.trace_sha256, cases[0].trace_sha256);
             assert_eq!(case.operation_trace_sha256, cases[0].operation_trace_sha256);
             assert!(case.operation_trace_sha256.is_some());
+            if cfg!(unix) {
+                assert!(case.load.start.is_some() && case.load.end.is_some());
+                assert!(case.samples.iter().all(|s| s.load.start.is_some()));
+            }
+            let size = case.proof_size;
+            assert!(size.pcs_bytes > 0 && size.mosaic_bytes > 0 && size.iop_bytes > 0);
+            assert_eq!(
+                size.total_bytes,
+                size.pcs_bytes + size.mosaic_bytes + size.iop_bytes
+            );
+            assert!(case.soundness.bits > 100.0 && case.soundness.bits < 128.0);
+            assert!(!case.soundness.terms.is_empty());
         }
         assert_eq!(
             cases[0].area.populated_bits,
@@ -1474,14 +2324,17 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec!["spice-typed", "spice", "spice-ripple"]
         );
+        let ratios = paired_ratios(&cases);
+        assert_eq!(ratios.len(), 6);
         let report = Report {
-            schema_version: 4,
+            schema_version: SCHEMA_VERSION,
             implementation: "test".into(),
             options,
             environment: serde_json::Value::Null,
             provenance: serde_json::Value::Null,
             notes: vec![],
             cases,
+            paired_ratios: ratios,
             comparisons,
             verified_proofs: 4,
         };
@@ -1490,6 +2343,10 @@ mod tests {
         assert_eq!(rows.len(), 5);
         assert!(rows[0].contains("operation_trace_sha256"));
         assert!(rows[0].contains("mask_ms"));
+        assert!(rows[0].contains("pcs_bytes") && rows[0].contains("proof_bytes"));
+        assert!(rows[0].contains("soundness_bits"));
+        assert_eq!(report.cases[0].soundness.iop_source, "crate");
+        assert_eq!(report.cases[2].soundness.iop_source, "partial");
         assert!(rows[0].contains("populated_fraction"));
         assert!(!rows[0].contains("ordering_gate_fraction"));
         assert!(!rows[0].contains("padding_adjusted_estimate:ordering_ms"));
@@ -1498,7 +2355,12 @@ mod tests {
         assert!(!rows[0].contains("padding_adjusted_estimate:opening_ms"));
         assert!(!rows[0].contains("padding_adjusted_estimate:exclusive:"));
         let json = serde_json::to_value(&report).unwrap();
-        assert_eq!(json["schema_version"], 4);
+        assert_eq!(json["schema_version"], 5);
+        assert!(json["paired_ratios"][0]["prover"]["ci95_low"].is_number());
+        assert!(json["cases"][0]["soundness"]["terms"].is_array());
+        assert!(json["cases"][0]["proof_size"]["pcs_bytes"].is_number());
+        assert!(json["cases"][0]["samples"][0]["verifier_stages_ms"].is_object());
+        assert!(json["cases"][0]["samples"][0]["load"].is_object());
         assert!(
             json["cases"][0]["samples"][0]["padding_adjusted_estimate"]["prover_ms"].is_number()
         );

@@ -12,6 +12,8 @@ om-sumcheck = { path = "../../vendor/open-magnetar/crates/om-sumcheck" }
 om-memcheck = { path = "../../vendor/open-magnetar/crates/om-memcheck" }
 om-mosaic = { path = "../../vendor/open-magnetar/crates/om-mosaic" }
 om-pcs = { path = "../../vendor/open-magnetar/crates/om-pcs" }
+rayon = { workspace = true }
 
 [dev-dependencies]
 ram-payload = { path = "../ram-payload" }
+om-transcript = { path = "../../vendor/open-magnetar/crates/om-transcript", features = ["profiling"] }

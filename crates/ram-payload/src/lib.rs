@@ -7,6 +7,7 @@ use om_elf::{Params, build_m0, extract_output, load};
 use om_isa::bytecode::{HALTED_UPC, VirtualMachine, expand, store_apply};
 use serde::{Deserialize, Serialize};
 
+pub mod locality;
 pub mod operations;
 
 pub const UPSTREAM_COMMIT: &str = "febfc0e66f5809e034dd1afac78202bd4882de27";
@@ -176,7 +177,7 @@ impl fmt::Display for PayloadError {
 impl std::error::Error for PayloadError {}
 
 fn dimensions(log_cycles: u32, address_bits: u32) -> Result<(usize, usize), PayloadError> {
-    if log_cycles < 2 || log_cycles >= usize::BITS {
+    if !(2..usize::BITS).contains(&log_cycles) {
         return Err(PayloadError(
             "log_cycles must be at least 2 and fit usize".into(),
         ));

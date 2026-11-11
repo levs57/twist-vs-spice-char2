@@ -2,10 +2,10 @@
 
 This repository compares the current optimized implementations of two RAM arguments over GF(2^128):
 
-- **Twist:** BinaryTwist with shared read/write addresses, optimized Flat virtualization and packed OneHot checks.
+- **Twist:** Twist v2 (`ram_argument::twist2`, method `twist`). As in Jolt, it commits only the one-hot address chunks and `Inc`, and keeps the read value virtual. A read check that also folds in the address, then one sum-check over the cycles that proves the value, final-memory, virtualization and one-hot claims together. It binds address variables first and merges loads between stores by default. `twist-legacy` runs the previous BinaryTwist prover with Flat virtualization and packed OneHot checks. [docs/soundness-twist.md](docs/soundness-twist.md) explains why the changes are sound.
 - **Spice:** single-value read/write records (`spice-typed`), a batched masked-value reduction, leanVM-derived grand-product kernels and Flock's packed Boolean ordering argument.
 
-Both use the same Mosaic, RingSwitch and Ligerito commitment stack. Each benchmark case uses identical ordered word operations and public initial/final memory. Every warmup and measured proof is independently verified.
+Both use the same Mosaic, RingSwitch and Ligerito commitment stack. Both end with the same CPU interface: after the commitment the verifier draws a cycle point `r_c`, and `verify` returns word-level claims at it (address, read and write value for Twist; address, value and `is_write` for Spice). The harness checks these claims against the trace outside the timed regions, and the load constraint belongs to the CPU, as in Jolt ([docs/methodology.md](docs/methodology.md#cpu-interface)). Each benchmark case uses identical ordered word operations and public initial memory. Final memory is public by default; `--final-memory private` commits it instead, for `twist`, `spice-typed` and `spice-typed-2fp` only. Every warmup and measured proof is independently verified.
 
 ## Run the comparison
 
@@ -37,7 +37,7 @@ This runs both methods on random operations, an ERC20 mixed-block pattern and a 
 | `--guest-fill repeat` | Repeat the guest access pattern against continuous memory until the requested operation count is reached. |
 | `--seed 1` | Deterministic random seed; default is `1`. |
 
-For a smaller run, change `--log-cycles 20` to `18`. To check sensitivity to measurement order, repeat the command with `--methods spice-typed,twist` and different output filenames. `--patterns random` or `--patterns guest` selects one workload family; `--guest-program` accepts a single program as well as a comma-separated list.
+For a smaller run, change `--log-cycles 20` to `18`. To check sensitivity to measurement order, repeat the command with `--methods spice-typed,twist` and different output filenames. `--patterns random` or `--patterns guest` selects one workload family, and `--patterns locality` adds a seeded synthetic trace with stack, scan and Zipf-heap locality that does not repeat (see [docs/methodology.md](docs/methodology.md#workloads)); `--guest-program` accepts a single program as well as a comma-separated list.
 
 The comparison explicitly selects `--trace-format operations` and both methods, so it does not depend on executable defaults. Native CPU compilation enables the local machine's optimized kernels; rebuild when moving the binary to a different CPU.
 
@@ -59,13 +59,13 @@ The console prints per-case medians and individual phases. JSON contains every m
 
 Padding-adjusted estimates are reported separately from measured values and apply only to commitment time. Let `r = populated_bits / committed_bits`. Estimated commitment time is `commit_ms * r`, and estimated total prover time is `prover_ms - commit_ms * (1-r)`. Openings, Mosaic, ordering, all other sumchecks, packing, verification and unattributed time retain their measured costs. The trace already contains exactly `2^n` operations.
 
-These are linear commitment-cost estimates, not measured timings of an unpadded implementation; fixed setup and logarithmic effects are approximated. JSON schema 4 keeps actual timings in the existing sample/median fields and puts estimates under `padding_adjusted_estimate`, with `prover_ms`, `commit_ms` and `removed_padding_ms`. CSV uses the `padding_adjusted_estimate:` prefix. Each adjusted sample is computed before its median, so independently reported medians need not add up exactly.
+These are linear commitment-cost estimates, not measured timings of an unpadded implementation; fixed setup and logarithmic effects are approximated. JSON schema 5 keeps actual timings in the existing sample/median fields and puts estimates under `padding_adjusted_estimate`, with `prover_ms`, `commit_ms` and `removed_padding_ms`. CSV uses the `padding_adjusted_estimate:` prefix. Each adjusted sample is computed before its median, so independently reported medians need not add up exactly.
 
-At `address-bits=16, log-cycles=20`, Twist has 24 MiB populated and 32 MiB padded commitment input; Spice has about 15.55 MiB populated and 16 MiB padded input. These are witness footprints, not proof sizes or total process memory.
+At `address-bits=16, log-cycles=20`, Twist v2 has 16 MiB populated and 16 MiB padded commitment input (128 bits per cycle, exactly `2^27`); Spice has about 15.55 MiB populated and 16 MiB padded input. These are witness footprints, not proof sizes or total process memory.
 
-Both methods use GF(2^128), the inherited `provable-120` PCS profile and `log-rate=2` by default. Common field/PCS parameters do not establish equal composed security: Spice's grand-product fingerprint error grows with the trace and memory sizes, and the report records that bound separately.
+Both methods use GF(2^128), the inherited `provable-120` PCS profile and `log-rate=2` by default. Common field/PCS parameters do not establish equal composed security: Spice's grand-product fingerprint error grows with the trace and memory sizes. Every case therefore reports composed soundness bits (PCS plus IOP terms), and `spice-typed-2fp` runs typed Spice with two independent fingerprints; [docs/methodology.md](docs/methodology.md) gives the numbers.
 
-The proved statement is RAM consistency with public initial and final memory. It does not prove execution of the guest CPU program.
+The proved statement is RAM consistency with public initial memory and, by default, public final memory, plus the word-level claims at the CPU point. It does not prove execution of the guest CPU program.
 
 ## Check the implementation
 
@@ -74,7 +74,10 @@ cargo test --locked --release --workspace
 RUSTFLAGS='-C target-cpu=native' cargo test --locked --release --workspace
 python3 scripts/check_vendor.py
 python3 scripts/check_spice_port.py
-python3 scripts/check_stage15.py
+python3 scripts/check_stage16.py
+python3 scripts/test_scripts.py
 ```
 
-The source checks use the included hash manifests and retained upstream licenses. The benchmark embeds provenance from [open-magnetar](vendor/open-magnetar/UPSTREAM.json), [lean-grandproduct](vendor/lean-grandproduct/UPSTREAM.json), [Flock](vendor/flock-boolean/UPSTREAM.json) and the [comparison implementation](audit/stage15-implementation.json).
+`scripts/sweep.py` runs the same arguments over a grid of address bits, trace lengths and thread counts and writes one JSON per point; `scripts/interleave.py` alternates two binaries round by round, and `scripts/ablation.py` alternates several. Both are described in [docs/methodology.md](docs/methodology.md). `scripts/check_stage16.py` requires `audit/stage16-implementation.json` to match the current tree exactly. After changing any source, run `python3 scripts/write_manifest.py` and rebuild, because each report embeds the manifest. `scripts/check_stage15.py` checks the earlier Stage 1.5 tree. [docs/methodology.md](docs/methodology.md) explains the measurement method, the schema and the soundness accounting.
+
+The source checks use the included hash manifests and retained upstream licenses. The benchmark embeds provenance from [open-magnetar](vendor/open-magnetar/UPSTREAM.json), [lean-grandproduct](vendor/lean-grandproduct/UPSTREAM.json), [Flock](vendor/flock-boolean/UPSTREAM.json) and the [comparison implementation](audit/stage16-implementation.json).

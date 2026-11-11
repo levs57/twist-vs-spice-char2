@@ -9,10 +9,10 @@ pub mod masked_reduction;
 pub mod operations;
 pub mod order;
 pub mod order_flock;
+pub mod planes;
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::sync::OnceLock;
 use std::time::Duration;
 
 use lean_grandproduct::{GrandProductProof, LeafClaims, Leaves};
@@ -120,6 +120,12 @@ fn dims(s: &Statement) -> (usize, usize, usize, usize) {
 }
 
 fn validate(s: &Statement) -> Result<(), Error> {
+    validate_memory(s, true)
+}
+
+/// With `public_final` false the statement's final memory is ignored: it is
+/// neither checked here nor read by the verifier.
+fn validate_memory(s: &Statement, public_final: bool) -> Result<(), Error> {
     let c = &s.config;
     require(
         (1..=31).contains(&c.address_bits) && s.log_cycles <= 31,
@@ -140,15 +146,13 @@ fn validate(s: &Statement) -> Result<(), Error> {
     )?;
     require(
         s.initial_memory.len() == 1usize << c.address_bits
-            && s.final_memory.len() == s.initial_memory.len(),
+            && (!public_final || s.final_memory.len() == s.initial_memory.len()),
         "public memory shape mismatch",
     )?;
     let word_fits = |&v: &u64| c.word_log_bits == 6 || v >> (1usize << c.word_log_bits) == 0;
+    let final_memory: &[u64] = if public_final { &s.final_memory } else { &[] };
     require(
-        s.initial_memory
-            .iter()
-            .chain(&s.final_memory)
-            .all(word_fits),
+        s.initial_memory.iter().chain(final_memory).all(word_fits),
         "public memory word exceeds configured width",
     )
 }
@@ -231,7 +235,18 @@ impl Schema {
 }
 
 fn transcript(s: &Statement, schema: &Schema, ordering: &OrderingMode) -> Transcript {
-    let _span = Span::new("spice.statement");
+    transcript_with(s, schema, ordering, true, "spice.statement")
+}
+
+/// The statement transcript. Final memory is absorbed only when public.
+fn transcript_with(
+    s: &Statement,
+    schema: &Schema,
+    ordering: &OrderingMode,
+    public_final: bool,
+    span: &'static str,
+) -> Transcript {
+    let _span = Span::new(span);
     let mut tr = Transcript::new_default(b"ordered-spice-ram/gf128/v2");
     tr.absorb_bytes(
         b"spice/ordering",
@@ -261,9 +276,14 @@ fn transcript(s: &Statement, schema: &Schema, ordering: &OrderingMode) -> Transc
         format!("{:?}", s.config.virtualization).as_bytes(),
     );
     tr.absorb_bytes(b"spice/profile", s.config.profile.as_bytes());
+    let empty = Vec::new();
     for (label, values) in [
         (b"spice/initial".as_slice(), &s.initial_memory),
-        (b"spice/final".as_slice(), &s.final_memory),
+        if public_final {
+            (b"spice/final".as_slice(), &s.final_memory)
+        } else {
+            (b"spice/final-committed".as_slice(), &empty)
+        },
     ] {
         tr.absorb_bytes(
             label,
@@ -276,25 +296,60 @@ fn transcript(s: &Statement, schema: &Schema, ordering: &OrderingMode) -> Transc
     tr
 }
 
+/// Bit planes `0..bits` of `words`, each as a packed column.
+///
+/// Each group of 64 words is transposed once with two 32x32 bit-matrix
+/// transposes, so the input is read once instead of once per plane.
 fn pack_columns(words: &[u32], bits: usize) -> Vec<PackedBits> {
+    assert!(bits <= 32);
+    let chunks = words.len().div_ceil(64);
+    let mut planes = vec![0u64; chunks * bits];
+    if bits > 0 {
+        planes
+            .par_chunks_mut(bits)
+            .zip(words.par_chunks(64))
+            .for_each(|(out, chunk)| {
+                let mut halves = [[0u32; 32]; 2];
+                for (i, &w) in chunk.iter().enumerate() {
+                    halves[i / 32][i % 32] = w;
+                }
+                halves.iter_mut().for_each(transpose32);
+                for (b, plane) in out.iter_mut().enumerate() {
+                    let half = |h: &[u32; 32]| u64::from(h[31 - b].reverse_bits());
+                    *plane = half(&halves[0]) | half(&halves[1]) << 32;
+                }
+            });
+    }
     (0..bits)
         .into_par_iter()
         .map(|b| {
             PackedBits::from_words(
-                words
-                    .chunks(64)
-                    .map(|chunk| {
-                        chunk
-                            .iter()
-                            .enumerate()
-                            .fold(0u64, |v, (i, &x)| v | (((x >> b) & 1) as u64) << i)
-                    })
-                    .collect(),
+                (0..chunks).map(|c| planes[c * bits + b]).collect(),
                 words.len(),
             )
         })
         .collect()
 }
+
+/// Transpose a 32x32 bit matrix whose row `r` is `a[r]`, most significant
+/// bit first (Hacker's Delight, figure 7-6): afterwards bit `31 - c` of
+/// `a[r]` is the old bit `31 - r` of `a[c]`.
+fn transpose32(a: &mut [u32; 32]) {
+    let mut j = 16;
+    let mut m: u32 = 0x0000_ffff;
+    while j != 0 {
+        let mut k = 0;
+        while k < 32 {
+            let t = (a[k] ^ (a[k + j] >> j)) & m;
+            a[k] ^= t;
+            a[k + j] ^= t << j;
+            k = (k + j + 1) & !j;
+        }
+        j >>= 1;
+        m ^= m << j;
+    }
+}
+
 fn pack_values(values: &[u64], log_bits: usize) -> PackedBits {
     if log_bits == 6 {
         return PackedBits::from_words(values.to_vec(), values.len() * 64);
@@ -331,24 +386,7 @@ fn word_eval(values: &[u64], point: &[K], log_bits: usize) -> K {
     factor * word_mle_eval(values, &p, point)
 }
 fn word_encoding(log_bits: usize) -> (Vec<K>, K) {
-    static ENCODINGS: OnceLock<Vec<(Vec<K>, K)>> = OnceLock::new();
-    ENCODINGS.get_or_init(|| {
-        (0..=6)
-            .map(|log_bits| {
-                let mut power = K::X;
-                let mut factor = K::ONE;
-                let mut p = Vec::new();
-                for _ in 0..log_bits {
-                    let sum = K::ONE + power;
-                    factor *= sum;
-                    p.push(power / sum);
-                    power = power.square();
-                }
-                (p, factor)
-            })
-            .collect()
-    })[log_bits]
-        .clone()
+    ram_argument::word::encoding_point(log_bits)
 }
 fn combine_bits(values: &[K]) -> K {
     values
@@ -762,4 +800,36 @@ pub fn verify(statement: &Statement, proof: &Proof) -> Result<(), Error> {
         verify_inner(statement, proof)
     }))
     .map_err(|_| Error("malformed Spice proof".into()))?
+}
+
+#[cfg(test)]
+mod pack_tests {
+    use super::*;
+
+    #[test]
+    fn transposed_packing_matches_per_bit_extraction() {
+        let mut seed = 0x9e37_79b9_7f4a_7c15u64;
+        for (len, bits) in [(1, 1), (5, 3), (64, 32), (100, 21), (4096, 17), (256, 0)] {
+            let words: Vec<u32> = (0..len)
+                .map(|_| {
+                    seed ^= seed << 13;
+                    seed ^= seed >> 7;
+                    seed ^= seed << 17;
+                    (seed as u32) & (((1u64 << bits) - 1) as u32)
+                })
+                .collect();
+            let columns = pack_columns(&words, bits);
+            assert_eq!(columns.len(), bits);
+            for (b, column) in columns.iter().enumerate() {
+                assert_eq!(column.len(), len);
+                for (i, &w) in words.iter().enumerate() {
+                    assert_eq!(
+                        column.words()[i / 64] >> (i % 64) & 1 == 1,
+                        w >> b & 1 == 1,
+                        "len {len} bit {b} row {i}"
+                    );
+                }
+            }
+        }
+    }
 }

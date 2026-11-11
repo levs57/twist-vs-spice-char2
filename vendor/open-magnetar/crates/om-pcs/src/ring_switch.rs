@@ -15,6 +15,11 @@ use rayon::prelude::*;
 /// Tables at least this large use rayon (exact elementwise maps).
 const PAR_THRESHOLD: usize = 1 << 14;
 
+/// Groups of eight 128-bit rows with at least this many set bits (of 1024)
+/// use subset-sum lookups in [`partial_evals_packed`]; sparser groups add
+/// bit by bit. Both paths give the same result.
+const DENSE_GROUP_ONES: u32 = 160;
+
 /// `κ = 7` (§4.5).
 pub const KAPPA: usize = 7;
 /// Packing width `128 = 2^κ` (Python `W`).
@@ -85,29 +90,52 @@ pub fn partial_evals_packed(bits: &PackedBits, r_hi: &[K]) -> Vec<K> {
     let h = r_hi.len() / 2;
     let (lo, hi) = (eq_table(&r_hi[..h]), eq_table(&r_hi[h..]));
     let words = bits.words();
+    // Add `e` into `local[b]` for every set bit `b` of row `v`.
+    let sparse_row = |local: &mut [u128; W], v: usize, e: u128| {
+        for (half, &w) in [words[2 * v], words[2 * v + 1]].iter().enumerate() {
+            let mut m = w;
+            while m != 0 {
+                let b = m.trailing_zeros() as usize;
+                m &= m - 1;
+                local[64 * half + b] ^= e;
+            }
+        }
+    };
     let block = |vh: usize| -> [u128; W] {
         let mut local = [0u128; W];
         let v_base = vh << h;
-        for (vl, e_lo) in lo.iter().enumerate() {
+        let rows = lo.len();
+        let mut vl = 0;
+        // Eight rows at a time: dense groups use one subset-sum lookup per
+        // column (see `om_field::subset`), sparse ones add bit by bit. Both
+        // give the same sums.
+        while vl + 8 <= rows {
             let v = v_base | vl;
-            let w0 = words[2 * v];
-            let w1 = words[2 * v + 1];
-            if (w0 | w1) == 0 {
-                continue;
+            let group = &words[2 * v..2 * v + 16];
+            let ones: u32 = group.iter().map(|w| w.count_ones()).sum();
+            if ones >= DENSE_GROUP_ONES {
+                let t = om_field::subset::subset_sums8(&lo[vl..vl + 8]);
+                for half in 0..2 {
+                    let column_rows: [u64; 8] = std::array::from_fn(|k| group[2 * k + half]);
+                    for (q, bytes) in om_field::subset::column_bytes(&column_rows)
+                        .into_iter()
+                        .enumerate()
+                    {
+                        for j in 0..8 {
+                            let s = ((bytes >> (8 * j)) & 0xff) as usize;
+                            local[64 * half + 8 * q + j] ^= t[s].value();
+                        }
+                    }
+                }
+            } else if ones != 0 {
+                for k in 0..8 {
+                    sparse_row(&mut local, v + k, lo[vl + k].value());
+                }
             }
-            let e = e_lo.value();
-            let mut m0 = w0;
-            while m0 != 0 {
-                let b = m0.trailing_zeros() as usize;
-                m0 &= m0 - 1;
-                local[b] ^= e;
-            }
-            let mut m1 = w1;
-            while m1 != 0 {
-                let b = m1.trailing_zeros() as usize;
-                m1 &= m1 - 1;
-                local[64 + b] ^= e;
-            }
+            vl += 8;
+        }
+        for vl in vl..rows {
+            sparse_row(&mut local, v_base | vl, lo[vl].value());
         }
         let hi_v = hi[vh];
         let mut acc = [0u128; W];
