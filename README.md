@@ -2,7 +2,7 @@
 
 This repository compares the current optimized implementations of two RAM arguments over GF(2^128):
 
-- **Twist:** BinaryTwist with shared read/write addresses, optimized Flat virtualization and packed OneHot checks.
+- **Twist:** Twist v2 (`ram_argument::twist2`, method `twist`): a read check with no write term, then one sum-check over the cycles that proves the value, final-memory, virtualization and one-hot claims together. It binds address variables first and merges loads between stores by default. `twist-legacy` runs the previous BinaryTwist prover with Flat virtualization and packed OneHot checks. [docs/soundness-twist.md](docs/soundness-twist.md) explains why the changes are sound.
 - **Spice:** single-value read/write records (`spice-typed`), a batched masked-value reduction, leanVM-derived grand-product kernels and Flock's packed Boolean ordering argument.
 
 Both use the same Mosaic, RingSwitch and Ligerito commitment stack. Each benchmark case uses identical ordered word operations and public initial/final memory. Every warmup and measured proof is independently verified.
@@ -63,7 +63,7 @@ These are linear commitment-cost estimates, not measured timings of an unpadded 
 
 At `address-bits=16, log-cycles=20`, Twist has 24 MiB populated and 32 MiB padded commitment input; Spice has about 15.55 MiB populated and 16 MiB padded input. These are witness footprints, not proof sizes or total process memory.
 
-Both methods use GF(2^128), the inherited `provable-120` PCS profile and `log-rate=2` by default. Common field/PCS parameters do not establish equal composed security: Spice's grand-product fingerprint error grows with the trace and memory sizes, and the report records that bound separately.
+Both methods use GF(2^128), the inherited `provable-120` PCS profile and `log-rate=2` by default. Common field/PCS parameters do not establish equal composed security: Spice's grand-product fingerprint error grows with the trace and memory sizes. Every case therefore reports composed soundness bits (PCS plus IOP terms), and `spice-typed-2fp` runs typed Spice with two independent fingerprints; [docs/methodology.md](docs/methodology.md) gives the numbers.
 
 The proved statement is RAM consistency with public initial and final memory. It does not prove execution of the guest CPU program.
 

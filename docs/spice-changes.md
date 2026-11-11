@@ -78,7 +78,7 @@ Reimplementing the ordering argument in this crate as an eq-factored sum-check w
 
 ## 5. Private final memory (§5, Spice half)
 
-`Options::private_final_memory` commits final memory instead of reading it from the statement. It is off by default and has no ram-compare method yet, because the harness's area formula and its final-memory check assume public final memory. The example `cargo run --release -p spice-argument --example typed_options -- 20 16 5` measures it.
+`Options::private_final_memory` commits final memory instead of reading it from the statement. It is off by default. `ram-compare --final-memory private` turns it on for the typed Spice methods (and for Twist v2); the example `cargo run --release -p spice-argument --example typed_options -- 20 16 5` also measures it.
 
 **Construction.** The prover places the final words as component `boundary/final` (one 64-bit word per cell, word-encoded like `input/value`, log size `a + 6`) in the same commitment as every other column, so the words are fixed before the fingerprints are drawn. The memory-side left tuple `(last_k, k, final_k, 0)` is unchanged. Its value coordinate at the GKR leaf point is now `Evaluations::final_value`, which the prover sends and the transcript absorbs with the other evaluations. `check_leaves` uses it where it used `word_eval(final_memory, leaf[..a])`, and one extra Mosaic claim, `word_claim("boundary/final", leaf[..a], final_value)`, binds it to the committed words. The verifier then ignores `Statement::final_memory`: `validate_memory` skips its shape check, and `transcript_with` absorbs an empty `spice/final-committed` entry in its place, so public and private proofs do not verify under each other's options. Initial memory stays public.
 
