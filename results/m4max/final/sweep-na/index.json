@@ -1,0 +1,416 @@
+[
+  {
+    "address_bits": 12,
+    "log_cycles": 16,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "12",
+      "--log-cycles",
+      "16",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a12-n16-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.574,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 26.81 25.45 24.71",
+      "load": [
+        26.81,
+        25.45,
+        24.71
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 26.81 25.45 24.71",
+      "load": [
+        26.81,
+        25.45,
+        24.71
+      ]
+    },
+    "json": "a12-n16-t8.json",
+    "log": "a12-n16-t8.log"
+  },
+  {
+    "address_bits": 16,
+    "log_cycles": 16,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "16",
+      "--log-cycles",
+      "16",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a16-n16-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.759,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 26.81 25.45 24.71",
+      "load": [
+        26.81,
+        25.45,
+        24.71
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 26.81 25.45 24.71",
+      "load": [
+        26.81,
+        25.45,
+        24.71
+      ]
+    },
+    "json": "a16-n16-t8.json",
+    "log": "a16-n16-t8.log"
+  },
+  {
+    "address_bits": 20,
+    "log_cycles": 16,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "20",
+      "--log-cycles",
+      "16",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a20-n16-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.837,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 26.81 25.45 24.71",
+      "load": [
+        26.81,
+        25.45,
+        24.71
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 26.81 25.45 24.71",
+      "load": [
+        26.81,
+        25.45,
+        24.71
+      ]
+    },
+    "json": "a20-n16-t8.json",
+    "log": "a20-n16-t8.log"
+  },
+  {
+    "address_bits": 12,
+    "log_cycles": 18,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "12",
+      "--log-cycles",
+      "18",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a12-n18-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.957,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 26.81 25.45 24.71",
+      "load": [
+        26.81,
+        25.45,
+        24.71
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 25.86 25.28 24.65",
+      "load": [
+        25.86,
+        25.28,
+        24.65
+      ]
+    },
+    "json": "a12-n18-t8.json",
+    "log": "a12-n18-t8.log"
+  },
+  {
+    "address_bits": 16,
+    "log_cycles": 18,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "16",
+      "--log-cycles",
+      "18",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a16-n18-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.664,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 25.86 25.28 24.65",
+      "load": [
+        25.86,
+        25.28,
+        24.65
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 25.40 25.19 24.63",
+      "load": [
+        25.4,
+        25.19,
+        24.63
+      ]
+    },
+    "json": "a16-n18-t8.json",
+    "log": "a16-n18-t8.log"
+  },
+  {
+    "address_bits": 20,
+    "log_cycles": 18,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "20",
+      "--log-cycles",
+      "18",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a20-n18-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.375,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 25.40 25.19 24.63",
+      "load": [
+        25.4,
+        25.19,
+        24.63
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 25.56 25.23 24.65",
+      "load": [
+        25.56,
+        25.23,
+        24.65
+      ]
+    },
+    "json": "a20-n18-t8.json",
+    "log": "a20-n18-t8.log"
+  },
+  {
+    "address_bits": 12,
+    "log_cycles": 20,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "12",
+      "--log-cycles",
+      "20",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a12-n20-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.715,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 25.56 25.23 24.65",
+      "load": [
+        25.56,
+        25.23,
+        24.65
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 25.51 25.23 24.65",
+      "load": [
+        25.51,
+        25.23,
+        24.65
+      ]
+    },
+    "json": "a12-n20-t8.json",
+    "log": "a12-n20-t8.log"
+  },
+  {
+    "address_bits": 16,
+    "log_cycles": 20,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "16",
+      "--log-cycles",
+      "20",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a16-n20-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.649,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 25.51 25.23 24.65",
+      "load": [
+        25.51,
+        25.23,
+        24.65
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 24.83 25.09 24.60",
+      "load": [
+        24.83,
+        25.09,
+        24.6
+      ]
+    },
+    "json": "a16-n20-t8.json",
+    "log": "a16-n20-t8.log"
+  },
+  {
+    "address_bits": 20,
+    "log_cycles": 20,
+    "threads": 8,
+    "command": [
+      "/Users/quangdao/Documents/SNARKs/tvs-bins/rc-final3",
+      "--trace-format",
+      "operations",
+      "--methods",
+      "twist,spice-typed",
+      "--patterns",
+      "random,locality",
+      "--warmup",
+      "1",
+      "--repeat",
+      "5",
+      "--address-bits",
+      "20",
+      "--log-cycles",
+      "20",
+      "--threads",
+      "8",
+      "--output",
+      "results/m4max/final/sweep-na/a20-n20-t8.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 6.543,
+    "uptime_before": {
+      "raw": "18:20  up 1 day,  4:30, 40 users, load averages: 24.83 25.09 24.60",
+      "load": [
+        24.83,
+        25.09,
+        24.6
+      ]
+    },
+    "uptime_after": {
+      "raw": "18:21  up 1 day,  4:31, 40 users, load averages: 23.40 24.79 24.50",
+      "load": [
+        23.4,
+        24.79,
+        24.5
+      ]
+    },
+    "json": "a20-n20-t8.json",
+    "log": "a20-n20-t8.log"
+  }
+]
