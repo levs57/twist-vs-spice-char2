@@ -21,6 +21,8 @@ use soundness::Soundness;
 use proof_size::ProofSize;
 use platform::{LoadWindow, load_average};
 
+const SCHEMA_VERSION: usize = 5;
+const IMPLEMENTATION: &str = "typed-spice-vs-twist-gf128-v5";
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 /// The harness's own sources, hashed into every report so a result names the
 /// exact comparison code that produced it.
@@ -1367,10 +1369,11 @@ fn main() -> Result<()> {
         "open_magnetar":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/open-magnetar/UPSTREAM.json"))?,
         "lean_grandproduct":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/lean-grandproduct/UPSTREAM.json"))?,
         "flock_boolean":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/flock-boolean/UPSTREAM.json"))?,
-        "adapter":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage14-implementation.json"))?,
-        "typed_adapter":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage15-implementation.json"))?,
+        // Regenerated from the tree by scripts/write_manifest.py; earlier
+        // stage manifests are not embedded because they describe older trees.
+        "implementation_manifest":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage16-implementation.json"))?,
     });
-    let report = Report { schema_version:4,implementation:"typed-spice-vs-twist-gf128-v4".into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods.".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial/final memory are public and transcript-bound.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
+    let report = Report { schema_version:SCHEMA_VERSION,implementation:IMPLEMENTATION.into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods.".into(),"Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).".into(),"Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; IOP terms are a local fallback until the argument crates export soundness_terms), load averages per case and sample, and host metadata.".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial/final memory are public and transcript-bound.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
     if let Some(path) = &report.options.output {
         write(path, &serde_json::to_vec_pretty(&report)?)?;
         println!("JSON: {}", path.display());
@@ -1866,7 +1869,7 @@ mod tests {
         let ratios = paired_ratios(&cases);
         assert_eq!(ratios.len(), 6);
         let report = Report {
-            schema_version: 4,
+            schema_version: SCHEMA_VERSION,
             implementation: "test".into(),
             options,
             environment: serde_json::Value::Null,
@@ -1894,7 +1897,12 @@ mod tests {
         assert!(!rows[0].contains("padding_adjusted_estimate:opening_ms"));
         assert!(!rows[0].contains("padding_adjusted_estimate:exclusive:"));
         let json = serde_json::to_value(&report).unwrap();
-        assert_eq!(json["schema_version"], 4);
+        assert_eq!(json["schema_version"], 5);
+        assert!(json["paired_ratios"][0]["prover"]["ci95_low"].is_number());
+        assert!(json["cases"][0]["soundness"]["terms"].is_array());
+        assert!(json["cases"][0]["proof_size"]["pcs_bytes"].is_number());
+        assert!(json["cases"][0]["samples"][0]["verifier_stages_ms"].is_object());
+        assert!(json["cases"][0]["samples"][0]["load"].is_object());
         assert!(
             json["cases"][0]["samples"][0]["padding_adjusted_estimate"]["prover_ms"].is_number()
         );

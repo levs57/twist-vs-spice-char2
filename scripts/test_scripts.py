@@ -13,7 +13,9 @@ SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
 import bench_stats  # noqa: E402
+import check_stage16  # noqa: E402
 import interleave  # noqa: E402
+import write_manifest  # noqa: E402
 
 FAKE = """#!{python}
 import json, sys
@@ -106,6 +108,33 @@ class InterleaveTests(unittest.TestCase):
                 interleave.main(
                     ["--baseline", "x", "--branch", "y", "--out-dir", tmp, "--", "--repeat", "3"]
                 )
+
+
+class ManifestTests(unittest.TestCase):
+    def test_collect_is_deterministic_and_covers_harness_sources(self):
+        first, second = write_manifest.collect(), write_manifest.collect()
+        self.assertEqual(first, second)
+        files = first["files_sha256"]
+        for name in ("crates/ram-compare/src/main.rs", "scripts/write_manifest.py", "Cargo.lock"):
+            self.assertIn(name, files)
+        self.assertNotIn("audit/stage16-implementation.json", files)
+        self.assertEqual(first["source_sha256"], write_manifest.fingerprint(files))
+
+    def test_check_rejects_a_stale_hash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            stale = write_manifest.collect()
+            name = "crates/ram-compare/src/main.rs"
+            stale["files_sha256"][name] = "00" * 32
+            stale["source_sha256"] = write_manifest.fingerprint(stale["files_sha256"])
+            path = Path(tmp) / "manifest.json"
+            path.write_text(json.dumps(stale))
+            original = check_stage16.MANIFEST
+            check_stage16.MANIFEST = path
+            try:
+                with self.assertRaisesRegex(ValueError, "hash differs: " + name):
+                    check_stage16.main()
+            finally:
+                check_stage16.MANIFEST = original
 
 
 if __name__ == "__main__":
