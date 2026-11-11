@@ -110,8 +110,14 @@ mod tests {
             // A random bit table opened at (p ‖ r) equals W[x](r) / φ.
             let n = 3;
             let width = 1usize << log_bits;
-            let mask = if width == 64 { u64::MAX } else { (1u64 << width) - 1 };
-            let words: Vec<u64> = (0..1 << n).map(|_| rand_k(&mut s).value() as u64 & mask).collect();
+            let mask = if width == 64 {
+                u64::MAX
+            } else {
+                (1u64 << width) - 1
+            };
+            let words: Vec<u64> = (0..1 << n)
+                .map(|_| rand_k(&mut s).value() as u64 & mask)
+                .collect();
             let r: Vec<K> = (0..n).map(|_| rand_k(&mut s)).collect();
             let (point, value) = claim_at(&r, mle(&words, &r), log_bits);
             let full = eq_table(&point);

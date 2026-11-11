@@ -239,7 +239,13 @@ fn schema_commits_only_ra_and_inc() {
     names.sort();
     assert_eq!(
         names,
-        ["ram/inc", "ram/ra0/1", "ram/ra0/2", "ram/ra0/3", "ram/ra0/4"]
+        [
+            "ram/inc",
+            "ram/ra0/1",
+            "ram/ra0/2",
+            "ram/ra0/3",
+            "ram/ra0/4"
+        ]
     );
     let populated: usize = schema.components.iter().map(|c| 1usize << c.log_size).sum();
     assert_eq!(populated, 1 << 27);
@@ -767,7 +773,10 @@ fn rejects_tampered_cycle_messages_from_the_split_prover() {
             for k in 0..result.proof.cycle.sumcheck.round_msgs[i].len() {
                 let mut p = result.proof.clone();
                 p.cycle.sumcheck.round_msgs[i][k] += K::ONE;
-                assert!(verify(&result.statement, &p).is_err(), "round {i} value {k}");
+                assert!(
+                    verify(&result.statement, &p).is_err(),
+                    "round {i} value {k}"
+                );
             }
         }
         for i in 0..cfg.components() {

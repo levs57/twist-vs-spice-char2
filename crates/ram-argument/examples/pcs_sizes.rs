@@ -33,7 +33,11 @@ fn main() {
             .sum();
         let pcs = BitPCS::new(params);
         let words = (1usize << ell) / 64;
-        let populated = if ell == 28 && !full { words / 4 * 3 } else { words };
+        let populated = if ell == 28 && !full {
+            words / 4 * 3
+        } else {
+            words
+        };
         let mut s = 0x9e37_79b9_7f4a_7c15u64;
         let g = PackedBits::from_words(
             (0..words)

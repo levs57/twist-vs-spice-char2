@@ -208,11 +208,7 @@ pub fn proof_size(proof: &Proof) -> ProofSize {
 /// derives each term.
 pub fn soundness_terms(statement: &Statement) -> Vec<(String, f64)> {
     let config = &statement.config;
-    let (n, a, c) = (
-        statement.log_cycles,
-        config.address_bits,
-        config.chunk_bits,
-    );
+    let (n, a, c) = (statement.log_cycles, config.address_bits, config.chunk_bits);
     let d = config.components();
     let schema = Schema::new(config, n);
     // Two per component, Inc at z, Inc at r_c, and committed final memory.
@@ -494,13 +490,10 @@ fn cpu_claims(w: &Witness, r_c: &[K]) -> CpuClaims {
         }
         acc.map(|x| se.hi[hi] * x.reduce())
     };
-    let [address, read, inc] = (0..se.hi.len())
-        .into_par_iter()
-        .map(block)
-        .reduce(
-            || [K::ZERO; 3],
-            |x, y| [x[0] + y[0], x[1] + y[1], x[2] + y[2]],
-        );
+    let [address, read, inc] = (0..se.hi.len()).into_par_iter().map(block).reduce(
+        || [K::ZERO; 3],
+        |x, y| [x[0] + y[0], x[1] + y[1], x[2] + y[2]],
+    );
     CpuClaims {
         address,
         read,
@@ -792,10 +785,7 @@ pub(crate) fn prove_witness(
             mosaic,
             opening,
         },
-        interface: Interface {
-            point: r_c,
-            claims,
-        },
+        interface: Interface { point: r_c, claims },
         metrics: profiling::take(),
         summary,
     })
