@@ -445,3 +445,60 @@ fn soundness_terms_at_n20_a16() {
     assert_eq!(numerator.round() as usize, 298 + 2 * ell);
     assert_eq!(statement.config.components(), 4);
 }
+
+#[test]
+fn cycle_prover_matches_the_reference_prover() {
+    // The split cycle prover must send exactly the reference prover's
+    // messages and evaluations, across shapes that exercise the
+    // sequential and parallel paths and every block split.
+    let mut s = 21u64;
+    for &(n, a, c) in &[
+        (4usize, 4usize, 2usize),
+        (5, 6, 3),
+        (7, 8, 4),
+        (9, 8, 2),
+        (14, 8, 4),
+        (15, 12, 4),
+    ] {
+        fn rand_k(s: &mut u64) -> K {
+            K::from_u128(((lcg(s) as u128) << 64) | lcg(s) as u128)
+        }
+        let d = a / c;
+        let r_k: Vec<K> = (0..a).map(|_| rand_k(&mut s)).collect();
+        let r_j: Vec<K> = (0..n).map(|_| rand_k(&mut s)).collect();
+        let addr: Vec<u32> = (0..1u32 << n)
+            .map(|_| (lcg(&mut s) % (1 << a)) as u32)
+            .collect();
+        // About half the cycles are loads (zero increment).
+        let inc: Vec<K> = (0..1usize << n)
+            .map(|_| {
+                if lcg(&mut s) % 2 == 0 {
+                    K::ZERO
+                } else {
+                    rand_k(&mut s)
+                }
+            })
+            .collect();
+        let mut tr = Transcript::new_default(b"test");
+        let ch = cycle::challenges(&mut tr, d);
+        let w = cycle::CycleWitness {
+            addr: &addr,
+            inc_e: &inc,
+            c,
+            d,
+        };
+        let (rows, eps) = cycle::reference_rows(&w, &r_k, &r_j, &ch);
+        let claim = cycle::row_sum(&rows);
+        let mut t1 = tr.clone();
+        let fast = cycle_prover::prove(&w, &r_k, &r_j, claim, &ch, &mut t1);
+        let mut t2 = tr.clone();
+        let reference = cycle::prove_rows(rows, &eps, claim, &mut t2);
+        assert_eq!(fast.proof, reference.proof, "n={n} a={a} c={c}");
+        assert_eq!(fast.z, reference.z);
+        assert_eq!(
+            t1.challenge_k(b"after"),
+            t2.challenge_k(b"after"),
+            "transcripts diverge at n={n}"
+        );
+    }
+}

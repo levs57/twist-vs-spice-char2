@@ -16,6 +16,7 @@
 //! The soundness argument is in `docs/soundness-twist.md`.
 
 pub mod cycle;
+pub(crate) mod cycle_prover;
 pub mod read;
 pub(crate) mod util;
 

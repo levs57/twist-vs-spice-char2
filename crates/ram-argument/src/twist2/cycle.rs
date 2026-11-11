@@ -29,7 +29,7 @@ use rayon::prelude::*;
 
 use super::util::{PAR, SplitEq, SplitLt, checks_enabled, emit_round, node, par_build};
 
-const LABEL: &[u8] = b"ram/cycle";
+pub(crate) const LABEL: &[u8] = b"ram/cycle";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CycleProof {
@@ -298,89 +298,18 @@ fn bind_eval(rows: &Rows, r: K, degree: usize, last: bool) -> (Rows, Acc) {
     (Rows { d, width: w, data }, acc)
 }
 
-/// Round-0 accumulator over rows that `make_row(j, out)` writes on demand,
-/// so the full-size table is never stored.
-fn eval_virtual<G: Fn(usize, &mut [K]) + Sync>(
-    size: usize,
-    d: usize,
-    w: usize,
-    degree: usize,
-    make_row: &G,
-) -> Acc {
-    let half = size / 2;
-    let fold = |range: std::ops::Range<usize>| -> Acc {
-        let mut acc = Acc::new(degree);
-        let mut scratch = vec![K::ZERO; 2 * w];
-        let mut pair = vec![K::ZERO; 2 * w];
-        for m in range {
-            let (x0, x1) = pair.split_at_mut(w);
-            make_row(2 * m, x0);
-            make_row(2 * m + 1, x1);
-            pair_kernel(x0, x1, d, degree, &mut acc, &mut scratch);
-        }
-        acc
-    };
-    (0..half.div_ceil(CHUNK))
-        .into_par_iter()
-        .map(|c| fold(c * CHUNK..((c + 1) * CHUNK).min(half)))
-        .reduce(|| Acc::new(degree), Acc::merge)
-}
-
-/// Bind round 0 to `r` over rows from `make_row` and accumulate round 1 in
-/// the same pass. Needs at least four rows.
-fn bind_eval_virtual<G: Fn(usize, &mut [K]) + Sync>(
-    size: usize,
-    d: usize,
-    w: usize,
-    r: K,
-    degree: usize,
-    make_row: &G,
-) -> (Rows, Acc) {
-    let out_len = size / 2;
-    let last = out_len == 1;
-    let units = out_len / 2;
-    let chunk = if units >= PAR / 2 {
-        CHUNK
-    } else {
-        units.max(1)
-    };
-    let accs = std::sync::Mutex::new(Vec::new());
-    // SAFETY: `out_len` is even here, so every chunk of `chunk * 2 * w`
-    // elements is a whole number of output pairs, and each pair writes all
-    // `2 * w` of its elements through the zip with `pair` below.
-    let data = unsafe {
-        par_build(out_len * w, chunk * 2 * w, |start, dst| {
-            debug_assert_eq!(dst.len() % (2 * w), 0);
-            let p0 = start / (2 * w);
-            let mut acc = Acc::new(degree);
-            let mut scratch = vec![K::ZERO; 2 * w];
-            let mut src = vec![K::ZERO; 4 * w];
-            let mut pair = vec![K::ZERO; 2 * w];
-            for (k, out_pair) in dst.chunks_mut(2 * w).enumerate() {
-                let p = p0 + k;
-                for (q, row) in src.chunks_mut(w).enumerate() {
-                    make_row(4 * p + q, row);
-                }
-                let (o0, o1) = pair.split_at_mut(w);
-                bind_row(&src[..w], &src[w..2 * w], r, o0);
-                bind_row(&src[2 * w..3 * w], &src[3 * w..], r, o1);
-                for (o, &x) in out_pair.iter_mut().zip(pair.iter()) {
-                    o.write(x);
-                }
-                if !last {
-                    let (o0, o1) = pair.split_at(w);
-                    pair_kernel(o0, o1, d, degree, &mut acc, &mut scratch);
-                }
-            }
-            accs.lock().unwrap().push(acc);
+/// The sum of the cycle summand over all rows: the honest claim.
+#[cfg(test)]
+pub(crate) fn row_sum(rows: &Rows) -> K {
+    let d = rows.d;
+    (0..rows.len())
+        .map(|j| {
+            let row = rows.row(j);
+            let prod: K = (0..d).fold(K::ONE, |p, i| p * row[A0 + i]);
+            let mir: K = (0..d).fold(K::ZERO, |s, i| s + row[A0 + i] * row[A0 + d + i]);
+            (row[TL] * row[INC] + row[ED]) * prod + row[ED] * mir
         })
-    };
-    let acc = accs
-        .into_inner()
-        .unwrap()
-        .into_iter()
-        .fold(Acc::new(degree), Acc::merge);
-    (Rows { d, width: w, data }, acc)
+        .fold(K::ZERO, |a, b| a + b)
 }
 
 /// Column-form tables, used by tests to build adversarial inputs.
@@ -409,7 +338,9 @@ impl Tables {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+/// Prove the cycle check. Traces of fewer than 16 cycles use the reference
+/// prover on full row tables; longer ones use the split prover in
+/// `cycle_prover.rs`. Both send the same messages.
 pub(crate) fn prove(
     w: &CycleWitness<'_>,
     r_k: &[K],
@@ -418,14 +349,28 @@ pub(crate) fn prove(
     ch: &Challenges,
     tr: &mut Transcript,
 ) -> CycleResult {
-    let n = r_j.len();
-    let (c, d) = (w.c, w.d);
-    let tables_span = om_transcript::profiling::Span::new("twist.cycle.tables");
+    if r_j.len() < 4 {
+        let (rows, eps_scaled) = reference_rows(w, r_k, r_j, ch);
+        return prove_rows(rows, &eps_scaled, claim, tr);
+    }
+    super::cycle_prover::prove(w, r_k, r_j, claim, ch, tr)
+}
+
+/// `ε_i' = ε_i / δ`, the factor folded into the mirror columns.
+pub(crate) fn eps_scaled(ch: &Challenges) -> Vec<K> {
     let delta_inv = ch.delta.inverse();
-    let eps_scaled: Vec<K> = ch.eps.iter().map(|&e| e * delta_inv).collect();
-    let mask = (1u32 << c) - 1;
-    let eq_a: Vec<Vec<K>> = (0..d).map(|i| eq_table(chunk_point(r_k, c, i))).collect();
-    let eq_am: Vec<Vec<K>> = (0..d)
+    ch.eps.iter().map(|&e| e * delta_inv).collect()
+}
+
+/// `eq(r_k^i, ·)` and `ε_i' eq(1 + r_k^i, ·)` for each component.
+pub(crate) fn component_tables(
+    r_k: &[K],
+    c: usize,
+    d: usize,
+    eps_scaled: &[K],
+) -> (Vec<Vec<K>>, Vec<Vec<K>>) {
+    let eq_a = (0..d).map(|i| eq_table(chunk_point(r_k, c, i))).collect();
+    let eq_am = (0..d)
         .map(|i| {
             eq_table(&mirrored(chunk_point(r_k, c, i)))
                 .into_iter()
@@ -433,11 +378,25 @@ pub(crate) fn prove(
                 .collect()
         })
         .collect();
+    (eq_a, eq_am)
+}
+
+/// The honest full row tables for the reference prover.
+pub(crate) fn reference_rows(
+    w: &CycleWitness<'_>,
+    r_k: &[K],
+    r_j: &[K],
+    ch: &Challenges,
+) -> (Rows, Vec<K>) {
+    let (c, d) = (w.c, w.d);
+    let eps_scaled = eps_scaled(ch);
+    let (eq_a, eq_am) = component_tables(r_k, c, d, &eps_scaled);
+    let mask = (1u32 << c) - 1;
     let lt = SplitLt::new(r_j);
     let eq = SplitEq::new(r_j);
-    let size = 1usize << n;
     let width = A0 + 2 * d;
-    let make_row = |j: usize, row: &mut [K]| {
+    let mut data = vec![K::ZERO; (1usize << r_j.len()) * width];
+    for (j, row) in data.chunks_mut(width).enumerate() {
         let ad = w.addr[j];
         row[TL] = lt.at(j) + ch.gamma;
         row[ED] = ch.delta * eq.at(j);
@@ -447,26 +406,8 @@ pub(crate) fn prove(
             row[A0 + i] = eq_a[i][u];
             row[A0 + d + i] = eq_am[i][u];
         }
-    };
-    drop(tables_span);
-    let _span = om_transcript::profiling::Span::new("twist.cycle.rounds");
-    if size < 4 {
-        let mut data = vec![K::ZERO; size * width];
-        for (j, row) in data.chunks_mut(width).enumerate() {
-            make_row(j, row);
-        }
-        return prove_rows(Rows { d, width, data }, &eps_scaled, claim, tr);
     }
-    // Round 0 reads rows built on the fly, and its bind writes the first
-    // stored (half-size) table.
-    let degree = d + 2;
-    sumcheck_init(tr, LABEL, claim, n, degree);
-    let mut msgs = Vec::with_capacity(n);
-    let acc = eval_virtual(size, d, width, degree, &make_row);
-    let ys = acc.values(claim);
-    let (r, cur) = emit_round(&ys, tr, LABEL, &mut msgs);
-    let (rows, acc) = bind_eval_virtual(size, d, width, r, degree, &make_row);
-    finish_rounds(rows, acc, vec![r], msgs, cur, &eps_scaled, tr)
+    (Rows { d, width, data }, eps_scaled)
 }
 
 /// The sum-check on already built rows; `eps_scaled[i]` is the factor
@@ -518,13 +459,33 @@ fn finish_rounds(
         assert_eq!(value, cur, "cycle check final value");
     }
     let row = rows.row(0);
-    let a_z: Vec<K> = row[A0..A0 + d].to_vec();
-    let am_z: Vec<K> = row[A0 + d..A0 + 2 * d]
+    conclude(
+        row[A0..A0 + d].to_vec(),
+        &row[A0 + d..A0 + 2 * d],
+        eps_scaled,
+        row[INC],
+        msgs,
+        z,
+        tr,
+    )
+}
+
+/// Build the proof from the bound evaluations; `am_scaled[i]` is
+/// `ε_i' A_i(1 + r_k^i, z)`.
+pub(crate) fn conclude(
+    a_z: Vec<K>,
+    am_scaled: &[K],
+    eps_scaled: &[K],
+    inc_z: K,
+    msgs: Vec<Vec<K>>,
+    z: Vec<K>,
+    tr: &mut Transcript,
+) -> CycleResult {
+    let am_z: Vec<K> = am_scaled
         .iter()
         .zip(eps_scaled)
         .map(|(&t, &e)| t * e.inverse())
         .collect();
-    let inc_z = row[INC];
     let mut evals = a_z.clone();
     evals.extend_from_slice(&am_z);
     evals.push(inc_z);
