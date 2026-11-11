@@ -386,13 +386,15 @@ fn private_final_memory_verifies_without_the_public_final_memory() {
         ] {
             let r = operations::prove_with(&config(a), &t, &options).unwrap();
             assert!(r.proof.evaluations.final_value.is_some());
-            // The harness still sees the prover's final memory.
-            assert_eq!(r.statement.final_memory, fixture_final(&t));
+            // The statement carries no final memory; the prover returns its own.
+            assert!(r.statement.final_memory.is_empty());
+            assert_eq!(r.final_memory, fixture_final(&t));
             operations::verify_with(&r.statement, &r.proof, &options).unwrap();
-            // The verifier never reads the statement's final memory.
+            // A statement that carries final memory is rejected rather than
+            // silently ignored, even when the value is correct.
             let mut s = r.statement.clone();
-            s.final_memory = Vec::new();
-            operations::verify_with(&s, &r.proof, &options).unwrap();
+            s.final_memory = fixture_final(&t);
+            assert!(operations::verify_with(&s, &r.proof, &options).is_err());
             // Public and private proofs are not interchangeable.
             let public = operations::Options {
                 private_final_memory: false,

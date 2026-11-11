@@ -42,7 +42,9 @@ pub struct Options {
     pub fingerprints: usize,
     /// Commit final memory (one word per cell) instead of reading it from the
     /// statement. The leaf binding then uses a Mosaic claim on the committed
-    /// words, and the verifier ignores `Statement::final_memory`.
+    /// words. `Statement::final_memory` must then be empty: the verifier
+    /// rejects a statement that carries one, so a caller cannot mistake it
+    /// for a checked value. `ProveResult::final_memory` holds the prover's.
     pub private_final_memory: bool,
 }
 
@@ -204,7 +206,11 @@ pub struct Proof {
 
 #[derive(Clone, Debug)]
 pub struct ProveResult {
+    /// The public statement. With private final memory its `final_memory`
+    /// is empty.
     pub statement: Statement,
+    /// The final memory the prover computed, in both modes.
+    pub final_memory: Vec<u64>,
     pub proof: Proof,
     pub metrics: Vec<(&'static str, std::time::Duration)>,
     pub summary: Summary,
@@ -924,8 +930,14 @@ pub fn prove_with(
         mosaic_claims: claims.len(),
         commitment_components: schema.components,
     };
+    let final_memory = if options.private_final_memory {
+        std::mem::take(&mut statement.final_memory)
+    } else {
+        statement.final_memory.clone()
+    };
     Ok(ProveResult {
         statement,
+        final_memory,
         proof: Proof {
             commitment,
             permutation,
@@ -947,6 +959,10 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error
     let (n, a, l, schema, mut tr, fps) = {
         let _span = Span::new("verify.setup");
         validate_memory(s, !options.private_final_memory)?;
+        require(
+            !options.private_final_memory || s.final_memory.is_empty(),
+            "a statement with private final memory must not carry final memory",
+        )?;
         options.validate()?;
         let (n, a, l, _) = dims(s);
         let schema = schema(s, options);
