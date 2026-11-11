@@ -475,7 +475,7 @@ fn cycle_prover_matches_the_reference_prover() {
         // About half the cycles are loads (zero increment).
         let inc: Vec<K> = (0..1usize << n)
             .map(|_| {
-                if lcg(&mut s) % 2 == 0 {
+                if lcg(&mut s).is_multiple_of(2) {
                     K::ZERO
                 } else {
                     rand_k(&mut s)
