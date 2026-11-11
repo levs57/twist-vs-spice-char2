@@ -26,9 +26,10 @@
 //! round-0 bind reads tables bound to the challenge.
 //!
 //! **Inc skipping.** A pair whose rows both have `Inc = 0` contributes no
-//! `P` term, so the kernels skip it and stop one node earlier.
+//! `P` term, so the kernels skip it. The quadratic mirror term still needs
+//! node 2; for `d >= 2`, the kernels also stop one node earlier.
 
-use om_field::{K, U256};
+use om_field::{K, U256, clmul_pairs, mul_pairs};
 use om_sumcheck::{interpolate_eval, sumcheck_init};
 use om_transcript::Transcript;
 use rayon::prelude::*;
@@ -109,20 +110,32 @@ impl Acc {
     /// `lt_hi` already includes `γ`.
     fn flush(&mut self, b: &mut Acc, eq_hi: K, lt_hi: K) {
         for e in 0..b.p0.len() {
-            self.plt[e] += lt_hi.clmul(b.p0[e]) + eq_hi.clmul(b.plt[e].reduce());
+            let [plain, weighted] = clmul_pairs([lt_hi, eq_hi], [b.p0[e], b.plt[e].reduce()]);
+            self.plt[e] += plain + weighted;
             self.peq[e] += eq_hi.clmul(b.peq[e].reduce());
             b.p0[e] = K::ZERO;
             b.plt[e] = U256::ZERO;
             b.peq[e] = U256::ZERO;
         }
-        for (a, x) in self.pi.iter_mut().zip(b.pi.iter_mut()) {
-            *a += eq_hi.clmul(x.reduce());
-            *x = U256::ZERO;
-        }
-        for (a, x) in self.mir.iter_mut().zip(b.mir.iter_mut()) {
-            *a += eq_hi.clmul(x.reduce());
-            *x = U256::ZERO;
-        }
+        scale_accumulate_and_clear(&mut self.pi, &mut b.pi, eq_hi);
+        scale_accumulate_and_clear(&mut self.mir, &mut b.mir, eq_hi);
+    }
+}
+
+/// Keep independent products in packed lanes without reducing the outer sum.
+fn scale_accumulate_and_clear(dst: &mut [U256], src: &mut [U256], scale: K) {
+    debug_assert_eq!(dst.len(), src.len());
+    let paired = src.len() & !1;
+    for i in (0..paired).step_by(2) {
+        let [a, b] = clmul_pairs([scale; 2], [src[i].reduce(), src[i + 1].reduce()]);
+        dst[i] += a;
+        dst[i + 1] += b;
+        src[i] = U256::ZERO;
+        src[i + 1] = U256::ZERO;
+    }
+    if paired < src.len() {
+        dst[paired] += scale.clmul(src[paired].reduce());
+        src[paired] = U256::ZERO;
     }
 }
 
@@ -165,7 +178,8 @@ fn kernel(
     // With Inc zero on both rows (two loads), `P` vanishes and only the
     // degree-d eq-weighted part remains.
     let store = !(x0[INC].is_zero() && x1[INC].is_zero());
-    for e in 0..=d + store as usize {
+    // The mirror sum is quadratic even when d=1 and Inc vanishes.
+    for e in 0..=(d + store as usize).max(2) {
         let v: &[K] = match e {
             0 => x0,
             1 => x1,
@@ -184,17 +198,26 @@ fn kernel(
         }
         if store {
             let p = prod * v[INC];
+            let [plt, peq] = clmul_pairs([lt_lo, eq_lo], [p; 2]);
             b.p0[e] += p;
-            b.plt[e] += lt_lo.clmul(p);
-            b.peq[e] += eq_lo.clmul(p);
+            b.plt[e] += plt;
+            b.peq[e] += peq;
         }
         if e <= d {
             b.pi[e] += eq_lo.clmul(prod);
         }
         if e <= 2 {
             let mut m = U256::ZERO;
-            for i in 0..d {
-                m += v[A0 + i].clmul(v[A0 + d + i]);
+            let paired = d & !1;
+            for i in (0..paired).step_by(2) {
+                let [a, b] = clmul_pairs(
+                    [v[A0 + i], v[A0 + i + 1]],
+                    [v[A0 + d + i], v[A0 + d + i + 1]],
+                );
+                m += a + b;
+            }
+            if paired < d {
+                m += v[A0 + paired].clmul(v[A0 + d + paired]);
             }
             b.mir[e] += eq_lo.clmul(m.reduce());
         }
@@ -359,16 +382,18 @@ impl PairTables {
         let di = i0 + i1;
         let pts = d + 2;
         let store = !(i0.is_zero() && i1.is_zero());
-        for e in 0..=d + store as usize {
+        // Node two is still needed by the quadratic mirror term on loads.
+        for e in 0..=(d + store as usize).max(2) {
             let mut prod = self.a[keys[0] * pts + e];
             for &key in &keys[1..] {
                 prod *= self.a[key * pts + e];
             }
             if store {
                 let p = prod * (i0 + di.mul_t(e as u128));
+                let [plt, peq] = clmul_pairs([lt_lo, eq_lo], [p; 2]);
                 b.p0[e] += p;
-                b.plt[e] += lt_lo.clmul(p);
-                b.peq[e] += eq_lo.clmul(p);
+                b.plt[e] += plt;
+                b.peq[e] += peq;
             }
             if e <= d {
                 b.pi[e] += eq_lo.clmul(prod);
@@ -400,8 +425,14 @@ fn bound_pair_table(x: &[Vec<K>], c: usize, r: K) -> Vec<K> {
 
 #[inline]
 fn bind_row(src0: &[K], src1: &[K], r: K, dst: &mut [K]) {
-    for ((o, &a), &b) in dst.iter_mut().zip(src0).zip(src1) {
-        *o = a + r * (a + b);
+    let paired = dst.len() & !1;
+    for i in (0..paired).step_by(2) {
+        let [a, b] = mul_pairs([r; 2], [src0[i] + src1[i], src0[i + 1] + src1[i + 1]]);
+        dst[i] = src0[i] + a;
+        dst[i + 1] = src0[i + 1] + b;
+    }
+    if paired < dst.len() {
+        dst[paired] = src0[paired] + r * (src0[paired] + src1[paired]);
     }
 }
 
@@ -489,8 +520,12 @@ pub(crate) fn prove(
         for i in 0..d {
             let u0 = ((a0 >> (i * c)) & mask) as usize;
             let u1 = ((a1 >> (i * c)) & mask) as usize;
-            out[A0 + i] = bind(eq_a[i][u0], eq_a[i][u1]);
-            out[A0 + d + i] = bind(eq_am[i][u0], eq_am[i][u1]);
+            let [a, am] = mul_pairs(
+                [r; 2],
+                [eq_a[i][u0] + eq_a[i][u1], eq_am[i][u0] + eq_am[i][u1]],
+            );
+            out[A0 + i] = eq_a[i][u0] + a;
+            out[A0 + d + i] = eq_am[i][u0] + am;
         }
     };
     drop(tables_span);

@@ -116,7 +116,10 @@
     "crates/om-transcript/src/hashing.rs",
     "crates/om-transcript/src/lib.rs",
     "crates/om-transcript/src/sha256.rs",
-    "crates/om-pcs/tests/ring_switch.rs"
+    "crates/om-pcs/tests/ring_switch.rs",
+    "crates/om-mosaic/src/lib.rs",
+    "crates/om-transcript/src/transcript.rs",
+    "crates/om-transcript/tests/transcript.rs"
   ],
   "added_files": [
     "LICENSE-FLOCK-MIT",
@@ -137,7 +140,8 @@
     "crates/om-sumcheck/tests/fused.rs",
     "crates/om-sumcheck/tests/products.rs",
     "crates/om-transcript/src/profiling.rs",
-    "crates/om-field/src/subset.rs"
+    "crates/om-field/src/subset.rs",
+    "crates/om-mosaic/tests/prefix.rs"
   ],
   "implementation": "gf128-jolt-flat-structural-sharing-v1",
   "workspace_note": "Cargo.toml selects eight upstream crates. Cargo.lock is resolved for this subset; neither workspace file is a prover kernel.",
@@ -146,11 +150,11 @@
     "LICENSE-JOLT-MIT": "452532d531b7503f55729a3b1fe136de15814f14ae5ac18a0e33c6476b70997b",
     "crates/om-field/src/lib.rs": "391c685fd44edbb4c4543d0f0716efcbe207ff1766ec76208843df583edfd726",
     "crates/om-field/src/subset.rs": "838d8b7dacd488ec9f98c239c5b4b923d41c68f178ac4f59492f49550d580327",
-    "crates/om-memcheck/src/eq_factor.rs": "0e7f2ac0f538acf8b8f890a0fdfa008e89a8654d03e9bea8822327e530355235",
+    "crates/om-memcheck/src/eq_factor.rs": "abd5d626e84e93d1c7f11619bb2d734e1be7363a13d7dfed500e512a22f418fa",
     "crates/om-memcheck/src/gkr_kernels.rs": "13f02fe3924d82b2df1041f25d1fc92aabb7e77bf137e32f8929f57d75df2e3c",
     "crates/om-memcheck/src/lazy.rs": "5c9831fea1c02f2fee9d8668d897254bda4f786d61987d4ff56e798151348497",
     "crates/om-memcheck/src/lib.rs": "202de617c789ca78ccaabaf39bdf95c509c25a87a09eed51d97c2914cdf2e42d",
-    "crates/om-memcheck/src/onehot.rs": "bc343c1f13c4385ad0e6f5e3cf76690f128369d0b396234b2dbf341b4f20b241",
+    "crates/om-memcheck/src/onehot.rs": "dbd9ad8c5539eea847689ae2f64626250fafc4a7a0768a750ddfbf394dd2b415",
     "crates/om-memcheck/src/onehot_kernels.rs": "c97b100a7b818deee8e7035a2af6276c7f05e50e65e5b9348cb53765e54996b9",
     "crates/om-memcheck/src/onehot_structural_tests.rs": "386b6a87a85bfcb38777239647aada7cf0e208f39176630e6f42f69a6f51f897",
     "crates/om-memcheck/src/shout.rs": "0df00508882bd182a8aa5bfaa9519c1a9376141cc085223e026b74f86c59f414",
@@ -164,28 +168,32 @@
     "crates/om-memcheck/src/virt_tree.rs": "f63ea7e04d069df0b9429ad48db8322a375858a82da8687d678a385eded60ce7",
     "crates/om-memcheck/tests/shout.rs": "6e2173e85c18f15482b8fe3bfd4770be6a78681be8ae8e1653a566048448ba14",
     "crates/om-memcheck/tests/vectors.rs": "1b577d1072b73cc1fec31ed1c94a56d4d2eda1ff735686eaa4436a486880e80e",
-    "crates/om-mosaic/src/mosaic.rs": "7aeb01b6b1e838fea3037e2be6635fd4a68f4f7579af6007942e90608d6ac8f1",
+    "crates/om-mosaic/src/mosaic.rs": "e3164c6b70fd38c0549c6b746cc8c59c2de91cd346e400ccf0dc4404500269c3",
     "crates/om-mosaic/tests/mosaic.rs": "966d242824ab9cf367446100cf16f63935a8351e5b19ddd82813147bea391298",
-    "crates/om-pcs/src/ligerito.rs": "e35f275686551470de555f4acb7ad65d8636290cfe5c058bbc3e9d3af1ea85bf",
+    "crates/om-pcs/src/ligerito.rs": "ae9a073f2c16bc40f01b5a2fd687ef0d1ce3f1487c37dc55130d250a58d988c6",
     "crates/om-pcs/src/merkle.rs": "9f21c5880a0c9520d035950b2e7ed07a0bdcaa67a7fef6fd4d268f19c72f6662",
     "crates/om-pcs/src/ntt.rs": "1a04646a1a8ed8c9623c60fa13c6946411c8adef7b910646f7b0bb6418a77be9",
-    "crates/om-pcs/src/pcs.rs": "8cfc7e0e6f50bff22093b149f81497c719f27fef4a341b5b9803f208824a9209",
-    "crates/om-pcs/src/ring_switch.rs": "be5f74b973e83af16501c44de8dc05ef2fdca66da35b4276712ca56df3a25e75",
+    "crates/om-pcs/src/pcs.rs": "19cd72d82ad79480f75d3c2aea006eed5ae1516eac63c94a055afc8a8c0fc810",
+    "crates/om-pcs/src/ring_switch.rs": "eeb2e42ab4f1954e4d44ad624044693cd8973e89a79b8656f23fc956637e5c53",
     "crates/om-pcs/tests/commit_encoding.rs": "4e8d708a22b97bdaf60fe2e164f50780a2658dbee033edb9b09fbfa52f267f77",
     "crates/om-pcs/tests/ring_switch.rs": "fc352142b663bba2b44b534c87eb35e7005dca0d9d4165af07a80d72f9eb0909",
-    "crates/om-sumcheck/src/lib.rs": "7f658bcc7831882fb0e028d7b8b8a07e2829caa9b1042d7ba6c16c2f2ab02c5e",
+    "crates/om-sumcheck/src/lib.rs": "ad80848e61fa44eca7e9b510ad86966e10faeb0ea93224e490d78296b0e6bff6",
     "crates/om-sumcheck/src/mle.rs": "26e3dbd3b398d6cb737899d997d2eee68cdb1e2fc2a2873e44ac1577b67de05f",
-    "crates/om-sumcheck/src/products.rs": "0ceb2a7b28baed40fb4c876f6fde75bf92d1595ffc47a44a4c1758f19d426298",
-    "crates/om-sumcheck/src/sumcheck.rs": "50804674bed4b12db8f63e34aa995150fae4e1f5be24d7434a634511e252bdb4",
+    "crates/om-sumcheck/src/products.rs": "9e639fcda0e7a23182fdd115d756e33978ccfa8ae122be721d56ce35b5003f44",
+    "crates/om-sumcheck/src/sumcheck.rs": "64cf5664510c02509c29c0de7a4c8962c479d76f354ea2502e5dc414f5cf21c7",
     "crates/om-sumcheck/tests/fused.rs": "49d17063e8b254edbccf125bb3bedc8733722ee618c990571974e733cb0553ec",
     "crates/om-sumcheck/tests/products.rs": "82fa16f2ac41acfdbe80af316f27ede1ab8542a4b80cf68b07e033d2a8275bc4",
     "crates/om-transcript/Cargo.toml": "e4472a209420a12dd0becf7348557e2d6b06ddb7a30cecf5a9b88e9803ac695c",
     "crates/om-transcript/src/hashing.rs": "40f32fdb4b01a56def19adce4eeb3c6cf5c1cba0384b5ab97de2b6c7992d8da4",
     "crates/om-transcript/src/lib.rs": "1e09ca3943e2d92c02ed30a35e742f670f3b5040e99e91d19c9d17f5ad442444",
     "crates/om-transcript/src/profiling.rs": "76a1f8915a2ce2b7e2959afe36c82108c308f6b13c4c1f4b0128afc8d7e11585",
-    "crates/om-transcript/src/sha256.rs": "45f95805d38ca47d16750285fb3e5d676fed9fd6cd607ac88b0406cb32570bf1"
+    "crates/om-transcript/src/sha256.rs": "45f95805d38ca47d16750285fb3e5d676fed9fd6cd607ac88b0406cb32570bf1",
+    "crates/om-mosaic/tests/prefix.rs": "2226662894ba7381444c008f3602edbaa50c86565c6f46933a61066c03033d65",
+    "crates/om-mosaic/src/lib.rs": "fa98014213379ea123bde4bd6d2eeb262ca0be3cb202371fa5702a7e51cab722",
+    "crates/om-transcript/tests/transcript.rs": "24c15386675fd959c7b31fe39dec256d0d9a147d1cf14592b11b351d89ed6403",
+    "crates/om-transcript/src/transcript.rs": "8e4b508f5af6ec0dd88374b6a8d0b3ac5ba8db6afeecc1083ef8982d8a603e25"
   },
-  "local_patch_sha256": "1c2666399d6d9c5f042532f93c8a8584c57f7b24dde6cca4eedd70c3eb11a186",
+  "local_patch_sha256": "daffa0f5d4e36c4595e2f0fc6242162e4e595b7da3fb2816fad942f8bb250cfc",
   "optimization_sources": {
     "flock": {
       "repository": "https://github.com/succinctlabs/flock",
@@ -214,5 +222,9 @@
   "stage14_api_note": "The existing Eq-factor Cofactor/Endpoint/prove kernel is exported for the ordered Spice comparison. Existing Twist/Shout kernels and proof formats are unchanged.",
   "stage15_api_note": "Expose the existing Eq-factor known-initial-claim driver for the typed Spice masked-value reduction; arithmetic and existing proof kernels are unchanged.",
   "mosaic_profiling_note": "mosaic.bind_g and mosaic.dense isolate full-layout work from per-component batching. Profiling is transcript-neutral.",
-  "dense_bit_scan_note": "Mosaic phase-1 region sums (om-mosaic region_sums) and the packed ring-switch partial evaluations (om-pcs partial_evals_packed) take eight rows at a time when they are dense: om-field subset::subset_sums8 builds the 256 subset sums of the eight eq values and subset::column_bytes transposes the rows so that one table lookup per column replaces up to eight additions. Sparse groups keep the per-bit path. Field addition is XOR, so the sums and the proofs are unchanged."
+  "dense_bit_scan_note": "Mosaic phase-1 region sums (om-mosaic region_sums) and the packed ring-switch partial evaluations (om-pcs partial_evals_packed) take eight rows at a time when they are dense: om-field subset::subset_sums8 builds the 256 subset sums of the eight eq values and subset::column_bytes transposes the rows so that one table lookup per column replaces up to eight additions. Sparse groups keep the per-bit path. Field addition is XOR, so the sums and the proofs are unchanged.",
+  "mosaic_scratch_note": "Dense-row subset lookup scratch is retained per Rayon fold and allocated lazily; sparse groups allocate none. Arithmetic and transcript remain unchanged.",
+  "masked_native_domain_api_note": "Expose existing Eq-factor coefficient reconstruction, batch inversion and wire-evaluation helpers for the proof-compatible native-domain masked-value driver. Existing helper arithmetic and other sumcheck kernels are unchanged.",
+  "mosaic_prefix_note": "Add explicit verifier-provided low-prefix linear functionals for compact Flock gate layouts. Their ordered descriptors are bound before batching; the packed phase folds small multilinear basis tables and retains the existing high-coordinate scans and ordinary final G opening. Empty functional lists delegate to the legacy APIs exactly. RingSwitch and Ligerito are unchanged.",
+  "glue_copy_note": "Borrow addresses in the existing onehot packer and hash public words with identical little-endian framing without a serialized copy on little-endian targets. RingSwitch generates initial field elements from packed u64 pairs; Ligerito allocates its canonical packed table once after RingSwitch, borrows its first Eq fold and consumes it for query encoding. Existing owned/repacking APIs and paired/fused arithmetic remain. No witness table or codewords are retained across the IOP; proof/transcript values are unchanged."
 }

@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 use om_field::{K, U256, clmul_pairs, mul_pairs};
 use om_sumcheck::{
     PackedBits, SumcheckProof, VerificationError, batch_claims, bind_low_in_place, eq_eval,
-    eq_table, interpolate_eval, mle_eval_bits, sumcheck_init, sumcheck_verify,
+    eq_table, interpolate_eval, mle_eval, mle_eval_bits, sumcheck_init, sumcheck_verify,
 };
 use om_transcript::Transcript;
 use rayon::prelude::*;
@@ -32,6 +32,18 @@ pub struct Claim {
     pub comp_id: i64,
     pub point: Vec<K>,
     pub value: K,
+}
+
+/// A component claim with an explicit evaluation functional on its low bits.
+/// For `p = log2(prefix_weights.len())`, the claim is
+/// `sum_x prefix_weights[x_low] eq(claim.point[p..], x_high) table[x]`.
+/// The low `p` coordinates of `claim.point` are ignored placeholders; its
+/// complete length must still equal the component dimension. This does not
+/// assume that the prefix weights factor as an equality point.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PrefixClaim {
+    pub claim: Claim,
+    pub prefix_weights: Vec<K>,
 }
 
 /// Where one component sits in `G`: the aligned subcube starting at
@@ -296,6 +308,99 @@ pub fn batch_prove_packed(
     batch_prove_packed_with(layout, claims, g, transcript, BIT_ROUNDS)
 }
 
+fn prefix_dimension(layout: &Layout, claim: &PrefixClaim) -> Result<usize, VerificationError> {
+    lift_point(layout, &claim.claim)?;
+    let count = claim.prefix_weights.len();
+    if !count.is_power_of_two() || count > 1usize << BIT_ROUNDS {
+        return Err(VerificationError::new("invalid Mosaic prefix weight count"));
+    }
+    let dimension = count.trailing_zeros() as usize;
+    if dimension > claim.claim.point.len() {
+        return Err(VerificationError::new(
+            "Mosaic prefix exceeds component dimension",
+        ));
+    }
+    Ok(dimension)
+}
+
+/// Bind the ordered component bases before drawing batching coefficients.
+/// This framing belongs only to the explicit-prefix API; ordinary API calls
+/// retain their existing transcript, including an empty-prefix delegation.
+fn bind_prefix_context(
+    layout: &Layout,
+    ordinary: &[Claim],
+    prefixes: &[PrefixClaim],
+    transcript: &mut Transcript,
+) {
+    transcript.absorb_bytes(b"mos/prefix/protocol", b"mos/prefix/low-table-v1");
+    let shape: Vec<u8> = [layout.ell, ordinary.len(), prefixes.len()]
+        .into_iter()
+        .flat_map(|x| (x as u64).to_le_bytes())
+        .collect();
+    transcript.absorb_bytes(b"mos/prefix/shape", &shape);
+    for (claim, weights) in ordinary.iter().map(|claim| (claim, &[][..])).chain(
+        prefixes
+            .iter()
+            .map(|p| (&p.claim, p.prefix_weights.as_slice())),
+    ) {
+        let placement = layout.placement(claim.comp_id).expect("validated claim");
+        let descriptor: Vec<u8> = [
+            claim.comp_id as u64,
+            placement.log_size as u64,
+            placement.offset as u64,
+        ]
+        .into_iter()
+        .flat_map(u64::to_le_bytes)
+        .collect();
+        transcript.absorb_bytes(b"mos/prefix/component", &descriptor);
+        transcript.absorb_ks(b"mos/prefix/point", &claim.point);
+        transcript.absorb_ks(b"mos/prefix/weights", weights);
+    }
+}
+
+/// Batch ordinary claims followed by explicit low-prefix functionals.
+/// Every prefix is a power-of-two table fitting both its component and the
+/// first [`BIT_ROUNDS`] variables. The final claim is still an ordinary MLE
+/// opening of `G`, suitable for the unchanged RingSwitch/PCS pipeline.
+/// An empty prefix list delegates to [`batch_prove_packed`] byte for byte.
+pub fn batch_prove_packed_with_prefixes(
+    layout: &Layout,
+    ordinary: &[Claim],
+    prefixes: &[PrefixClaim],
+    g: &PackedBits,
+    transcript: &mut Transcript,
+) -> (BatchProof, Vec<K>, K) {
+    if prefixes.is_empty() {
+        return batch_prove_packed(layout, ordinary, g, transcript);
+    }
+    assert!(
+        ordinary.len() + prefixes.len() <= MAX_CLAIMS,
+        "too many Mosaic claims for powers-of-gamma batching (05.4)"
+    );
+    for claim in ordinary {
+        lift_point(layout, claim).unwrap_or_else(|e| panic!("batch_prove: {}", e.message()));
+    }
+    for claim in prefixes {
+        prefix_dimension(layout, claim).unwrap_or_else(|e| panic!("batch_prove: {}", e.message()));
+    }
+    assert_eq!(
+        g.len(),
+        1usize << layout.ell,
+        "batch_prove: g must have length 2^ell"
+    );
+    bind_prefix_context(layout, ordinary, prefixes, transcript);
+    let claims: Vec<Claim> = ordinary
+        .iter()
+        .cloned()
+        .chain(prefixes.iter().map(|p| p.claim.clone()))
+        .collect();
+    let weights: Vec<&[K]> = prefixes
+        .iter()
+        .map(|p| p.prefix_weights.as_slice())
+        .collect();
+    split_batch_prove_general(layout, &claims, &weights, g, transcript, BIT_ROUNDS)
+}
+
 /// Rounds of the batching sum-check computed straight from the bits
 /// of `G`, before the bound tables (`2^(ell - BIT_ROUNDS)` entries
 /// each) are materialised for the remaining dense rounds.
@@ -338,6 +443,7 @@ struct BatchTerm<'a> {
     point: &'a [K],
     lifted: Vec<K>,
     coef: K,
+    prefix_weights: Option<&'a [K]>,
 }
 
 /// Call `f(i)` for each set bit `i` of `words` in `[start, start + len)`,
@@ -394,10 +500,12 @@ fn region_sums(
     let block = 1usize << (r + 1 + h);
     // Scratch is per Rayon worker, not per high block. Products remain
     // unreduced across high blocks and are reduced once per output slot.
+    type BlockScratch = (Vec<Vec<U256>>, Vec<Vec<K>>, Vec<[K; 256]>);
     let zero = || {
         (
             vec![vec![U256::ZERO; np]; group.len()],
             vec![vec![K::ZERO; np]; group.len()],
+            Vec::new(),
         )
     };
     let rows = 1usize << h;
@@ -405,18 +513,22 @@ fn region_sums(
     // and use subset-sum lookups (`om_field::subset`) where they are dense.
     let grouped = np >= 64 && rows >= 8;
     let words_per_row = np / 64;
-    let one_block = |(mut tot, mut acc): (Vec<Vec<U256>>, Vec<Vec<K>>), yhi: usize| {
+    let one_block = |(mut tot, mut acc, mut tables): BlockScratch, yhi: usize| {
         for column in &mut acc {
             column.fill(K::ZERO);
         }
         if grouped {
-            let mut tables = vec![[K::ZERO; 256]; lo.len()];
             let first = (base + yhi * block) / 64;
             for y0 in (0..rows).step_by(8) {
                 let start = first + y0 * words_per_row;
                 let group = &words[start..start + 8 * words_per_row];
                 let ones: usize = group.iter().map(|w| w.count_ones() as usize).sum();
                 if ones * DENSE_DIVISOR >= 8 * np {
+                    // Keep these lookup tables in the fold's scratch across
+                    // high blocks; sparse regions never need to allocate them.
+                    if tables.is_empty() {
+                        tables.resize(lo.len(), [K::ZERO; 256]);
+                    }
                     for (t, e) in tables.iter_mut().zip(&lo) {
                         *t = om_field::subset::subset_sums8(&e[y0..y0 + 8]);
                     }
@@ -471,7 +583,7 @@ fn region_sums(
                 }
             }
         }
-        (tot, acc)
+        (tot, acc, tables)
     };
     let nblocks = 1usize << (nfree - h);
     let merge = |mut a: Vec<Vec<U256>>, b: Vec<Vec<U256>>| {
@@ -486,7 +598,7 @@ fn region_sums(
         (0..nblocks)
             .into_par_iter()
             .fold(zero, one_block)
-            .map(|(tot, _)| tot)
+            .map(|(tot, _, _)| tot)
             .reduce(|| vec![vec![U256::ZERO; np]; group.len()], merge)
     } else {
         (0..nblocks).fold(zero(), one_block).0
@@ -521,6 +633,19 @@ fn split_batch_prove(
     transcript: &mut Transcript,
     bit_rounds: usize,
 ) -> (BatchProof, Vec<K>, K) {
+    split_batch_prove_general(layout, claims, &[], g, transcript, bit_rounds)
+}
+
+/// `prefix_weights` describes the final claims; all earlier claims are
+/// ordinary points. Each prefix fits in the packed phase's low variables.
+fn split_batch_prove_general(
+    layout: &Layout,
+    claims: &[Claim],
+    prefix_weights: &[&[K]],
+    g: &PackedBits,
+    transcript: &mut Transcript,
+    bit_rounds: usize,
+) -> (BatchProof, Vec<K>, K) {
     let ell = layout.ell;
     let words = g.words();
     let values: Vec<K> = claims.iter().map(|c| c.value).collect();
@@ -529,14 +654,18 @@ fn split_batch_prove(
     // Keep every public claim and alpha draw above. Equal internal basis
     // functions can share one term even when their claimed values disagree:
     // the original batched value remains checked by the first actual message.
-    let mut indices = BTreeMap::<(usize, usize, Vec<u128>), usize>::new();
+    let ordinary_count = claims.len() - prefix_weights.len();
+    let mut indices = BTreeMap::<(usize, usize, Vec<u128>, Vec<u128>), usize>::new();
     let mut terms: Vec<BatchTerm<'_>> = Vec::new();
-    for (c, &alpha) in claims.iter().zip(&alphas) {
+    for (index, (c, &alpha)) in claims.iter().zip(&alphas).enumerate() {
         let p = by_id[&c.comp_id];
+        let prefix = index.checked_sub(ordinary_count).map(|i| prefix_weights[i]);
+        let prefix_log = prefix.map_or(0, |w| w.len().trailing_zeros() as usize);
         let key = (
             p.offset,
             p.log_size,
-            c.point.iter().map(|x| x.value()).collect(),
+            prefix.unwrap_or(&[]).iter().map(|x| x.value()).collect(),
+            c.point[prefix_log..].iter().map(|x| x.value()).collect(),
         );
         if let Some(&j) = indices.get(&key) {
             terms[j].coef += alpha;
@@ -548,6 +677,7 @@ fn split_batch_prove(
                 point: &c.point,
                 lifted: lift_point(layout, c).expect("claims pre-checked by caller"),
                 coef: alpha,
+                prefix_weights: prefix,
             });
         }
     }
@@ -583,6 +713,21 @@ fn split_batch_prove(
     // Short components in the same 2^m-bit block also share that table: their
     // different subcube indicators remain in the term-specific lifted prefix.
     let m = bit_rounds.min(ell);
+    // Explicit low functionals affect only these small tables. The large G
+    // scans still depend solely on the ordinary equality suffix above m.
+    let mut prefix_bases: Vec<Option<Vec<K>>> = terms
+        .iter()
+        .map(|t| {
+            t.prefix_weights.map(|weights| {
+                let p = weights.len().trailing_zeros() as usize;
+                assert!(p <= m, "Mosaic prefix exceeds packed phase");
+                eq_table(&t.lifted[p..m])
+                    .into_iter()
+                    .flat_map(|weight| weights.iter().map(move |&low| low * weight))
+                    .collect()
+            })
+        })
+        .collect();
     let mut cofactor_indices = BTreeMap::<(usize, usize, Vec<u128>), usize>::new();
     let mut cofactor_sources = Vec::new();
     let mut term_cofactors = Vec::with_capacity(terms.len());
@@ -633,6 +778,32 @@ fn split_batch_prove(
             let mut products = [U256::ZERO; 3];
             for (j, t) in terms.iter().enumerate() {
                 let mj = &m_tables[term_cofactors[j]];
+                if let Some(basis) = &prefix_bases[j] {
+                    // An arbitrary prefix remains multilinear, so each
+                    // round is a two-table product. Keep its first-phase
+                    // basis explicit instead of pretending it is one Eq.
+                    let mut g0 = U256::ZERO;
+                    let mut g1 = U256::ZERO;
+                    let mut leading = U256::ZERO;
+                    for (weights, values) in basis.chunks_exact(2).zip(mj.chunks_exact(2)) {
+                        let [at_zero, high] = clmul_pairs(
+                            [weights[0], weights[0] + weights[1]],
+                            [values[0], values[0] + values[1]],
+                        );
+                        g0 += at_zero;
+                        leading += high;
+                        if r == 0 {
+                            g1 += weights[1].clmul(values[1]);
+                        }
+                    }
+                    let [at_zero, high] = clmul_pairs([t.coef; 2], [g0.reduce(), leading.reduce()]);
+                    products[0] += at_zero;
+                    products[2] += high;
+                    if r == 0 {
+                        products[1] += t.coef.clmul(g1.reduce());
+                    }
+                    continue;
+                }
                 let eq_rem = eq_table(&t.lifted[r + 1..m]);
                 let mut u0 = U256::ZERO;
                 let mut ud = U256::ZERO;
@@ -678,8 +849,12 @@ fn split_batch_prove(
             let ev = [g0, g1, g0 + (g0 + g1 + gd).mul_x() + gd.mul_x().mul_x()];
             let chal = round(ev, &mut cur, &mut rs, transcript);
             for (j, t) in terms.iter_mut().enumerate() {
-                cofactor_claims[j] += chal * slopes[j];
-                t.coef *= eqfac(t.lifted[r], chal);
+                if let Some(basis) = &mut prefix_bases[j] {
+                    bind_low_in_place(basis, chal);
+                } else {
+                    cofactor_claims[j] += chal * slopes[j];
+                    t.coef *= eqfac(t.lifted[r], chal);
+                }
             }
             for mj in &mut m_tables {
                 bind_low_in_place(mj, chal);
@@ -698,8 +873,10 @@ fn split_batch_prove(
     // Prefixes have now been absorbed into the coefficients, so equal
     // remaining Eq bases can be combined before constructing the dense E.
     let mut cofactor_coefficients = vec![K::ZERO; cofactor_sources.len()];
-    for (t, &id) in terms.iter().zip(&term_cofactors) {
-        cofactor_coefficients[id] += t.coef;
+    for (j, (t, &id)) in terms.iter().zip(&term_cofactors).enumerate() {
+        cofactor_coefficients[id] += prefix_bases[j]
+            .as_ref()
+            .map_or(t.coef, |basis| t.coef * basis[0]);
     }
     for (&j, coefficient) in cofactor_sources.iter().zip(cofactor_coefficients) {
         if coefficient.is_zero() {
@@ -872,6 +1049,73 @@ pub fn batch_verify(
     let mut ew = K::ZERO;
     for (a, pt) in alphas.iter().zip(&lifted) {
         ew += *a * eq_eval(pt, &r_g);
+    }
+    if ew * proof.v_g != e {
+        return Err(VerificationError::new(
+            "mosaic batching: final check failed",
+        ));
+    }
+    Ok((r_g, proof.v_g))
+}
+
+/// Verify the ordered ordinary/prefix batch against the same ordinary final
+/// `G` opening as [`batch_verify`]. Prefix tables and their complete claim
+/// shapes are verifier input and are bound before the batching challenge.
+/// Empty prefix lists delegate to [`batch_verify`] without new framing.
+pub fn batch_verify_with_prefixes(
+    layout: &Layout,
+    ordinary: &[Claim],
+    prefixes: &[PrefixClaim],
+    proof: &BatchProof,
+    transcript: &mut Transcript,
+) -> Result<(Vec<K>, K), VerificationError> {
+    if prefixes.is_empty() {
+        return batch_verify(layout, ordinary, proof, transcript);
+    }
+    if ordinary.len() + prefixes.len() > MAX_CLAIMS {
+        return Err(VerificationError::new(
+            "too many Mosaic claims for powers-of-gamma batching (05.4)",
+        ));
+    }
+    let ordinary_points: Vec<Vec<K>> = ordinary
+        .iter()
+        .map(|claim| lift_point(layout, claim))
+        .collect::<Result<_, _>>()?;
+    let prefix_points: Vec<Vec<K>> = prefixes
+        .iter()
+        .map(|claim| {
+            prefix_dimension(layout, claim)?;
+            lift_point(layout, &claim.claim)
+        })
+        .collect::<Result<_, _>>()?;
+    bind_prefix_context(layout, ordinary, prefixes, transcript);
+    let values: Vec<K> = ordinary
+        .iter()
+        .map(|c| c.value)
+        .chain(prefixes.iter().map(|p| p.claim.value))
+        .collect();
+    let (alphas, claim) = batch_claims(&values, transcript, b"mos/batch");
+    let (r_g, e) = sumcheck_verify(
+        claim,
+        layout.ell,
+        2,
+        &proof.sumcheck,
+        transcript,
+        b"mos/batch",
+    )?;
+    transcript.absorb_k(b"mos/vg", proof.v_g);
+    let mut ew = K::ZERO;
+    for (&alpha, point) in alphas.iter().zip(&ordinary_points) {
+        ew += alpha * eq_eval(point, &r_g);
+    }
+    for ((&alpha, prefix), point) in alphas[ordinary.len()..]
+        .iter()
+        .zip(prefixes)
+        .zip(&prefix_points)
+    {
+        let p = prefix.prefix_weights.len().trailing_zeros() as usize;
+        let low = mle_eval(&prefix.prefix_weights, &r_g[..p]);
+        ew += alpha * low * eq_eval(&point[p..], &r_g[p..]);
     }
     if ew * proof.v_g != e {
         return Err(VerificationError::new(

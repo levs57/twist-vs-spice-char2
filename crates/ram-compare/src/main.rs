@@ -1,6 +1,6 @@
 use om_transcript::Hasher;
 use om_transcript::profiling;
-use ram_argument::{AccessTrace, Config, Statement, Summary, VirtualizationMode};
+use ram_argument::{AccessTrace, Config, Summary, VirtualizationMode};
 use ram_payload::locality::{locality_operations, reuse_distance};
 use ram_payload::operations::{OperationPayload, guest_operations, random_operations};
 use ram_payload::{GuestFill, GuestOptions, GuestProgram, GuestRows, RamPayload};
@@ -35,6 +35,10 @@ const SOURCES: &[(&str, &[u8])] = &[
     ),
     ("crates/ram-compare/build.rs", include_bytes!("../build.rs")),
     ("crates/ram-compare/src/main.rs", include_bytes!("main.rs")),
+    (
+        "crates/ram-compare/src/interface.rs",
+        include_bytes!("interface.rs"),
+    ),
     (
         "crates/ram-compare/src/platform.rs",
         include_bytes!("platform.rs"),
@@ -888,15 +892,6 @@ struct Public<'a> {
     log_cycles: usize,
     final_memory: Vec<u64>,
 }
-impl<'a> From<&'a Statement> for Public<'a> {
-    fn from(s: &'a Statement) -> Self {
-        Public {
-            initial_memory: &s.initial_memory,
-            log_cycles: s.log_cycles,
-            final_memory: s.final_memory.clone(),
-        }
-    }
-}
 /// The Twist v2 configuration for a run of `ram-compare`.
 fn twist2_config(config: &Config, o: &Options) -> Result<ram_argument::twist2::Config> {
     use ram_argument::twist2::ReadOrder;
@@ -984,7 +979,11 @@ fn measure(
             verifier_ms,
             verifier_metrics,
             proof_size::twist(&result.proof),
-            (&result.statement).into(),
+            Public {
+                initial_memory: &result.statement.initial_memory,
+                log_cycles: result.statement.log_cycles,
+                final_memory: result.statement.final_memory,
+            },
             result.metrics,
             &result.summary,
             trace,
@@ -1021,7 +1020,7 @@ fn measure(
             Public {
                 initial_memory: &result.statement.initial_memory,
                 log_cycles: result.statement.log_cycles,
-                final_memory: result.final_memory.clone(),
+                final_memory: result.final_memory,
             },
             result.metrics,
             &result.summary,
@@ -1050,7 +1049,11 @@ fn measure(
             verifier_ms,
             verifier_metrics,
             proof_size::spice(&result.proof),
-            (&result.statement).into(),
+            Public {
+                initial_memory: &result.statement.initial_memory,
+                log_cycles: result.statement.log_cycles,
+                final_memory: result.statement.final_memory,
+            },
             result.metrics,
             &result.summary,
             trace,
@@ -1145,13 +1148,22 @@ fn round_order(count: usize, round: usize) -> Box<dyn Iterator<Item = usize>> {
 fn benchmark(o: &Options) -> Result<Vec<Case>> {
     let mut cases = Vec::new();
     for (pattern, guest) in workloads(o) {
-        let (pattern, data, operation_trace, operation_digest, metadata, expected_final) =
+        let (pattern, trace, operation_trace, operation_digest, metadata, expected_final) =
             if o.trace_format == "operations" {
                 let data = operation_payload(o, &pattern, guest)?;
                 let digest = operation_trace_hash(&data);
-                let final_memory = data.replay()?;
+                let (old_values, final_memory) = data.replay_with_old_values()?;
                 let metadata = serde_json::to_value(&data.metadata)?;
-                let rmw = data.clone().into_rmw()?;
+                // Only the arrays required by the two owning trace APIs are
+                // copied. In particular, do not clone flags/metadata or replay
+                // the same operations again through an intermediate payload.
+                let rmw = AccessTrace {
+                    initial: data.initial_memory.clone(),
+                    reads: vec![data.addresses.clone()],
+                    writes: data.addresses.clone(),
+                    new_values: data.values.clone(),
+                    read_values: Some(vec![old_values]),
+                };
                 let typed = spice_argument::operations::AccessTrace {
                     initial: data.initial_memory,
                     addresses: data.addresses,
@@ -1169,15 +1181,15 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             } else {
                 let data = payload(o, &pattern, guest)?;
                 let metadata = serde_json::to_value(&data.metadata)?;
-                (pattern, data, None, None, metadata, None)
+                let trace = AccessTrace {
+                    initial: data.initial_memory,
+                    reads: data.reads,
+                    writes: data.writes,
+                    new_values: data.new_values,
+                    read_values: Some(data.read_values),
+                };
+                (pattern, trace, None, None, metadata, None)
             };
-        let trace = AccessTrace {
-            initial: data.initial_memory,
-            reads: data.reads,
-            writes: data.writes,
-            new_values: data.new_values,
-            read_values: Some(data.read_values),
-        };
         let digest = trace_hash(&trace);
         // Shared-address rows: each row's write address is its read address,
         // so `writes` is the one address sequence of either trace format.
@@ -1753,6 +1765,39 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn harness_fingerprint_covers_every_source_module() {
+        fn visit(root: &Path, directory: &Path, names: &mut Vec<String>) {
+            for entry in fs::read_dir(directory).unwrap() {
+                let path = entry.unwrap().path();
+                if path.is_dir() {
+                    visit(root, &path, names);
+                } else if path.extension().is_some_and(|extension| extension == "rs") {
+                    names.push(format!(
+                        "crates/ram-compare/{}",
+                        path.strip_prefix(root)
+                            .unwrap()
+                            .to_str()
+                            .unwrap()
+                            .replace('\\', "/")
+                    ));
+                }
+            }
+        }
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let mut expected = Vec::new();
+        visit(root, &root.join("src"), &mut expected);
+        let mut listed: Vec<_> = SOURCES
+            .iter()
+            .filter(|(name, _)| name.starts_with("crates/ram-compare/src/"))
+            .map(|(name, _)| name.to_string())
+            .collect();
+        expected.sort();
+        listed.sort();
+        assert_eq!(listed, expected);
+    }
+
     #[test]
     fn method_order_preserved_spice_not_repeated_by_chunks() {
         let o = Options {

@@ -69,7 +69,8 @@ pub fn scale_low_weights(weights: &[K], low_eq: &[K]) -> Vec<K> {
 
 /// Batch-invert nonzero `1+z`; entries for `z=1` are zero sentinels. At most
 /// one inversion is needed for all rounds, and no zero value is ever inverted.
-pub(crate) fn batch_inverse_one_plus(point: &[K]) -> Vec<K> {
+#[doc(hidden)]
+pub fn batch_inverse_one_plus(point: &[K]) -> Vec<K> {
     let mut prefixes = Vec::with_capacity(point.len());
     let mut product = K::ONE;
     for &z in point {
@@ -96,7 +97,8 @@ pub(crate) fn batch_inverse_one_plus(point: &[K]) -> Vec<K> {
 /// Recover cofactor coefficients from `[H(0), H(1), h2, ..., hD]`. With a
 /// normalized claim, one endpoint can be omitted. `z=1` uses the other endpoint
 /// explicitly, so the zero sentinel is never used as an inverse.
-pub(crate) fn reconstruct_cofactor(
+#[doc(hidden)]
+pub fn reconstruct_cofactor(
     stats: &[K],
     z: K,
     normalized_claim: Option<K>,
@@ -118,7 +120,8 @@ pub(crate) fn reconstruct_cofactor(
 }
 
 #[inline]
-pub(crate) fn eval_coefficients(coefficients: &[K], r: K) -> K {
+#[doc(hidden)]
+pub fn eval_coefficients(coefficients: &[K], r: K) -> K {
     coefficients
         .iter()
         .rev()
@@ -127,7 +130,8 @@ pub(crate) fn eval_coefficients(coefficients: &[K], r: K) -> K {
 
 /// Original degree-(D+1) wire evaluation points, obtained only after the large
 /// table scan. Multiplication by small points uses shifts/XORs.
-pub(crate) fn factored_evaluations(coefficients: &[K], z: K, prefix: K) -> Vec<K> {
+#[doc(hidden)]
+pub fn factored_evaluations(coefficients: &[K], z: K, prefix: K) -> Vec<K> {
     (0..=coefficients.len())
         .map(|point| {
             let h = coefficients

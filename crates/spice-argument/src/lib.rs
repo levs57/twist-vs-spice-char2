@@ -20,7 +20,8 @@ use om_field::{K, mul_pairs};
 use om_memcheck::onehot::EvalClaim;
 use om_memcheck::twist::word_mle_eval;
 use om_mosaic::{
-    BatchProof, Claim, Layout, batch_prove_packed, batch_verify, compute_layout, place_in_g_packed,
+    BatchProof, Claim, Layout, PrefixClaim, batch_prove_packed_with_prefixes,
+    batch_verify_with_prefixes, compute_layout, place_in_g_packed,
 };
 use om_pcs::ligerito::make_params;
 use om_pcs::{BitPCS, BitProof, Commitment};
@@ -163,6 +164,12 @@ struct Schema {
     components: Vec<ComponentSummary>,
     pcs: BitPCS,
 }
+
+/// A normal component evaluation or a public low-prefix functional followed
+/// by ordinary equality weights. The functional comes from the verified Flock
+/// transcript, never from an unauthenticated proof field.
+type TaggedClaim = (EvalClaim, Option<Vec<K>>);
+
 impl Schema {
     // Same Mosaic/BitPCS placement and opening pipeline as ram-argument and
     // lookup-argument; no alternate commitment implementation is introduced.
@@ -217,20 +224,52 @@ impl Schema {
     fn place(&self, g: &mut PackedBits, name: &str, bits: &PackedBits) {
         place_in_g_packed(g, &self.layout, self.ids[name], bits);
     }
-    fn claims(&self, claims: &[EvalClaim]) -> Result<Vec<Claim>, Error> {
+
+    /// Whole-word components already have the commitment's bit order. Copy
+    /// them directly into their final placement instead of building a second
+    /// PackedBits buffer first. Narrow words retain the existing packing.
+    fn place_values(&self, g: &mut PackedBits, name: &str, values: &[u64], log_bits: usize) {
+        if log_bits == 6 {
+            let id = self.ids[name];
+            let placement = self
+                .layout
+                .placements
+                .iter()
+                .find(|p| p.comp_id == id)
+                .expect("component placement");
+            assert_eq!(values.len() * 64, 1usize << placement.log_size);
+            assert!(placement.offset.is_multiple_of(64));
+            let start = placement.offset / 64;
+            g.words_mut()[start..start + values.len()].copy_from_slice(values);
+        } else {
+            self.place(g, name, &pack_values(values, log_bits));
+        }
+    }
+    fn tagged_claims(
+        &self,
+        claims: &[TaggedClaim],
+    ) -> Result<(Vec<Claim>, Vec<PrefixClaim>), Error> {
         require(
             claims.len() <= om_mosaic::MAX_CLAIMS,
             "too many Mosaic claims",
         )?;
-        claims
-            .iter()
-            .map(|c| {
-                self.ids
-                    .get(&c.poly)
-                    .map(|&i| c.to_mosaic_claim(i))
-                    .ok_or_else(|| Error("unknown component".into()))
-            })
-            .collect()
+        let mut ordinary = Vec::new();
+        let mut prefixes = Vec::new();
+        for (claim, weights) in claims {
+            let id = *self
+                .ids
+                .get(&claim.poly)
+                .ok_or_else(|| Error("unknown component".into()))?;
+            let claim = claim.to_mosaic_claim(id);
+            match weights {
+                None => ordinary.push(claim),
+                Some(weights) => prefixes.push(PrefixClaim {
+                    claim,
+                    prefix_weights: weights.clone(),
+                }),
+            }
+        }
+        Ok((ordinary, prefixes))
     }
 }
 
@@ -285,13 +324,7 @@ fn transcript_with(
             (b"spice/final-committed".as_slice(), &empty)
         },
     ] {
-        tr.absorb_bytes(
-            label,
-            &values
-                .iter()
-                .flat_map(|v| v.to_le_bytes())
-                .collect::<Vec<_>>(),
-        );
+        tr.absorb_u64s(label, values);
     }
     tr
 }
@@ -563,7 +596,7 @@ pub fn prove_with_ordering(
     )?;
     let (reads, previous, last) = {
         let _span = Span::new("spice.witness");
-        let mut memory = trace.initial.clone();
+        let mut memory = std::mem::take(&mut statement.final_memory);
         let mut last: Vec<u32> = (0..cells as u32).collect();
         let mut previous = Vec::with_capacity(t);
         let mut reads = Vec::with_capacity(t);
@@ -594,22 +627,19 @@ pub fn prove_with_ordering(
         let _span = Span::new("spice.witness");
         order::build_carries(&previous, n, a)?
     };
-    let (address_columns, previous_columns, last_columns, g) = {
+    let (address_columns, previous_columns, carry_columns, last_columns, g) = {
         let _span = Span::new("spice.pack");
         let addresses = pack_columns(&trace.writes, a);
         let prev = pack_columns(&previous, w);
         let carry = pack_columns(&carries, w - 1);
         let last = pack_columns(&last, w);
         let mut g = PackedBits::zero(1usize << schema.layout.ell);
-        schema.place(
-            &mut g,
-            "input/read",
-            &pack_values(&reads, config.word_log_bits),
-        );
-        schema.place(
+        schema.place_values(&mut g, "input/read", &reads, config.word_log_bits);
+        schema.place_values(
             &mut g,
             "input/write",
-            &pack_values(&trace.new_values, config.word_log_bits),
+            &trace.new_values,
+            config.word_log_bits,
         );
         for (prefix, columns) in [
             ("input/address", &addresses),
@@ -621,7 +651,7 @@ pub fn prove_with_ordering(
                 schema.place(&mut g, &format!("{prefix}/{i}"), column);
             }
         }
-        (addresses, prev, last, g)
+        (addresses, prev, carry, last, g)
     };
     let (commitment, state) = {
         let _span = Span::new("pcs.commit");
@@ -693,27 +723,47 @@ pub fn prove_with_ordering(
     };
     check_leaves(&statement, &leaves, &inputs, gamma, alpha, beta)?;
     absorb_inputs(&mut tr, &inputs);
-    let mut claims = source_claims(&statement, &leaves.point, &inputs);
+    let mut claims: Vec<TaggedClaim> = source_claims(&statement, &leaves.point, &inputs)
+        .into_iter()
+        .map(|claim| (claim, None))
+        .collect();
     let order = {
         let _span = Span::new("spice.order");
         match ordering {
             OrderingMode::FlockBoolean => {
-                let (proof, terminal) =
-                    order_flock::prove(&previous, &carries, n, a, &mut tr, b"spice/order")?;
-                claims.extend(flock_order_claims(&terminal));
+                let (proof, terminal) = order_flock::prove_packed(
+                    &previous,
+                    &carries,
+                    &previous_columns,
+                    &carry_columns,
+                    n,
+                    a,
+                    &mut tr,
+                    b"spice/order",
+                )?;
+                claims.extend(
+                    flock_order_claims(&terminal)
+                        .into_iter()
+                        .map(|claim| (claim, terminal.prefix_weights.clone())),
+                );
                 OrderingProof::Flock(proof)
             }
             OrderingMode::Ripple => {
                 let (proof, terminal) =
                     order::prove(&previous, &carries, n, a, &mut tr, b"spice/order")?;
-                claims.extend(ripple_order_claims(&terminal));
+                claims.extend(
+                    ripple_order_claims(&terminal)
+                        .into_iter()
+                        .map(|claim| (claim, None)),
+                );
                 OrderingProof::Ripple(proof)
             }
         }
     };
     let (mosaic, r, value) = {
         let _span = Span::new("mosaic.batch");
-        batch_prove_packed(&schema.layout, &schema.claims(&claims)?, &g, &mut tr)
+        let (ordinary, prefixes) = schema.tagged_claims(&claims)?;
+        batch_prove_packed_with_prefixes(&schema.layout, &ordinary, &prefixes, &g, &mut tr)
     };
     let (opened, opening) = {
         let _span = Span::new("pcs.open");
@@ -766,29 +816,28 @@ fn verify_inner(statement: &Statement, proof: &Proof) -> Result<(), Error> {
         lean_grandproduct::verify(l + 1, &proof.permutation, &mut tr, b"spice/permutation")?;
     check_leaves(statement, &leaves, &proof.inputs, gamma, alpha, beta)?;
     absorb_inputs(&mut tr, &proof.inputs);
-    let mut claims = source_claims(statement, &leaves.point, &proof.inputs);
+    let mut claims: Vec<TaggedClaim> = source_claims(statement, &leaves.point, &proof.inputs)
+        .into_iter()
+        .map(|claim| (claim, None))
+        .collect();
     match &proof.order {
-        OrderingProof::Flock(p) => claims.extend(flock_order_claims(&order_flock::verify(
-            n,
-            a,
-            p,
-            &mut tr,
-            b"spice/order",
-        )?)),
-        OrderingProof::Ripple(p) => claims.extend(ripple_order_claims(&order::verify(
-            n,
-            a,
-            p,
-            &mut tr,
-            b"spice/order",
-        )?)),
+        OrderingProof::Flock(p) => {
+            let terminal = order_flock::verify(n, a, p, &mut tr, b"spice/order")?;
+            claims.extend(
+                flock_order_claims(&terminal)
+                    .into_iter()
+                    .map(|claim| (claim, terminal.prefix_weights.clone())),
+            );
+        }
+        OrderingProof::Ripple(p) => claims.extend(
+            ripple_order_claims(&order::verify(n, a, p, &mut tr, b"spice/order")?)
+                .into_iter()
+                .map(|claim| (claim, None)),
+        ),
     }
-    let (r, value) = batch_verify(
-        &schema.layout,
-        &schema.claims(&claims)?,
-        &proof.mosaic,
-        &mut tr,
-    )?;
+    let (ordinary, prefixes) = schema.tagged_claims(&claims)?;
+    let (r, value) =
+        batch_verify_with_prefixes(&schema.layout, &ordinary, &prefixes, &proof.mosaic, &mut tr)?;
     schema
         .pcs
         .verify(&proof.commitment, &r, value, &proof.opening, &mut tr)?;

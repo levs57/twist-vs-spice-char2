@@ -1,6 +1,8 @@
 //! Explicit product relations. Equality factors stay structured until the
 //! requested terminal tables are needed; no relation is inferred from samples.
 
+use std::borrow::Cow;
+
 use om_field::{K, U256, clmul_pairs, fold_pairs, mul_pairs};
 use om_transcript::Transcript;
 use rayon::prelude::*;
@@ -153,7 +155,33 @@ fn bind_into(input: &[K], output: &mut Vec<K>, r: K) {
 /// messages, transcript initialization, and returned column order are unchanged.
 pub fn sumcheck_prove_rounds_eq_mul2(
     claim: K,
-    mut f: Vec<K>,
+    f: Vec<K>,
+    point: &[K],
+    rounds: usize,
+    transcript: &mut Transcript,
+    base: &[u8],
+) -> (SumcheckProof, Vec<K>, Vec<Vec<K>>) {
+    prove_rounds_eq_mul2(claim, Cow::Owned(f), point, rounds, transcript, base)
+}
+
+/// Borrow the initial F table instead of cloning it for the first fold. Every
+/// nonempty fold produces its owned half-size buffer directly; subsequent
+/// rounds use the same fused dot/fold kernels and reusable owned buffers.
+/// With zero rounds the return contract requires a copy of the unbound table.
+pub fn sumcheck_prove_rounds_eq_mul2_borrowed(
+    claim: K,
+    f: &[K],
+    point: &[K],
+    rounds: usize,
+    transcript: &mut Transcript,
+    base: &[u8],
+) -> (SumcheckProof, Vec<K>, Vec<Vec<K>>) {
+    prove_rounds_eq_mul2(claim, Cow::Borrowed(f), point, rounds, transcript, base)
+}
+
+fn prove_rounds_eq_mul2(
+    claim: K,
+    mut f: Cow<'_, [K]>,
     point: &[K],
     rounds: usize,
     transcript: &mut Transcript,
@@ -202,7 +230,10 @@ pub fn sumcheck_prove_rounds_eq_mul2(
             s0 = normalized + point[round + 1] * sd;
             ev = message(s0, sd, scale, point[round + 1]);
         }
-        std::mem::swap(&mut f, &mut scratch);
+        let old = std::mem::replace(&mut f, Cow::Owned(std::mem::take(&mut scratch)));
+        if let Cow::Owned(old) = old {
+            scratch = old;
+        }
     }
     let mut b = eq_table(&point[rounds..]);
     if b.len() >= PAR_THRESHOLD {
@@ -210,7 +241,11 @@ pub fn sumcheck_prove_rounds_eq_mul2(
     } else {
         b.iter_mut().for_each(|x| *x *= scale);
     }
-    (SumcheckProof { round_msgs: msgs }, challenges, vec![f, b])
+    (
+        SumcheckProof { round_msgs: msgs },
+        challenges,
+        vec![f.into_owned(), b],
+    )
 }
 
 fn weighted_evals(
@@ -395,6 +430,154 @@ pub fn sumcheck_prove_weighted_mul2(
 mod tests {
     use super::*;
     use crate::{bind_low, sumcheck_round_evals_mul2};
+
+    fn random(state: &mut u64) -> K {
+        *state ^= *state << 13;
+        *state ^= *state >> 7;
+        *state ^= *state << 17;
+        K::from_u128(u128::from(*state) | (u128::from(state.rotate_left(23)) << 64))
+    }
+
+    #[test]
+    fn borrowed_eq_rounds_match_owned_proof_tables_and_transcript() {
+        let mut seed = 0x93a1_7345_7788;
+        for n in [0usize, 1, 3, 14] {
+            let f: Vec<K> = (0..1usize << n).map(|_| random(&mut seed)).collect();
+            for kind in 0..3 {
+                let point: Vec<K> = (0..n)
+                    .map(|i| match kind {
+                        0 => K::ZERO,
+                        1 => K::from_bit(i % 2 == 0),
+                        _ => random(&mut seed),
+                    })
+                    .collect();
+                let claim = product_sum(&f, &eq_table(&point));
+                for rounds in [0, n.min(1), n / 2, n] {
+                    let mut owned_tr = Transcript::new_default(b"borrow-eq");
+                    let mut borrowed_tr = owned_tr.clone();
+                    let owned = sumcheck_prove_rounds_eq_mul2(
+                        claim,
+                        f.clone(),
+                        &point,
+                        rounds,
+                        &mut owned_tr,
+                        b"sc",
+                    );
+                    let borrowed = sumcheck_prove_rounds_eq_mul2_borrowed(
+                        claim,
+                        &f,
+                        &point,
+                        rounds,
+                        &mut borrowed_tr,
+                        b"sc",
+                    );
+                    assert_eq!(owned, borrowed, "n={n} rounds={rounds} kind={kind}");
+                    assert_eq!(
+                        owned_tr.challenge_k(b"after"),
+                        borrowed_tr.challenge_k(b"after")
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn borrowed_product_and_first_fold_match_owned_kernels() {
+        use crate::{
+            bind_low_and_round_evals_mul2_into, bind_low_and_round_evals_mul2_slices_into,
+            sumcheck_prove_mul2, sumcheck_prove_mul2_borrowed_first,
+            sumcheck_prove_mul2_generated_first,
+        };
+        let mut seed = 0xabcd_7823_2288;
+        for n in [0usize, 1, 2, 14] {
+            let first: Vec<K> = (0..1usize << n).map(|_| random(&mut seed)).collect();
+            let second: Vec<K> = (0..1usize << n)
+                .map(|i| {
+                    if i % 3 == 0 {
+                        K::ZERO
+                    } else {
+                        random(&mut seed)
+                    }
+                })
+                .collect();
+            let claim = product_sum(&first, &second);
+            let mut old_tr = Transcript::new_default(b"borrow-product");
+            let mut new_tr = old_tr.clone();
+            let mut generated_tr = old_tr.clone();
+            let old = sumcheck_prove_mul2(
+                claim,
+                vec![first.clone(), second.clone()],
+                &mut old_tr,
+                b"sc",
+            );
+            let new = sumcheck_prove_mul2_borrowed_first(
+                claim,
+                &first,
+                second.clone(),
+                &mut new_tr,
+                b"sc",
+            );
+            // This is the same little-endian word-pair view RingSwitch uses,
+            // rather than a closure indexing the materialized field table.
+            let words: Vec<u64> = first
+                .iter()
+                .flat_map(|x| [x.value() as u64, (x.value() >> 64) as u64])
+                .collect();
+            let generated = sumcheck_prove_mul2_generated_first(
+                claim,
+                first.len(),
+                |i| K::from_u128(u128::from(words[2 * i]) | (u128::from(words[2 * i + 1]) << 64)),
+                second.clone(),
+                &mut generated_tr,
+                b"sc",
+            );
+            assert_eq!(old, new, "n={n}");
+            assert_eq!(old, generated, "generated n={n}");
+            let after = old_tr.challenge_k(b"after");
+            assert_eq!(after, new_tr.challenge_k(b"after"));
+            assert_eq!(after, generated_tr.challenge_k(b"after"));
+            if n > 0 {
+                for r in [K::ZERO, K::ONE, random(&mut seed)] {
+                    let next = product_sum(&bind_low(&first, r), &bind_low(&second, r));
+                    for known in [None, Some(next)] {
+                        let (mut old, mut new) = (Vec::new(), Vec::new());
+                        let old_ev = bind_low_and_round_evals_mul2_into(
+                            &[first.clone(), second.clone()],
+                            &mut old,
+                            r,
+                            known,
+                        );
+                        let new_ev = bind_low_and_round_evals_mul2_slices_into(
+                            &first, &second, &mut new, r, known,
+                        );
+                        assert_eq!((old_ev, old), (new_ev, new), "n={n} r={r:?}");
+                    }
+                }
+            }
+        }
+        let first = [K::ONE, K::X];
+        assert!(
+            std::panic::catch_unwind(|| sumcheck_prove_mul2_borrowed_first(
+                K::ZERO,
+                &first,
+                vec![K::ONE; 2],
+                &mut Transcript::new_default(b"false"),
+                b"sc"
+            ))
+            .is_err()
+        );
+        assert!(
+            std::panic::catch_unwind(|| sumcheck_prove_mul2_generated_first(
+                K::ZERO,
+                first.len(),
+                |i| first[i],
+                vec![K::ONE; 2],
+                &mut Transcript::new_default(b"false"),
+                b"sc"
+            ))
+            .is_err()
+        );
+    }
 
     #[test]
     fn equality_cofactor_recovery_survives_zero_prefixes() {

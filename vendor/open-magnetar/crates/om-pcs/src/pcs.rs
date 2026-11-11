@@ -153,8 +153,9 @@ pub type BitState = (LevelData, Vec<bool>);
 
 /// Prover state of the packed [`BitPCS::commit_packed`] path: the
 /// level-0 Merkle tree only ([`LevelData::strip`]ped). The bits are
-/// passed again to [`BitPCS::open_packed`], which re-packs the level
-/// table and re-encodes the queried columns.
+/// passed again to [`BitPCS::open_packed`], which packs the level table once,
+/// after RingSwitch, then borrows it for Ligerito's initial sumcheck before
+/// re-encoding queried columns.
 pub type BitStatePacked = LevelData;
 /// Proof of [`BitPCS`]: ring-switching proof and Ligerito proof.
 pub type BitProof = (RingSwitchProof, LigeritoProof);
@@ -185,8 +186,15 @@ impl BitPCS {
 
     /// `commit(bits, tr) -> (cm, state)`: pack, then Ligerito-commit.
     pub fn commit(&self, bits: &[bool], tr: &mut Transcript) -> (Commitment, BitState) {
-        let (cm, st) = self.pcs.commit(&rsw::pack(bits), tr);
-        (cm, (st, bits.to_vec()))
+        let (root, st) = lg::commit_owned(&self.pcs.p, self.pcs.h, rsw::pack(bits));
+        lg::absorb_setup(&self.pcs.p, &root, tr);
+        (
+            Commitment {
+                root,
+                n: self.pcs.p.n,
+            },
+            (st, bits.to_vec()),
+        )
     }
 
     /// Verifier-side setup absorption (delegates to the inner PCS).
@@ -238,6 +246,9 @@ impl BitPCS {
         r: &[K],
         tr: &mut Transcript,
     ) -> (K, BitProof) {
+        // RingSwitch reads its first table from packed bits without allocating
+        // a full field table. Pack once afterwards, for Ligerito's initial
+        // borrowed sumcheck and its subsequent queried encoding.
         let (rs_proof, r_s, v, y) = {
             let _span = om_transcript::profiling::Span::new("pcs.ringswitch");
             rsw::rs_prove_packed_value(bits, r, tr)
@@ -247,9 +258,8 @@ impl BitPCS {
         // Ligerito sum-check round's consistency check.
         let pf = {
             let _span = om_transcript::profiling::Span::new("pcs.ligerito_open");
-            lg::open_owned_repack(&self.pcs.p, self.pcs.h, state, &r_s, v, tr, &|| {
-                rsw::pack_packed(bits)
-            })
+            let packed = rsw::pack_packed(bits);
+            lg::open_owned_with_table(&self.pcs.p, self.pcs.h, state, packed, &r_s, v, tr)
         };
         (y, (rs_proof, pf))
     }
@@ -315,5 +325,75 @@ impl Pcs for BitPCS {
         tr: &mut Transcript,
     ) -> Result<(), VerificationError> {
         BitPCS::verify(self, cm, r, y, proof, tr)
+    }
+}
+
+#[cfg(test)]
+mod opening_copy_tests {
+    use super::*;
+    use std::cell::Cell;
+
+    #[test]
+    fn one_pack_opening_matches_repacking_path_and_preserves_stripped_state() {
+        let mut seed = 0x19a7_25d3_4455u64;
+        let mut next = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            seed
+        };
+        for (n, ks, rs, ts, gs) in [
+            (4usize, vec![2], vec![2], vec![3], vec![1]),
+            (8, vec![3, 3], vec![2, 1], vec![3, 4], vec![2, 1]),
+            (14, vec![4, 4], vec![1, 2], vec![3, 4], vec![1, 1]),
+        ] {
+            let bits = PackedBits::from_words(
+                (0..1usize << (n + 7 - 6)).map(|_| next()).collect(),
+                1 << (n + 7),
+            );
+            let point: Vec<K> = (0..n + 7)
+                .map(|i| match i % 3 {
+                    0 => K::ZERO,
+                    1 => K::ONE,
+                    _ => K::from_u128(u128::from(next()) | (u128::from(next()) << 64)),
+                })
+                .collect();
+            let pcs = BitPCS::new(LigeritoParams::with_gs(n, ks, rs, ts, gs));
+            let mut commit_tr = Transcript::new_default(b"one-pack");
+            let (cm, state) = pcs.commit_packed(&bits, &mut commit_tr);
+            assert!(
+                state.f.is_empty() && state.cw.is_empty(),
+                "no table or codewords retained across the IOP"
+            );
+            let mut old_tr = commit_tr.clone();
+            let mut new_tr = commit_tr;
+            let old_state = state.clone();
+            let (rs_proof, r_s, v, y) =
+                rsw::rs_prove_packed_value_owned_reference(&bits, &point, &mut old_tr);
+            let repacks = Cell::new(0usize);
+            let old = lg::open_owned_repack(
+                &pcs.pcs.p,
+                pcs.pcs.h,
+                old_state,
+                &r_s,
+                v,
+                &mut old_tr,
+                &|| {
+                    repacks.set(repacks.get() + 1);
+                    rsw::pack_packed(&bits)
+                },
+            );
+            assert_eq!(
+                repacks.get(),
+                2,
+                "old opening regenerates before and after level-zero sumcheck"
+            );
+            let new = pcs.open_packed(state, &bits, &point, &mut new_tr);
+            assert_eq!(new, (y, (rs_proof, old)), "packed n={n}");
+            assert_eq!(old_tr.challenge_k(b"after"), new_tr.challenge_k(b"after"));
+            let mut verify_tr = Transcript::new_default(b"one-pack");
+            pcs.absorb_commitment(&cm, &mut verify_tr);
+            pcs.verify(&cm, &point, y, &new.1, &mut verify_tr).unwrap();
+        }
     }
 }

@@ -303,3 +303,27 @@ fn enc_and_u64le() {
     want.extend_from_slice(b"abc");
     assert_eq!(enc(b"abc"), want);
 }
+
+#[test]
+fn borrowed_words_match_explicit_little_endian_framing_for_every_hash_profile() {
+    let words: Vec<u64> = (0..130u64)
+        .map(|i| i.wrapping_mul(0x9e37_79b9_7f4a_7c15) ^ 0x0123_4567_89ab_cdef)
+        .collect();
+    for hasher in [Hasher::Sha256, Hasher::Sha3_256, Hasher::Sha384] {
+        for count in [0, 1, 5, 129] {
+            let slice = &words[1..1 + count];
+            let explicit: Vec<u8> = slice.iter().flat_map(|word| word.to_le_bytes()).collect();
+            let mut expected = Transcript::new(b"word-framing", hasher);
+            expected.challenge_k(b"before");
+            let mut borrowed = expected.clone();
+            expected.absorb_bytes(b"memory", &explicit);
+            borrowed.absorb_u64s(b"memory", slice);
+            assert_eq!(borrowed, expected);
+            assert_eq!(borrowed.counter(), 0);
+            assert_eq!(
+                borrowed.challenge_k(b"after"),
+                expected.challenge_k(b"after")
+            );
+        }
+    }
+}

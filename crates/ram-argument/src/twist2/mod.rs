@@ -27,6 +27,7 @@ pub(crate) mod cycle_prover;
 pub mod read;
 pub(crate) mod util;
 
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 
 use om_field::{K, U256};
@@ -343,6 +344,23 @@ impl Schema {
         place_in_g_packed(g, &self.layout, self.ids[name], table);
     }
 
+    fn place_words(&self, g: &mut PackedBits, name: &str, words: &[u64], log_bits: usize) {
+        if log_bits != 6 {
+            self.place(g, name, &pack_words(words, log_bits));
+            return;
+        }
+        let placement = self
+            .layout
+            .placements
+            .iter()
+            .find(|p| p.comp_id == self.ids[name])
+            .expect("word component in layout");
+        assert_eq!(words.len() * 64, 1usize << placement.log_size);
+        assert_eq!(placement.offset % 64, 0);
+        let start = placement.offset / 64;
+        g.words_mut()[start..start + words.len()].copy_from_slice(words);
+    }
+
     fn claim(&self, name: &str, point: Vec<K>, value: K) -> Claim {
         Claim {
             comp_id: self.ids[name],
@@ -368,6 +386,10 @@ fn pack_words(words: &[u64], log_bits: usize) -> PackedBits {
         })
         .collect();
     PackedBits::from_words(packed, words.len() * width)
+}
+
+fn absorb_memory(tr: &mut Transcript, label: &[u8], words: &[u64]) {
+    tr.absorb_u64s(label, words);
 }
 
 fn statement_transcript(statement: &Statement, schema: &Schema) -> Transcript {
@@ -400,10 +422,9 @@ fn statement_transcript(statement: &Statement, schema: &Schema) -> Transcript {
         })
         .collect();
     tr.absorb_bytes(b"ram/layout", &layout);
-    let words = |w: &[u64]| -> Vec<u8> { w.iter().flat_map(|x| x.to_le_bytes()).collect() };
-    tr.absorb_bytes(b"ram/initial", &words(&statement.initial_memory));
+    absorb_memory(&mut tr, b"ram/initial", &statement.initial_memory);
     if let Some(f) = &statement.final_memory {
-        tr.absorb_bytes(b"ram/final", &words(f));
+        absorb_memory(&mut tr, b"ram/final", f);
     }
     tr
 }
@@ -411,6 +432,7 @@ fn statement_transcript(statement: &Statement, schema: &Schema) -> Transcript {
 /// The witness in one pass (issue item 7). With supplied read values, `Inc`
 /// is a parallel map and only stores update the final memory. Without them
 /// the trace is replayed once. `rv` is prover-only: it is not committed.
+#[cfg(test)]
 pub(crate) struct Witness {
     pub addr: Vec<u32>,
     pub rv: Vec<u64>,
@@ -418,11 +440,18 @@ pub(crate) struct Witness {
     pub final_memory: Vec<u64>,
 }
 
-pub(crate) fn build_witness(trace: &AccessTrace) -> Witness {
-    let addr = trace.writes.clone();
+struct PreparedWitness<'a> {
+    addr: &'a [u32],
+    rv: Cow<'a, [u64]>,
+    inc: Vec<u64>,
+    final_memory: Vec<u64>,
+}
+
+fn prepare_witness(trace: &AccessTrace) -> PreparedWitness<'_> {
+    let addr = trace.writes.as_slice();
     match &trace.read_values {
         Some(values) => {
-            let rv = values[0].clone();
+            let rv = values[0].as_slice();
             let inc: Vec<u64> = rv
                 .par_iter()
                 .zip(&trace.new_values)
@@ -434,9 +463,9 @@ pub(crate) fn build_witness(trace: &AccessTrace) -> Witness {
                     final_memory[addr[j] as usize] = trace.new_values[j];
                 }
             }
-            Witness {
+            PreparedWitness {
                 addr,
-                rv,
+                rv: Cow::Borrowed(rv),
                 inc,
                 final_memory,
             }
@@ -451,13 +480,24 @@ pub(crate) fn build_witness(trace: &AccessTrace) -> Witness {
                 inc.push(old ^ w);
                 memory[a as usize] = w;
             }
-            Witness {
+            PreparedWitness {
                 addr,
-                rv,
+                rv: Cow::Owned(rv),
                 inc,
                 final_memory: memory,
             }
         }
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn build_witness(trace: &AccessTrace) -> Witness {
+    let witness = prepare_witness(trace);
+    Witness {
+        addr: witness.addr.to_vec(),
+        rv: witness.rv.into_owned(),
+        inc: witness.inc,
+        final_memory: witness.final_memory,
     }
 }
 
@@ -477,7 +517,7 @@ fn absorb_claims(tr: &mut Transcript, claims: &CpuClaims) {
 }
 
 /// `W[addr](r_c)`, `W[rv](r_c)` and `W[rv ⊕ Inc](r_c)` in one pass.
-fn cpu_claims(w: &Witness, r_c: &[K]) -> CpuClaims {
+fn cpu_claims(w: &PreparedWitness<'_>, r_c: &[K]) -> CpuClaims {
     let se = SplitEq::new(r_c);
     let block = |hi: usize| -> [K; 3] {
         let base = hi << se.h;
@@ -583,19 +623,49 @@ pub fn prove(config: &Config, trace: &AccessTrace) -> Result<ProveResult, RamErr
     let schema = Schema::new(config, n);
     let witness = {
         let _span = Span::new("ram.witness");
-        build_witness(trace)
+        prepare_witness(trace)
     };
-    prove_witness(config, n, &trace.initial, witness, schema, None)
+    prove_prepared(config, n, &trace.initial, witness, schema, None)
 }
 
 /// Tests use `hook` to change the CPU claims before they are absorbed.
 pub(crate) type ClaimsHook<'a> = Option<&'a dyn Fn(&mut CpuClaims)>;
 
+#[cfg(test)]
 pub(crate) fn prove_witness(
     config: &Config,
     n: usize,
     initial: &[u64],
     witness: Witness,
+    schema: Schema,
+    hook: ClaimsHook<'_>,
+) -> Result<ProveResult, RamError> {
+    let Witness {
+        addr,
+        rv,
+        inc,
+        final_memory,
+    } = witness;
+    prove_prepared(
+        config,
+        n,
+        initial,
+        PreparedWitness {
+            addr: &addr,
+            rv: Cow::Owned(rv),
+            inc,
+            final_memory,
+        },
+        schema,
+        hook,
+    )
+}
+
+fn prove_prepared(
+    config: &Config,
+    n: usize,
+    initial: &[u64],
+    witness: PreparedWitness<'_>,
     schema: Schema,
     hook: ClaimsHook<'_>,
 ) -> Result<ProveResult, RamError> {
@@ -613,20 +683,20 @@ pub(crate) fn prove_witness(
     let g = {
         let _span = Span::new("ram.pack");
         let mut g = PackedBits::zero(1usize << schema.layout.ell);
-        let comps = AddrComps::from_addrs(witness.addr.clone(), config.address_bits, d);
         for i in 0..d {
-            schema.place(&mut g, &comp_name(i), &comps.packed(i));
-        }
-        schema.place(
-            &mut g,
-            "ram/inc",
-            &pack_words(&witness.inc, config.word_log_bits),
-        );
-        if !config.public_final {
             schema.place(
                 &mut g,
+                &comp_name(i),
+                &AddrComps::packed_from_addrs(witness.addr, config.chunk_bits, i),
+            );
+        }
+        schema.place_words(&mut g, "ram/inc", &witness.inc, config.word_log_bits);
+        if !config.public_final {
+            schema.place_words(
+                &mut g,
                 "ram/final",
-                &pack_words(&witness.final_memory, config.word_log_bits),
+                &witness.final_memory,
+                config.word_log_bits,
             );
         }
         g
@@ -655,27 +725,37 @@ pub(crate) fn prove_witness(
         // built from M0'(k) = enc(M0[k]) + gamma_a enc(k) with the same
         // increments. Its claim is v_rv + gamma_a v_addr.
         let _span = Span::new("ram.claims");
-        let shift: Vec<K> = (0..cells_of(config))
-            .into_par_iter()
-            .with_min_len(1 << 12)
-            .map(|k| gamma_a * word::enc(k as u64))
-            .collect();
-        let m0_e: Vec<K> = initial
-            .par_iter()
-            .zip(&shift)
-            .with_min_len(1 << 12)
-            .map(|(&x, &t)| word::enc(x) + t)
-            .collect();
-        // Only the cycle-first prover reads per-cycle values.
-        let rv_e: Vec<K> = match config.order {
-            ReadOrder::CycleFirst => witness
-                .rv
-                .par_iter()
-                .zip(&witness.addr)
-                .with_min_len(1 << 12)
-                .map(|(&x, &k)| word::enc(x) + shift[k as usize])
-                .collect(),
-            ReadOrder::AddressFirst => Vec::new(),
+        let (m0_e, rv_e): (Vec<K>, Vec<K>) = match config.order {
+            ReadOrder::AddressFirst => (
+                initial
+                    .par_iter()
+                    .enumerate()
+                    .with_min_len(1 << 12)
+                    .map(|(k, &x)| word::enc(x) + gamma_a * word::enc(k as u64))
+                    .collect(),
+                Vec::new(),
+            ),
+            ReadOrder::CycleFirst => {
+                let shift: Vec<K> = (0..cells_of(config))
+                    .into_par_iter()
+                    .with_min_len(1 << 12)
+                    .map(|k| gamma_a * word::enc(k as u64))
+                    .collect();
+                let m0_e = initial
+                    .par_iter()
+                    .zip(&shift)
+                    .with_min_len(1 << 12)
+                    .map(|(&x, &t)| word::enc(x) + t)
+                    .collect();
+                let rv_e = witness
+                    .rv
+                    .par_iter()
+                    .zip(witness.addr.par_iter())
+                    .with_min_len(1 << 12)
+                    .map(|(&x, &k)| word::enc(x) + shift[k as usize])
+                    .collect();
+                (m0_e, rv_e)
+            }
         };
         let inc_e: Vec<K> = witness
             .inc
@@ -690,7 +770,7 @@ pub(crate) fn prove_witness(
         let _span = Span::new("twist.read");
         read::prove(
             &read::ReadWitness {
-                addr: &witness.addr,
+                addr: witness.addr,
                 rv_e: &rv_e,
                 inc_e: &inc_e,
                 store: &store,
@@ -732,7 +812,7 @@ pub(crate) fn prove_witness(
         );
         cycle::prove(
             &cycle::CycleWitness {
-                addr: &witness.addr,
+                addr: witness.addr,
                 inc_e: &inc_e,
                 c: config.chunk_bits,
                 d,
@@ -854,14 +934,7 @@ fn verify_inner(statement: &Statement, proof: &Proof) -> Result<Interface, RamEr
         let _span = Span::new("verify.memory");
         let m0_at = word::mle(&statement.initial_memory, &read.r_k);
         let diff = match (&statement.final_memory, proof.final_eval) {
-            (Some(f), _) => {
-                let x: Vec<u64> = f
-                    .iter()
-                    .zip(&statement.initial_memory)
-                    .map(|(a, b)| a ^ b)
-                    .collect();
-                word::mle(&x, &read.r_k)
-            }
+            (Some(f), _) => word::mle(f, &read.r_k) + m0_at,
             (None, Some(v)) => v + m0_at,
             (None, None) => unreachable!(),
         };
@@ -921,3 +994,61 @@ pub fn verify(statement: &Statement, proof: &Proof) -> Result<Interface, RamErro
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod preparation_tests {
+    use super::*;
+
+    #[test]
+    fn borrowed_memory_bytes_preserve_exact_transcript() {
+        for words in [vec![], vec![0], vec![1, u64::MAX, 0x0123_4567_89ab_cdef]] {
+            let mut actual = Transcript::new_default(b"memory-borrow-oracle");
+            let mut expected = actual.clone();
+            absorb_memory(&mut actual, b"memory", &words);
+            let bytes: Vec<u8> = words.iter().flat_map(|word| word.to_le_bytes()).collect();
+            expected.absorb_bytes(b"memory", &bytes);
+            assert_eq!(actual, expected);
+            assert_eq!(actual.challenge_k(b"after"), expected.challenge_k(b"after"));
+        }
+    }
+
+    #[test]
+    fn prepared_trace_borrows_inputs_and_direct_word_placement_matches_packed_bits() {
+        let trace = AccessTrace {
+            initial: vec![1, 2, 3, 4],
+            reads: vec![vec![0, 1, 0, 3]],
+            writes: vec![0, 1, 0, 3],
+            new_values: vec![5, 2, 7, 0],
+            read_values: Some(vec![vec![1, 2, 5, 4]]),
+        };
+        let witness = prepare_witness(&trace);
+        assert_eq!(witness.addr.as_ptr(), trace.writes.as_ptr());
+        assert!(matches!(&witness.rv, Cow::Borrowed(_)));
+        assert_eq!(
+            witness.rv.as_ptr(),
+            trace.read_values.as_ref().unwrap()[0].as_ptr()
+        );
+        assert_eq!(witness.inc, vec![4, 0, 2, 4]);
+        assert_eq!(witness.final_memory, vec![7, 2, 3, 0]);
+        for word_log_bits in 0..=6 {
+            let config = Config {
+                address_bits: 2,
+                chunk_bits: 1,
+                word_log_bits,
+                ..Config::default()
+            };
+            let schema = Schema::new(&config, 2);
+            let mask = if word_log_bits == 6 {
+                u64::MAX
+            } else {
+                (1u64 << (1usize << word_log_bits)) - 1
+            };
+            let words = [1 & mask, 0, 0x1234_5678_9abc_def0 & mask, mask];
+            let mut direct = PackedBits::zero(1usize << schema.layout.ell);
+            let mut expected = direct.clone();
+            schema.place_words(&mut direct, "ram/inc", &words, word_log_bits);
+            schema.place(&mut expected, "ram/inc", &pack_words(&words, word_log_bits));
+            assert_eq!(direct, expected, "word_log_bits={word_log_bits}");
+        }
+    }
+}

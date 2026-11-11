@@ -704,10 +704,16 @@ fn cycle_prover_matches_the_reference_prover() {
     // sequential and parallel paths and every block split.
     let mut s = 21u64;
     for &(n, a, c) in &[
+        // Odd component counts, Boolean points and all-load/all-store rows.
+        (2usize, 3usize, 1usize),
+        (3, 6, 2),
         (4usize, 4usize, 2usize),
         (5, 6, 3),
         (7, 8, 4),
         (9, 8, 2),
+        // On either side of the parallel task threshold.
+        (12, 6, 2),
+        (13, 6, 2),
         (14, 8, 4),
         (15, 12, 4),
         // Chunks wider than LOOKUP_MAX_C build round-0 rows instead.
@@ -718,15 +724,31 @@ fn cycle_prover_matches_the_reference_prover() {
             K::from_u128(((lcg(s) as u128) << 64) | lcg(s) as u128)
         }
         let d = a / c;
-        let r_k: Vec<K> = (0..a).map(|_| rand_k(&mut s)).collect();
-        let r_j: Vec<K> = (0..n).map(|_| rand_k(&mut s)).collect();
+        let r_k: Vec<K> = (0..a)
+            .map(|i| {
+                if n <= 3 {
+                    K::from_bit(i % 2 == 0)
+                } else {
+                    rand_k(&mut s)
+                }
+            })
+            .collect();
+        let r_j: Vec<K> = (0..n)
+            .map(|i| {
+                if n <= 3 {
+                    K::from_bit(i % 2 != 0)
+                } else {
+                    rand_k(&mut s)
+                }
+            })
+            .collect();
         let addr: Vec<u32> = (0..1u32 << n)
             .map(|_| (lcg(&mut s) % (1 << a)) as u32)
             .collect();
         // About half the cycles are loads (zero increment).
         let inc: Vec<K> = (0..1usize << n)
             .map(|_| {
-                if lcg(&mut s).is_multiple_of(2) {
+                if n == 2 || (n != 3 && lcg(&mut s).is_multiple_of(2)) {
                     K::ZERO
                 } else {
                     rand_k(&mut s)
@@ -754,6 +776,88 @@ fn cycle_prover_matches_the_reference_prover() {
             t2.challenge_k(b"after"),
             "transcripts diverge at n={n}"
         );
+    }
+}
+
+#[test]
+fn single_component_cycle_prover_matches_reference_on_load_and_mixed_pairs() {
+    let mut state = 0x51c7_2b03;
+    for (n, c) in [(4usize, 1usize), (5, 5), (6, 6)] {
+        for all_loads in [true, false] {
+            let random = |state: &mut u64| {
+                K::from_u128((u128::from(lcg(state)) << 64) | u128::from(lcg(state)))
+            };
+            let r_k: Vec<K> = (0..c).map(|_| random(&mut state)).collect();
+            let r_j: Vec<K> = (0..n).map(|_| random(&mut state)).collect();
+            let addr: Vec<u32> = (0..1u32 << n).map(|j| j % (1 << c)).collect();
+            let inc: Vec<K> = (0..1usize << n)
+                .map(|j| {
+                    if all_loads || j % 5 != 0 {
+                        K::ZERO
+                    } else {
+                        random(&mut state)
+                    }
+                })
+                .collect();
+            let mut tr = Transcript::new_default(b"single-component-cycle");
+            let ch = cycle::challenges(&mut tr, 1);
+            let witness = cycle::CycleWitness {
+                addr: &addr,
+                inc_e: &inc,
+                c,
+                d: 1,
+            };
+            let (rows, eps) = cycle::reference_rows(&witness, &r_k, &r_j, &ch);
+            let claim = cycle::row_sum(&rows);
+            let mut fast_tr = tr.clone();
+            let fast = cycle_prover::prove(&witness, &r_k, &r_j, claim, &ch, &mut fast_tr);
+            let mut want_tr = tr.clone();
+            let want = cycle::prove_rows(rows, &eps, claim, &mut want_tr);
+            assert_eq!(fast.proof, want.proof, "n={n} c={c} all_loads={all_loads}");
+            assert_eq!(fast.z, want.z);
+            assert_eq!(fast_tr.challenge_k(b"after"), want_tr.challenge_k(b"after"));
+            cycle::verify(&fast.proof, &r_j, claim, &ch, 1, &mut tr).unwrap();
+        }
+    }
+}
+
+#[test]
+fn single_component_honest_load_and_mixed_traces_verify_in_both_orders() {
+    for n in [4usize, 7] {
+        for all_loads in [true, false] {
+            let initial = vec![0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210];
+            let mut memory = initial.clone();
+            let (mut addresses, mut reads, mut writes) = (Vec::new(), Vec::new(), Vec::new());
+            for j in 0..1usize << n {
+                let address = j % 2;
+                let read = memory[address];
+                let write = if !all_loads && j % 5 == 0 {
+                    read ^ (j as u64 + 1)
+                } else {
+                    read
+                };
+                memory[address] = write;
+                addresses.push(address as u32);
+                reads.push(read);
+                writes.push(write);
+            }
+            let trace = AccessTrace {
+                initial,
+                reads: vec![addresses.clone()],
+                writes: addresses,
+                new_values: writes,
+                read_values: Some(vec![reads]),
+            };
+            for order in ORDERS {
+                for merge in [false, true] {
+                    let result = prove(&config(1, 1, order, merge, true), &trace).unwrap();
+                    verify(&result.statement, &result.proof).unwrap_or_else(|e| {
+                        panic!("n={n} all_loads={all_loads} order={order:?} merge={merge}: {e}")
+                    });
+                    assert_eq!(result.final_memory, memory);
+                }
+            }
+        }
     }
 }
 

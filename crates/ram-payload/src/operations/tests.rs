@@ -1,5 +1,22 @@
 use super::*;
 
+#[test]
+fn one_replay_returns_validated_old_values_and_final_memory() {
+    let mut payload = random_operations(2, 1, 19).unwrap();
+    payload.initial_memory = vec![11, 22];
+    payload.addresses = vec![0, 1, 0, 1];
+    payload.values = vec![11, 33, 44, 33];
+    payload.is_write = vec![false, true, true, false];
+    assert_eq!(
+        payload.replay_with_old_values().unwrap(),
+        (vec![11, 22, 11, 33], vec![44, 33])
+    );
+    assert_eq!(payload.replay().unwrap(), vec![44, 33]);
+    payload.values[3] = 22;
+    assert!(payload.replay_with_old_values().is_err());
+    assert!(payload.replay().is_err());
+}
+
 fn operation(
     address: u32,
     store: Option<Store>,

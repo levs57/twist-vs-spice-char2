@@ -68,7 +68,7 @@ pub struct PartialSourceOperation {
 }
 
 impl OperationPayload {
-    fn replay_with_old_values(&self) -> Result<(Vec<u64>, Vec<u64>), PayloadError> {
+    fn replay_inner<const KEEP_OLD: bool>(&self) -> Result<(Vec<u64>, Vec<u64>), PayloadError> {
         let count = self.addresses.len();
         if count == 0
             || !count.is_power_of_two()
@@ -90,7 +90,11 @@ impl OperationPayload {
             ));
         }
         let mut memory = self.initial_memory.clone();
-        let mut old_values = Vec::with_capacity(count);
+        let mut old_values = if KEEP_OLD {
+            Vec::with_capacity(count)
+        } else {
+            Vec::new()
+        };
         for (i, ((&address, &value), &write)) in self
             .addresses
             .iter()
@@ -101,7 +105,9 @@ impl OperationPayload {
             let word = memory
                 .get_mut(address as usize)
                 .ok_or_else(|| PayloadError(format!("operation address out of range at {i}")))?;
-            old_values.push(*word);
+            if KEEP_OLD {
+                old_values.push(*word);
+            }
             if write {
                 *word = value;
             } else if *word != value {
@@ -112,7 +118,13 @@ impl OperationPayload {
     }
 
     pub fn replay(&self) -> Result<Vec<u64>, PayloadError> {
-        self.replay_with_old_values().map(|(_, memory)| memory)
+        self.replay_inner::<false>().map(|(_, memory)| memory)
+    }
+
+    /// Validate/replay once and return both old values and final memory, so a
+    /// caller preparing multiple argument representations can reuse the pass.
+    pub fn replay_with_old_values(&self) -> Result<(Vec<u64>, Vec<u64>), PayloadError> {
+        self.replay_inner::<true>()
     }
 
     /// Translate the same operation rows for Twist: reads write back their old

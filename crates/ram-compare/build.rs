@@ -31,8 +31,12 @@ fn collect(root: &Path, rel: &Path, out: &mut Vec<PathBuf>) {
     }
 }
 
-fn git(args: &[&str]) -> Option<String> {
-    let out = Command::new("git").args(args).output().ok()?;
+fn git(root: &Path, args: &[&str]) -> Option<String> {
+    let out = Command::new("git")
+        .current_dir(root)
+        .args(args)
+        .output()
+        .ok()?;
     out.status
         .success()
         .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
@@ -58,6 +62,11 @@ fn main() {
 
     let manifest = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("manifest dir"));
     let root = manifest.join("../..");
+    println!("cargo:rerun-if-changed={}", manifest.join("src").display());
+    println!(
+        "cargo:rerun-if-changed={}",
+        manifest.join("Cargo.toml").display()
+    );
     let mut files = Vec::new();
     for rel in ARGUMENT_SOURCES {
         collect(&root, Path::new(rel), &mut files);
@@ -80,26 +89,40 @@ fn main() {
 
     // The commit the binary was built from, and whether the tracked tree
     // differed from it. Rerun when HEAD, the branch ref or the index moves.
-    let commit = git(&["rev-parse", "HEAD"]).unwrap_or_else(|| "unknown".into());
-    let dirty = match git(&["status", "--porcelain", "--untracked-files=no"]) {
+    let commit = git(&root, &["rev-parse", "HEAD"]).unwrap_or_else(|| "unknown".into());
+    let dirty = match git(&root, &["status", "--porcelain", "--untracked-files=no"]) {
         Some(status) => (!status.is_empty()).to_string(),
         None => "unknown".into(),
     };
     println!("cargo:rustc-env=RAM_COMPARE_GIT_COMMIT={commit}");
     println!("cargo:rustc-env=RAM_COMPARE_GIT_DIRTY={dirty}");
-    let mut watched = vec!["HEAD".to_string(), "index".to_string()];
-    if let Some(head_ref) = git(&["symbolic-ref", "-q", "HEAD"]) {
+    // A source-only edit does not move the index. Watch tracked files as well
+    // so Cargo cannot reuse a clean-tree marker after an unstaged edit. The
+    // src watch above also covers newly added harness modules.
+    if let Some(names) = git(&root, &["ls-files", "-z"]) {
+        for name in names.split('\0').filter(|name| !name.is_empty()) {
+            println!("cargo:rerun-if-changed={}", root.join(name).display());
+        }
+    }
+    let mut watched = vec![
+        "HEAD".to_string(),
+        "index".to_string(),
+        "packed-refs".to_string(),
+    ];
+    if let Some(head_ref) = git(&root, &["symbolic-ref", "-q", "HEAD"]) {
         watched.push(head_ref);
     }
     for name in watched {
-        if let Some(path) = git(&["rev-parse", "--git-path", &name]) {
+        if let Some(path) = git(&root, &["rev-parse", "--git-path", &name]) {
             let path = PathBuf::from(path);
             let path = if path.is_absolute() {
                 path
             } else {
-                manifest.join(path)
+                root.join(path)
             };
-            println!("cargo:rerun-if-changed={}", path.display());
+            if path.exists() {
+                println!("cargo:rerun-if-changed={}", path.display());
+            }
         }
     }
 }

@@ -2,10 +2,11 @@
 //!
 //! Donor: succinctlabs/flock at daa0cf426563b01f9e744f6265ebae37c97afcb7,
 //! `crates/flock-core/src/zerocheck.rs` and its optimized skip/tail kernels.
-//! The gate index occupies the low six coordinates, so its phi8 evaluation
-//! functional acts only on known gate positions. The remaining coordinates
-//! are ordinary cycle MLE points and reach the existing Mosaic/BitPCS opening.
-//! A/B use one cycle point; the extracted C column uses a second one.
+//! For large traces the cycle index occupies the low coordinates and the
+//! gate axis is rounded only to the comparison width's next power of two.
+//! Flock's six skipped cycle coordinates give a general Lagrange functional;
+//! its weights are returned explicitly for source evaluation and Mosaic.
+//! Small traces retain the original gate-low layout and ordinary MLE claims.
 //!
 //! This module does not authenticate its terminal source values by itself.
 //! The caller must commit predecessor/carry bitplanes before entering, then
@@ -21,7 +22,7 @@ use flock_core::{
     },
 };
 use om_field::{K, U256};
-use om_sumcheck::eq_table;
+use om_sumcheck::{PackedBits, eq_table};
 use om_transcript::{Transcript, profiling::Span};
 use rayon::prelude::*;
 
@@ -29,6 +30,15 @@ use crate::order::{OrderError, width};
 
 const MIN_CYCLE_BITS: usize = 7;
 const GATE_SLOTS: usize = 1 << K_SKIP;
+const COMPACT_MIN_CYCLE_BITS: usize = K_SKIP + MIN_CYCLE_BITS;
+
+fn compact(n: usize) -> bool {
+    n >= COMPACT_MIN_CYCLE_BITS
+}
+
+fn gate_log(w: usize) -> usize {
+    w.next_power_of_two().trailing_zeros() as usize
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct OrderProof {
@@ -45,6 +55,9 @@ pub struct OrderClaims {
     pub previous_ab: Vec<K>,
     pub carries_ab: Vec<K>,
     pub carries_c: Vec<K>,
+    /// Replaces Eq on the low six cycle coordinates in the compact layout.
+    /// The corresponding entries of point_ab/point_c are placeholders.
+    pub prefix_weights: Option<Vec<K>>,
 }
 
 fn from_flock(x: F128) -> K {
@@ -104,6 +117,19 @@ impl Challenger for OmChallenger {
 
 fn setup(n: usize, a: usize, tr: &mut Transcript, base: &[u8]) -> Result<usize, OrderError> {
     let w = width(n, a)?;
+    if compact(n) {
+        let g = gate_log(w);
+        tr.absorb_bytes(
+            &label(base, b"/protocol"),
+            b"spice/order/flock-boolean/cycle-low/v2",
+        );
+        let dimensions: Vec<u8> = [n, a, w, n, K_SKIP, g]
+            .into_iter()
+            .flat_map(|v| (v as u64).to_le_bytes())
+            .collect();
+        tr.absorb_bytes(&label(base, b"/dimensions"), &dimensions);
+        return Ok(n + g - K_SKIP);
+    }
     let cycle_bits = n.max(MIN_CYCLE_BITS);
     tr.absorb_bytes(&label(base, b"/protocol"), b"spice/order/flock-boolean/v1");
     let dimensions: Vec<u8> = [n, a, w, cycle_bits, K_SKIP]
@@ -158,6 +184,87 @@ fn packed_rows(
             aa.copy_from_slice(&av.to_le_bytes());
             bb.copy_from_slice(&bv.to_le_bytes());
             cc.copy_from_slice(&cv.to_le_bytes());
+            Ok(())
+        })?;
+    Ok((packed, w))
+}
+
+/// Gate-major packed Boolean columns: bit j + 2^n*b is gate b at cycle j.
+/// Unused gates form one declared zero suffix rather than gaps in every row.
+fn packed_rows_compact(
+    previous: &[PackedBits],
+    carries: &[PackedBits],
+    n: usize,
+    a: usize,
+) -> Result<([Vec<u8>; 3], usize), OrderError> {
+    let w = width(n, a)?;
+    let cycles = 1usize << n;
+    if !compact(n)
+        || previous.len() != w
+        || carries.len() != w - 1
+        || previous.iter().chain(carries).any(|p| p.len() != cycles)
+    {
+        return Err(OrderError(
+            "order/flock: malformed packed source planes".into(),
+        ));
+    }
+    let bytes_per_gate = cycles / 8;
+    let mut packed = std::array::from_fn(|_| vec![0u8; bytes_per_gate * w.next_power_of_two()]);
+    let [a_rows, b_rows, c_rows] = &mut packed;
+    const TIME_LOW: [u64; 6] = [
+        0xaaaa_aaaa_aaaa_aaaa,
+        0xcccc_cccc_cccc_cccc,
+        0xf0f0_f0f0_f0f0_f0f0,
+        0xff00_ff00_ff00_ff00,
+        0xffff_0000_ffff_0000,
+        0xffff_ffff_0000_0000,
+    ];
+    a_rows
+        .par_chunks_mut(bytes_per_gate)
+        .zip(b_rows.par_chunks_mut(bytes_per_gate))
+        .zip(c_rows.par_chunks_mut(bytes_per_gate))
+        .enumerate()
+        .try_for_each(|(bit, ((aa, bb), cc))| {
+            if bit >= w {
+                return Ok(());
+            }
+            for (word, ((aa, bb), cc)) in aa
+                .chunks_exact_mut(8)
+                .zip(bb.chunks_exact_mut(8))
+                .zip(cc.chunks_exact_mut(8))
+                .enumerate()
+            {
+                let cin = if bit == 0 {
+                    u64::MAX
+                } else {
+                    carries[bit - 1].words()[word]
+                };
+                let cout = if bit + 1 == w {
+                    0
+                } else {
+                    carries[bit].words()[word]
+                };
+                let time = if bit + 1 == w {
+                    u64::MAX
+                } else if bit >= n {
+                    0
+                } else if bit < 6 {
+                    TIME_LOW[bit]
+                } else {
+                    0u64.wrapping_sub(((word >> (bit - 6)) & 1) as u64)
+                };
+                let av = previous[bit].words()[word] ^ cin;
+                let bv = !time ^ cin;
+                let cv = cin ^ cout;
+                if av & bv != cv {
+                    return Err(OrderError(
+                        "order/flock: noncanonical packed carry witness".into(),
+                    ));
+                }
+                aa.copy_from_slice(&av.to_le_bytes());
+                bb.copy_from_slice(&bv.to_le_bytes());
+                cc.copy_from_slice(&cv.to_le_bytes());
+            }
             Ok(())
         })?;
     Ok((packed, w))
@@ -242,9 +349,13 @@ fn check_terminals(
     carries_ab: &[K],
     carries_c: &[K],
 ) -> Result<OrderClaims, OrderError> {
-    let padded_n = n.max(MIN_CYCLE_BITS);
-    if claim.mlv_challenges.len() != padded_n
-        || claim.r_rest.len() != padded_n
+    let rounds = if compact(n) {
+        n + gate_log(w) - K_SKIP
+    } else {
+        n.max(MIN_CYCLE_BITS)
+    };
+    if claim.mlv_challenges.len() != rounds
+        || claim.r_rest.len() != rounds
         || previous_ab.len() != w
         || carries_ab.len() != w - 1
         || carries_c.len() != w - 1
@@ -258,34 +369,81 @@ fn check_terminals(
         .map(from_flock)
         .collect();
     let all_c: Vec<K> = claim.r_rest.iter().copied().map(from_flock).collect();
-    let point_ab = &all_ab[..n];
-    let weights = lagrange_weights_naive(K_SKIP, claim.z);
-    let mut a = U256::ZERO;
-    let mut b = U256::ZERO;
-    let mut c = U256::ZERO;
+    let prefix_weights = compact(n).then(|| {
+        lagrange_weights_naive(K_SKIP, claim.z)
+            .into_iter()
+            .map(from_flock)
+            .collect::<Vec<_>>()
+    });
+    let (point_ab, point_c, weights_ab, weights_c, mask_ab, mask_c) = if compact(n) {
+        let rest = n - K_SKIP;
+        let point = |tail: &[K]| {
+            let mut point = vec![K::ZERO; K_SKIP];
+            point.extend_from_slice(&tail[..rest]);
+            point
+        };
+        (
+            point(&all_ab),
+            point(&all_c),
+            eq_table(&all_ab[rest..]),
+            eq_table(&all_c[rest..]),
+            K::ONE,
+            K::ONE,
+        )
+    } else {
+        let weights: Vec<K> = lagrange_weights_naive(K_SKIP, claim.z)
+            .into_iter()
+            .map(from_flock)
+            .collect();
+        (
+            all_ab[..n].to_vec(),
+            all_c[..n].to_vec(),
+            weights.clone(),
+            weights,
+            padding_mask(&all_ab, n),
+            padding_mask(&all_c, n),
+        )
+    };
+    // A skipped cycle block is a general 64-weight functional, not an Eq
+    // point. Public low timestamp bits therefore use its binary moments.
+    let moments: [K; K_SKIP] = std::array::from_fn(|bit| {
+        prefix_weights.as_ref().map_or(K::ZERO, |weights| {
+            weights
+                .iter()
+                .enumerate()
+                .filter(|(j, _)| (j >> bit) & 1 != 0)
+                .fold(K::ZERO, |sum, (_, &weight)| sum + weight)
+        })
+    });
+    let mut aa = U256::ZERO;
+    let mut bb = U256::ZERO;
+    let mut cc = U256::ZERO;
     for bit in 0..w {
-        let weight = from_flock(weights[bit]);
         let cab = carry_bit(carries_ab, w, bit);
-        a += weight.clmul(previous_ab[bit] + cab);
-        b += weight.clmul(K::ONE + time_bit(point_ab, w, bit) + cab);
-        c += weight.clmul(carry_bit(carries_c, w, bit) + carry_bit(carries_c, w, bit + 1));
+        let time = if prefix_weights.is_some() && bit < K_SKIP {
+            moments[bit]
+        } else {
+            time_bit(&point_ab, w, bit)
+        };
+        aa += weights_ab[bit].clmul(previous_ab[bit] + cab);
+        bb += weights_ab[bit].clmul(K::ONE + time + cab);
+        cc += weights_c[bit].clmul(carry_bit(carries_c, w, bit) + carry_bit(carries_c, w, bit + 1));
     }
-    let mask_ab = padding_mask(&all_ab, n);
-    let mask_c = padding_mask(&all_c, n);
-    if a.reduce() * mask_ab != from_flock(claim.a_eval)
-        || b.reduce() * mask_ab != from_flock(claim.b_eval)
-        || c.reduce() * mask_c != from_flock(claim.c_eval)
+    if aa.reduce() * mask_ab != from_flock(claim.a_eval)
+        || bb.reduce() * mask_ab != from_flock(claim.b_eval)
+        || cc.reduce() * mask_c != from_flock(claim.c_eval)
     {
         return Err(OrderError(
             "order/flock: terminal source binding failed".into(),
         ));
     }
     Ok(OrderClaims {
-        point_ab: point_ab.to_vec(),
-        point_c: all_c[..n].to_vec(),
+        point_ab,
+        point_c,
         previous_ab: previous_ab.to_vec(),
         carries_ab: carries_ab.to_vec(),
         carries_c: carries_c.to_vec(),
+        prefix_weights,
     })
 }
 
@@ -298,7 +456,7 @@ fn absorb_sources(tr: &mut Transcript, base: &[u8], proof: &OrderProof) {
 /// The ordering zerocheck alone. The caller evaluates the sources at the
 /// returned points later (see [`terminal_points`] and [`check_sources`]) and
 /// must absorb them before any challenge that depends on them.
-pub fn prove_zerocheck(
+fn prove_zerocheck_legacy(
     previous: &[u32],
     carries: &[u32],
     n: usize,
@@ -324,6 +482,79 @@ pub fn prove_zerocheck(
     Ok((zerocheck, terminal))
 }
 
+/// Run the ordering proof from native words. Large traces transpose the
+/// sources once; callers that already committed planes should use the packed
+/// entry point to reuse that work.
+pub fn prove_zerocheck(
+    previous: &[u32],
+    carries: &[u32],
+    n: usize,
+    a: usize,
+    tr: &mut Transcript,
+    base: &[u8],
+) -> Result<(ZerocheckProof, ZerocheckClaim), OrderError> {
+    if !compact(n) {
+        return prove_zerocheck_legacy(previous, carries, n, a, tr, base);
+    }
+    let w = width(n, a)?;
+    let (previous_planes, carry_planes) = {
+        let _span = Span::new("spice.order.pack");
+        (
+            crate::pack_columns(previous, w),
+            crate::pack_columns(carries, w - 1),
+        )
+    };
+    prove_zerocheck_packed(
+        previous,
+        carries,
+        &previous_planes,
+        &carry_planes,
+        n,
+        a,
+        tr,
+        base,
+    )
+}
+
+/// Reuse the committed predecessor and carry planes. The source planes are
+/// authoritative; callers authenticate those same columns downstream. Raw
+/// words supply the legacy fallback and must describe the same trace.
+#[allow(clippy::too_many_arguments)]
+pub fn prove_zerocheck_packed(
+    previous: &[u32],
+    carries: &[u32],
+    previous_planes: &[PackedBits],
+    carry_planes: &[PackedBits],
+    n: usize,
+    a: usize,
+    tr: &mut Transcript,
+    base: &[u8],
+) -> Result<(ZerocheckProof, ZerocheckClaim), OrderError> {
+    width(n, a)?;
+    if !compact(n) {
+        return prove_zerocheck_legacy(previous, carries, n, a, tr, base);
+    }
+    if previous.len() != 1usize << n || carries.len() != previous.len() {
+        return Err(OrderError(
+            "order/flock: malformed source word lengths".into(),
+        ));
+    }
+    let ([a_rows, b_rows, c_rows], w) = {
+        let _span = Span::new("spice.order.pack");
+        packed_rows_compact(previous_planes, carry_planes, n, a)?
+    };
+    let m = K_SKIP + setup(n, a, tr, base)?;
+    let mut challenger = OmChallenger { tr: tr.clone() };
+    // Gate-major planes make every unused gate a contiguous zero suffix.
+    let padding = PaddingSpec::uniform(m, w * previous.len(), 1);
+    let (proof, terminal) = {
+        let _span = Span::new("spice.order.zerocheck");
+        prove_packed_padded(&a_rows, &b_rows, &c_rows, m, &padding, &mut challenger)
+    };
+    *tr = challenger.tr;
+    Ok((proof, terminal))
+}
+
 /// Verifier half of [`prove_zerocheck`].
 pub fn verify_zerocheck_with(
     n: usize,
@@ -344,14 +575,40 @@ pub fn verify_zerocheck_with(
 /// Flock zerocheck for `2^n` cycles. The fixed coordinates are the seven
 /// public inner challenges that `flock_core::zerocheck::verify` places at
 /// `r[K_SKIP..K_SKIP + 7]`.
-pub fn zerocheck_shape(n: usize) -> (usize, usize, usize) {
-    (K_SKIP, n.max(MIN_CYCLE_BITS), MIN_CYCLE_BITS)
+pub fn zerocheck_shape(n: usize, a: usize) -> (usize, usize, usize) {
+    let rounds = if compact(n) {
+        n + gate_log(n.max(a) + 1) - K_SKIP
+    } else {
+        n.max(MIN_CYCLE_BITS)
+    };
+    (K_SKIP, rounds, MIN_CYCLE_BITS)
 }
 
-/// The A/B and C cycle points at which the sources must be evaluated.
-pub fn terminal_points(n: usize, claim: &ZerocheckClaim) -> (Vec<K>, Vec<K>) {
-    let take = |xs: &[F128]| xs.iter().take(n).copied().map(from_flock).collect();
-    (take(&claim.mlv_challenges), take(&claim.r_rest))
+/// The A/B and C source bases. In the compact layout their first six
+/// coordinates are placeholders, replaced by terminal_prefix_weights.
+pub fn terminal_points(n: usize, _a: usize, claim: &ZerocheckClaim) -> (Vec<K>, Vec<K>) {
+    let point = |xs: &[F128]| {
+        let mut out = if compact(n) {
+            vec![K::ZERO; K_SKIP]
+        } else {
+            Vec::new()
+        };
+        let rest = if compact(n) { n - K_SKIP } else { n };
+        out.extend(xs.iter().take(rest).copied().map(from_flock));
+        out
+    };
+    (point(&claim.mlv_challenges), point(&claim.r_rest))
+}
+
+/// Flock's skipped-cycle Lagrange weights, or None for the legacy layout.
+/// These are not generally the Eq table of any six-coordinate field point.
+pub fn terminal_prefix_weights(n: usize, _a: usize, claim: &ZerocheckClaim) -> Option<Vec<K>> {
+    compact(n).then(|| {
+        lagrange_weights_naive(K_SKIP, claim.z)
+            .into_iter()
+            .map(from_flock)
+            .collect()
+    })
 }
 
 /// Check the zerocheck's terminal values against source evaluations.
@@ -374,12 +631,80 @@ pub fn prove(
     tr: &mut Transcript,
     base: &[u8],
 ) -> Result<(OrderProof, OrderClaims), OrderError> {
-    let (zerocheck, terminal) = prove_zerocheck(previous, carries, n, a, tr, base)?;
+    let w = width(n, a)?;
+    let (previous_planes, carry_planes) = {
+        let _span = Span::new("spice.order.pack");
+        (
+            crate::pack_columns(previous, w),
+            crate::pack_columns(carries, w - 1),
+        )
+    };
+    prove_packed(
+        previous,
+        carries,
+        &previous_planes,
+        &carry_planes,
+        n,
+        a,
+        tr,
+        base,
+    )
+}
+
+/// Full ordering proof with authenticated-column preparation shared with RAM.
+#[allow(clippy::too_many_arguments)]
+pub fn prove_packed(
+    previous: &[u32],
+    carries: &[u32],
+    previous_planes: &[PackedBits],
+    carry_planes: &[PackedBits],
+    n: usize,
+    a: usize,
+    tr: &mut Transcript,
+    base: &[u8],
+) -> Result<(OrderProof, OrderClaims), OrderError> {
+    let (zerocheck, terminal) = prove_zerocheck_packed(
+        previous,
+        carries,
+        previous_planes,
+        carry_planes,
+        n,
+        a,
+        tr,
+        base,
+    )?;
     let w = width(n, a)?;
     let _span = Span::new("spice.order.claims");
-    let (point_ab, point_c) = terminal_points(n, &terminal);
-    let (previous_ab, carries_ab, carries_c) =
-        evaluate_sources(previous, carries, &point_ab, &point_c, w);
+    let (point_ab, point_c) = terminal_points(n, a, &terminal);
+    let prefix_weights = terminal_prefix_weights(n, a, &terminal);
+    let (previous_ab, carries_ab, carries_c) = if compact(n) {
+        let mut evaluations = crate::planes::evaluate_with_prefixes(
+            &[&point_ab, &point_c],
+            &[prefix_weights.as_deref(), prefix_weights.as_deref()],
+            &[
+                crate::planes::Request {
+                    planes: previous_planes.iter().collect(),
+                    point: 0,
+                },
+                crate::planes::Request {
+                    planes: carry_planes.iter().collect(),
+                    point: 0,
+                },
+                crate::planes::Request {
+                    planes: carry_planes.iter().collect(),
+                    point: 1,
+                },
+            ],
+        )
+        .into_iter();
+        (
+            evaluations.next().unwrap(),
+            evaluations.next().unwrap(),
+            evaluations.next().unwrap(),
+        )
+    } else {
+        evaluate_sources(previous, carries, &point_ab, &point_c, w)
+    };
     let claims = check_terminals(n, w, &terminal, &previous_ab, &carries_ab, &carries_c)?;
     let proof = OrderProof {
         zerocheck,
@@ -423,3 +748,7 @@ pub fn verify(
 #[cfg(test)]
 #[path = "order_flock_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "order_flock_compact_tests.rs"]
+mod compact_tests;

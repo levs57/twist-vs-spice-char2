@@ -5,7 +5,7 @@
 use om_field::{K, U256, clmul_pairs};
 use om_sumcheck::{
     SumcheckProof, VerificationError, eq_table, product_sum, sumcheck_prove_rounds_eq_mul2,
-    sumcheck_prove_rounds_mul2, sumcheck_verify,
+    sumcheck_prove_rounds_eq_mul2_borrowed, sumcheck_prove_rounds_mul2, sumcheck_verify,
 };
 use om_transcript::{Hasher, Transcript, u64le};
 use rayon::prelude::*;
@@ -759,7 +759,24 @@ pub fn open_owned_repack(
     tr: &mut Transcript,
     repack: &dyn Fn() -> Vec<K>,
 ) -> LigeritoProof {
-    open_inner_repack(p, h, ld0, r, y, tr, &commit_level, Some(repack))
+    open_inner_repack(p, h, ld0, r, y, tr, &commit_level, Some(repack), false)
+}
+
+/// Opening-only ownership seam: RingSwitch has already borrowed this packed
+/// table. Borrow it once more for the level-zero sumcheck, then consume it
+/// while encoding queried columns. No full-size sumcheck clone or repacking
+/// callback is needed, and no codewords are retained from commitment time.
+pub(crate) fn open_owned_with_table(
+    p: &LigeritoParams,
+    h: Hasher,
+    ld0: LevelData,
+    table: Vec<K>,
+    r: &[K],
+    y: K,
+    tr: &mut Transcript,
+) -> LigeritoProof {
+    assert_eq!(table.len(), 1usize << p.n, "table must have 2^n entries");
+    open_inner_repack(p, h, ld0.with_f(table), r, y, tr, &commit_level, None, true)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -772,7 +789,7 @@ fn open_inner(
     tr: &mut Transcript,
     commit_fn: CommitFn<'_>,
 ) -> LigeritoProof {
-    open_inner_repack(p, h, ld0, r, y, tr, commit_fn, None)
+    open_inner_repack(p, h, ld0, r, y, tr, commit_fn, None, false)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -785,6 +802,7 @@ fn open_inner_repack(
     tr: &mut Transcript,
     commit_fn: CommitFn<'_>,
     repack0: Option<&dyn Fn() -> Vec<K>>,
+    borrow_initial: bool,
 ) -> LigeritoProof {
     assert_eq!(r.len(), p.n, "point has wrong length");
     tr.absorb_ks(b"pcs/point", r);
@@ -809,22 +827,26 @@ fn open_inner_repack(
         // the same as binding each column's block (C3 low-first order).
         let need_f_after = reps > 1 || ld.cw.is_empty();
         let can_repack = i == 0 && repack0.is_some();
-        let f_sc = if need_f_after && !can_repack {
-            f.clone()
+        let (proof, rho, mut fin) = if i == 0 && borrow_initial {
+            sumcheck_prove_rounds_eq_mul2_borrowed(c, &f, r, k, tr, b"pcs/sumcheck")
         } else {
-            std::mem::take(&mut f)
-        };
-        let (proof, rho, mut fin) = if i == 0 {
-            sumcheck_prove_rounds_eq_mul2(c, f_sc, r, k, tr, b"pcs/sumcheck")
-        } else {
-            // Later bases include opened-column constraints and are not Eq.
-            sumcheck_prove_rounds_mul2(
-                c,
-                vec![f_sc, std::mem::take(&mut b)],
-                k,
-                tr,
-                b"pcs/sumcheck",
-            )
+            let f_sc = if need_f_after && !can_repack {
+                f.clone()
+            } else {
+                std::mem::take(&mut f)
+            };
+            if i == 0 {
+                sumcheck_prove_rounds_eq_mul2(c, f_sc, r, k, tr, b"pcs/sumcheck")
+            } else {
+                // Later bases include opened-column constraints and are not Eq.
+                sumcheck_prove_rounds_mul2(
+                    c,
+                    vec![f_sc, std::mem::take(&mut b)],
+                    k,
+                    tr,
+                    b"pcs/sumcheck",
+                )
+            }
         };
         scs.push(proof);
         let bp = fin.pop().expect("b table");

@@ -22,10 +22,11 @@
 //! * Address rounds send `g(0)` and the leading coefficient of the degree-2
 //!   round polynomial.
 
-use om_field::{K, U256};
+use om_field::{K, U256, clmul_pairs, mul_pairs};
 use om_sumcheck::{VerificationError, eq_eval};
 use om_transcript::Transcript;
 use rayon::prelude::*;
+use std::borrow::Cow;
 
 use super::util::{PAR, SplitEq, checks_enabled, sublabel, zeros};
 
@@ -243,10 +244,12 @@ fn dense_cycle_rounds(
             let (a0, a1) = (ra[2 * m], ra[2 * m + 1]);
             let (v0, v1) = (val[2 * m], val[2 * m + 1]);
             let wm = w.at(m);
+            let [wa0, wa1] = mul_pairs([wm; 2], [a0, a1]);
+            let [q0, q1] = clmul_pairs([wa0, wa1], [v0, v1]);
             Acc3 {
-                q0: (wm * a0).clmul(v0),
-                q1: (wm * a1).clmul(v1),
-                qinf: (wm * (a0 + a1)).clmul(v0 + v1),
+                q0,
+                q1,
+                qinf: (wa0 + wa1).clmul(v0 + v1),
             }
         };
         let acc = if half >= PAR {
@@ -273,21 +276,8 @@ fn dense_cycle_rounds(
         let e = eq_lin(r_c[i], r);
         cur = e * quad_at(q0, q1, qinf, r);
         scale *= e;
-        let bind = |t: &[K]| -> Vec<K> {
-            if half >= PAR {
-                (0..half)
-                    .into_par_iter()
-                    .with_min_len(1 << 10)
-                    .map(|m| t[2 * m] + r * (t[2 * m] + t[2 * m + 1]))
-                    .collect()
-            } else {
-                (0..half)
-                    .map(|m| t[2 * m] + r * (t[2 * m] + t[2 * m + 1]))
-                    .collect()
-            }
-        };
-        ra = bind(&ra);
-        val = bind(&val);
+        ra = bind_dense(&ra, r);
+        val = bind_dense(&val, r);
     }
     (cur, ra[0], val[0])
 }
@@ -313,17 +303,26 @@ fn pair_aligned_ranges(keys: &[u32], parts: usize) -> Vec<std::ops::Range<usize>
 
 fn bind_dense(t: &[K], r: K) -> Vec<K> {
     let half = t.len() / 2;
-    if half >= PAR {
-        (0..half)
+    let pair = |m: usize| -> [K; 2] {
+        let t = &t[4 * m..4 * m + 4];
+        let [a, b] = mul_pairs([r; 2], [t[0] + t[1], t[2] + t[3]]);
+        [t[0] + a, t[2] + b]
+    };
+    let paired: Vec<[K; 2]> = if half >= PAR {
+        (0..half / 2)
             .into_par_iter()
-            .with_min_len(1 << 10)
-            .map(|m| t[2 * m] + r * (t[2 * m] + t[2 * m + 1]))
+            .with_min_len(1 << 9)
+            .map(pair)
             .collect()
     } else {
-        (0..half)
-            .map(|m| t[2 * m] + r * (t[2 * m] + t[2 * m + 1]))
-            .collect()
+        (0..half / 2).map(pair).collect()
+    };
+    let mut out = paired.into_flattened();
+    if half % 2 != 0 {
+        let p = 2 * (half - 1);
+        out.push(t[p] + r * (t[p] + t[p + 1]));
     }
+    out
 }
 
 /// Sparse address rounds after the cycle rounds: `Σ_k scale · ra(k) · V(k)`
@@ -363,8 +362,9 @@ fn sparse_address_rounds(
                     (ra0, v0, ra1, v1) = (K::ZERO, m0s[2 * t as usize], ra[i], val[i]);
                     i += 1;
                 }
-                acc.q0 += ra0.clmul(v0);
-                acc.q1 += ra1.clmul(v1);
+                let [q0, q1] = clmul_pairs([ra0, ra1], [v0, v1]);
+                acc.q0 += q0;
+                acc.q1 += q1;
                 acc.qinf += (ra0 + ra1).clmul(v0 + v1);
             }
             acc
@@ -411,8 +411,9 @@ fn sparse_address_rounds(
                     i += 1;
                 }
                 nk.push(t);
-                nr.push(ra0 + r * (ra0 + ra1));
-                nv.push(v0 + r * (v0 + v1));
+                let [ra_bound, val_bound] = mul_pairs([r; 2], [ra0 + ra1, v0 + v1]);
+                nr.push(ra0 + ra_bound);
+                nv.push(v0 + val_bound);
             }
             (nk, nr, nv)
         };
@@ -558,8 +559,9 @@ fn merge_rows(l: Row<'_>, r: Row<'_>, mut f: impl FnMut(u32, K, K, K, K, K, K)) 
 fn pair_round(l: Row<'_>, r: Row<'_>) -> (K, K, K) {
     let mut s = Acc3::default();
     merge_rows(l, r, |_, a0, a1, v0, v1, _, _| {
-        s.q0 += a0.clmul(v0);
-        s.q1 += a1.clmul(v1);
+        let [q0, q1] = clmul_pairs([a0, a1], [v0, v1]);
+        s.q0 += q0;
+        s.q1 += q1;
         s.qinf += (a0 + a1).clmul(v0 + v1);
     });
     s.reduce()
@@ -580,9 +582,10 @@ fn pair_bind(
 ) -> u32 {
     let mut o = 0;
     merge_rows(l, r, |k, a0, a1, v0, v1, p, nx| {
+        let [ra_bound, val_bound] = mul_pairs([rch; 2], [a0 + a1, v0 + v1]);
         key[o] = k;
-        ra[o] = a0 + rch * (a0 + a1);
-        val[o] = v0 + rch * (v0 + v1);
+        ra[o] = a0 + ra_bound;
+        val[o] = v0 + val_bound;
         prev[o] = p;
         next[o] = nx;
         o += 1;
@@ -591,8 +594,9 @@ fn pair_bind(
 }
 
 fn weighted(acc: &mut Acc3, w: K, (q0, q1, qinf): (K, K, K)) {
-    acc.q0 += w.clmul(q0);
-    acc.q1 += w.clmul(q1);
+    let [q0, q1] = clmul_pairs([w; 2], [q0, q1]);
+    acc.q0 += q0;
+    acc.q1 += q1;
     acc.qinf += w.clmul(qinf);
 }
 
@@ -808,23 +812,23 @@ fn prove_cycle_first(w: &ReadWitness<'_>, r_c: &[K], claim: K, tr: &mut Transcri
 /// the sum of their `eq(r_c, j)`. They read the same value in every address
 /// round, because no store intervenes. A unit's store, if any, happens after
 /// every read in its segment, so it is placed last in the segment.
-struct Units {
-    addr: Vec<u32>,
+struct Units<'a> {
+    addr: Cow<'a, [u32]>,
     weight: Vec<K>,
-    inc: Vec<K>,
-    store: Vec<bool>,
+    inc: Cow<'a, [K]>,
+    store: Cow<'a, [bool]>,
     /// The unit of each cycle (empty when units are cycles).
     of_cycle: Vec<u32>,
 }
 
-fn build_units(w: &ReadWitness<'_>, eq_c: Vec<K>, merge: bool) -> Units {
+fn build_units<'a>(w: &ReadWitness<'a>, eq_c: Vec<K>, merge: bool) -> Units<'a> {
     let t = w.addr.len();
     if !merge {
         return Units {
-            addr: w.addr.to_vec(),
+            addr: Cow::Borrowed(w.addr),
             weight: eq_c,
-            inc: w.inc_e.to_vec(),
-            store: w.store.to_vec(),
+            inc: Cow::Borrowed(w.inc_e),
+            store: Cow::Borrowed(w.store),
             of_cycle: Vec::new(),
         };
     }
@@ -908,19 +912,19 @@ fn build_units(w: &ReadWitness<'_>, eq_c: Vec<K>, merge: bool) -> Units {
     let parts: Vec<Part> = ranges.into_par_iter().map(part).collect();
     let total: usize = parts.iter().map(|p| p.0.len()).sum();
     let mut units = Units {
-        addr: Vec::with_capacity(total),
+        addr: Cow::Owned(Vec::with_capacity(total)),
         weight: Vec::with_capacity(total),
-        inc: Vec::with_capacity(total),
-        store: Vec::with_capacity(total),
+        inc: Cow::Owned(Vec::with_capacity(total)),
+        store: Cow::Owned(Vec::with_capacity(total)),
         of_cycle: Vec::with_capacity(t),
     };
     for (ad, wt, inc, st, of) in parts {
         let base = units.addr.len() as u32;
         units.of_cycle.extend(of.into_iter().map(|u| u + base));
-        units.addr.extend(ad);
+        units.addr.to_mut().extend(ad);
         units.weight.extend(wt);
-        units.inc.extend(inc);
-        units.store.extend(st);
+        units.inc.to_mut().extend(inc);
+        units.store.to_mut().extend(st);
     }
     units
 }
@@ -948,16 +952,15 @@ fn prove_address_first(
         .max(1);
     let bounds: Vec<usize> = (0..=blocks).map(|b| nu * b / blocks).collect();
     let mut starts: Vec<Vec<K>> = Vec::with_capacity(blocks);
-    {
-        let mut state = w.m0_e.to_vec();
-        for b in 0..blocks {
-            starts.push(state.clone());
-            for u in bounds[b]..bounds[b + 1] {
-                if units.store[u] {
-                    state[units.addr[u] as usize] += units.inc[u];
-                }
+    starts.push(w.m0_e.to_vec());
+    for b in 1..blocks {
+        let mut state = starts[b - 1].clone();
+        for u in bounds[b - 1]..bounds[b] {
+            if units.store[u] {
+                state[units.addr[u] as usize] += units.inc[u];
             }
         }
+        starts.push(state);
     }
     let mut c = vec![K::ONE; nu];
     let mut address = Vec::with_capacity(a);
@@ -973,12 +976,14 @@ fn prove_address_first(
                 let (v0, v1) = (state[t], state[t + 1]);
                 let cu = c[u];
                 let wc = units.weight[u] * cu;
+                let endpoint = if k & 1 == 0 { v0 } else { v1 };
+                let [qe, qinf] = clmul_pairs([wc; 2], [endpoint, v0 + v1]);
                 if k & 1 == 0 {
-                    acc.q0 += wc.clmul(v0);
+                    acc.q0 += qe;
                 } else {
-                    acc.q1 += wc.clmul(v1);
+                    acc.q1 += qe;
                 }
-                acc.qinf += wc.clmul(v0 + v1);
+                acc.qinf += qinf;
                 if units.store[u] {
                     state[k] += cu * units.inc[u];
                 }
@@ -1066,3 +1071,7 @@ pub(crate) fn prove(
         ReadOrder::AddressFirst => prove_address_first(w, r_c, claim, merge_loads, tr),
     }
 }
+
+#[cfg(test)]
+#[path = "read_kernel_tests.rs"]
+mod kernel_tests;

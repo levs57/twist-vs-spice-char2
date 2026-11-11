@@ -195,15 +195,23 @@ pub fn combine_sum(tables: &[Vec<K>], combine: &(dyn Fn(&[K]) -> K + Sync)) -> K
 /// using the characteristic-2 identity `g(X) = s0 + (s0 + s1 + sd) X + sd X^2`
 /// where `sd = Σ_i (a[2i] + a[2i+1])(b[2i] + b[2i+1])`.
 pub fn sumcheck_round_evals_mul2(a: &[K], b: &[K]) -> [K; 3] {
-    let half = a.len() / 2;
-    let [u0, u1, ud] = if a.len() >= PAR_THRESHOLD {
+    sumcheck_round_evals_mul2_source(a.len(), &|i| a[i], b)
+}
+
+fn sumcheck_round_evals_mul2_source(
+    size: usize,
+    a: &(impl Fn(usize) -> K + Sync),
+    b: &[K],
+) -> [K; 3] {
+    let half = size / 2;
+    let [u0, u1, ud] = if size >= PAR_THRESHOLD {
         (0..half)
             .into_par_iter()
             .with_min_len(2048)
             .fold(
                 || [U256::ZERO; 3],
                 |mut acc, i| {
-                    let (a0, a1) = (a[2 * i], a[2 * i + 1]);
+                    let (a0, a1) = (a(2 * i), a(2 * i + 1));
                     let (b0, b1) = (b[2 * i], b[2 * i + 1]);
                     let [p0, p1] = clmul_pairs([a0, a1], [b0, b1]);
                     acc[0] += p0;
@@ -224,7 +232,7 @@ pub fn sumcheck_round_evals_mul2(a: &[K], b: &[K]) -> [K; 3] {
     } else {
         let mut acc = [U256::ZERO; 3];
         for i in 0..half {
-            let (a0, a1) = (a[2 * i], a[2 * i + 1]);
+            let (a0, a1) = (a(2 * i), a(2 * i + 1));
             let (b0, b1) = (b[2 * i], b[2 * i + 1]);
             let [p0, p1] = clmul_pairs([a0, a1], [b0, b1]);
             acc[0] += p0;
@@ -328,7 +336,12 @@ fn prepare_bound(tables: &[Vec<K>], bound: &mut Vec<Vec<K>>) -> usize {
         size >= 2 && size.is_power_of_two() && tables.iter().all(|t| t.len() == size),
         "binding needs equal power-of-two tables of length at least two"
     );
-    bound.resize_with(tables.len(), Vec::new);
+    prepare_bound_size(size, tables.len(), bound);
+    size
+}
+
+fn prepare_bound_size(size: usize, width: usize, bound: &mut Vec<Vec<K>>) {
+    bound.resize_with(width, Vec::new);
     for output in bound {
         let next_size = size / 2;
         if size >= PAR_THRESHOLD && output.len() < next_size {
@@ -344,7 +357,6 @@ fn prepare_bound(tables: &[Vec<K>], bound: &mut Vec<Vec<K>>) -> usize {
             output.resize(next_size, K::ZERO);
         }
     }
-    size
 }
 
 /// Bind the lowest variable and compute the following round from the folded
@@ -438,28 +450,52 @@ pub fn bind_low_and_round_evals_mul2_into(
 ) -> Vec<K> {
     assert_eq!(tables.len(), 2, "product binding needs two tables");
     let size = prepare_bound(tables, bound);
+    bind_low_and_round_evals_mul2_source(&|i| tables[0][i], &tables[1], bound, r, next_claim, size)
+}
+
+/// Borrowed-input counterpart of [`bind_low_and_round_evals_mul2_into`]. The
+/// first fold allocates only the half-size output columns, never copies the
+/// full input tables, and retains the same fused next-round product kernel.
+pub fn bind_low_and_round_evals_mul2_slices_into(
+    first: &[K],
+    second: &[K],
+    bound: &mut Vec<Vec<K>>,
+    r: K,
+    next_claim: Option<K>,
+) -> Vec<K> {
+    let size = first.len();
+    assert!(
+        size >= 2 && size.is_power_of_two() && second.len() == size,
+        "binding needs equal power-of-two tables of length at least two"
+    );
+    prepare_bound_size(size, 2, bound);
+    bind_low_and_round_evals_mul2_source(&|i| first[i], second, bound, r, next_claim, size)
+}
+
+fn bind_low_and_round_evals_mul2_source(
+    first: &(impl Fn(usize) -> K + Sync),
+    second: &[K],
+    bound: &mut Vec<Vec<K>>,
+    r: K,
+    next_claim: Option<K>,
+    size: usize,
+) -> Vec<K> {
     if size == 2 {
-        for (input, output) in tables.iter().zip(bound) {
-            output[0] = input[0] + r * (input[0] + input[1]);
-        }
+        let first0 = first(0);
+        bound[0][0] = first0 + r * (first0 + first(1));
+        bound[1][0] = second[0] + r * (second[0] + second[1]);
         return Vec::new();
     }
     let process = |start: usize, left: &mut [K], right: &mut [K]| {
         let mut sums = [U256::ZERO; 3];
         for pair in 0..left.len() / 2 {
             let source = 2 * start + 4 * pair;
-            let fold = |input: &[K]| {
-                let [x, y] = mul_pairs(
-                    [r, r],
-                    [
-                        input[source] + input[source + 1],
-                        input[source + 2] + input[source + 3],
-                    ],
-                );
-                (input[source] + x, input[source + 2] + y)
+            let fold = |input: [K; 4]| {
+                let [x, y] = mul_pairs([r, r], [input[0] + input[1], input[2] + input[3]]);
+                (input[0] + x, input[2] + y)
             };
-            let (low0, high0) = fold(&tables[0]);
-            let (low1, high1) = fold(&tables[1]);
+            let (low0, high0) = fold(std::array::from_fn(|j| first(source + j)));
+            let (low1, high1) = fold(std::array::from_fn(|j| second[source + j]));
             left[2 * pair] = low0;
             left[2 * pair + 1] = high0;
             right[2 * pair] = low1;
@@ -563,6 +599,96 @@ pub fn sumcheck_prove_mul2(
     let (proof, point, bound) =
         sumcheck_prove_rounds_mul2(claim, tables, rounds, transcript, label);
     (proof, point, bound.iter().map(|table| table[0]).collect())
+}
+
+/// Product sumcheck with a borrowed first table and an owned second table.
+/// The first table stays immutable for another consumer. The second full-size
+/// allocation is released after the first fold, and every later round reuses
+/// the ordinary owned buffers and fused product kernel. Proof bytes match
+/// [`sumcheck_prove_mul2`] on copies of the same tables.
+pub fn sumcheck_prove_mul2_borrowed_first(
+    claim: K,
+    first: &[K],
+    second: Vec<K>,
+    transcript: &mut Transcript,
+    label: &[u8],
+) -> (SumcheckProof, Vec<K>, Vec<K>) {
+    sumcheck_prove_mul2_generated_first(claim, first.len(), |i| first[i], second, transcript, label)
+}
+
+/// Product sumcheck whose immutable first table is generated on demand.
+/// `first(i)` must return the same element on every call for `i < size`.
+/// Its values are read only for the initial round statistics and first fold;
+/// the prover allocates only folded tables. This is useful when a field table
+/// is already stored in another representation and need not be materialized.
+/// Proof bytes match [`sumcheck_prove_mul2`] on the generated table.
+pub fn sumcheck_prove_mul2_generated_first(
+    claim: K,
+    size: usize,
+    first: impl Fn(usize) -> K + Sync,
+    mut second: Vec<K>,
+    transcript: &mut Transcript,
+    label: &[u8],
+) -> (SumcheckProof, Vec<K>, Vec<K>) {
+    assert!(
+        size.is_power_of_two() && second.len() == size,
+        "tables must share a power-of-two length"
+    );
+    let rounds = size.trailing_zeros() as usize;
+    sumcheck_init(transcript, label, claim, rounds, 2);
+    if rounds == 0 {
+        return (
+            SumcheckProof {
+                round_msgs: Vec::new(),
+            },
+            Vec::new(),
+            vec![first(0), second[0]],
+        );
+    }
+    let msg_label = sublabel(label, b"/msg");
+    let chal_label = sublabel(label, b"/chal");
+    let mut messages = Vec::with_capacity(rounds);
+    let mut challenges = Vec::with_capacity(rounds);
+    let mut current = claim;
+    let mut tables = Vec::new();
+    let mut scratch = Vec::new();
+    let mut ev = sumcheck_round_evals_mul2_source(size, &first, &second).to_vec();
+    for round in 0..rounds {
+        assert_eq!(
+            ev[0] + ev[1],
+            current,
+            "claim inconsistent with tables (g(0)+g(1) != claim)"
+        );
+        let message = vec![ev[0], ev[2]];
+        transcript.absorb_ks(&msg_label, &message);
+        let challenge = transcript.challenge_k(&chal_label);
+        messages.push(message);
+        challenges.push(challenge);
+        current = interpolate_eval(&ev, challenge);
+        ev = if round == 0 {
+            prepare_bound_size(size, 2, &mut scratch);
+            let ev = bind_low_and_round_evals_mul2_source(
+                &first,
+                &second,
+                &mut scratch,
+                challenge,
+                Some(current),
+                size,
+            );
+            drop(std::mem::take(&mut second));
+            ev
+        } else {
+            bind_low_and_round_evals_mul2_into(&tables, &mut scratch, challenge, Some(current))
+        };
+        std::mem::swap(&mut tables, &mut scratch);
+    }
+    (
+        SumcheckProof {
+            round_msgs: messages,
+        },
+        challenges,
+        tables.iter().map(|table| table[0]).collect(),
+    )
 }
 
 /// [`sumcheck_prove`] over only the low `rounds` variables of the
@@ -1036,4 +1162,89 @@ pub fn sumcheck_verify_skip(
         rs.push(r);
     }
     Ok((rs, cur))
+}
+
+#[cfg(test)]
+mod generated_source_tests {
+    use super::*;
+    use crate::mle::bind_low;
+
+    fn scalar_round(first: &[K], second: &[K]) -> Vec<K> {
+        [K::ZERO, K::ONE, K::X]
+            .into_iter()
+            .map(|t| {
+                first
+                    .chunks_exact(2)
+                    .zip(second.chunks_exact(2))
+                    .fold(K::ZERO, |sum, (a, b)| {
+                        sum + (a[0] + t * (a[0] + a[1])) * (b[0] + t * (b[0] + b[1]))
+                    })
+            })
+            .collect()
+    }
+
+    #[test]
+    fn generated_initial_statistics_and_fold_match_scalar_oracle() {
+        let mut seed = 0xc039_9b27_6543_ab21u64;
+        let mut random = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            K::from_u128(u128::from(seed) | (u128::from(seed.rotate_left(23)) << 64))
+        };
+        // n=14 exercises the parallel statistics and fused folding paths.
+        for n in [1usize, 2, 4, 14] {
+            for kind in 0..3 {
+                let first: Vec<K> = (0..1usize << n)
+                    .map(|i| match kind {
+                        0 => K::ZERO,
+                        1 => K::from_bit(i % 3 != 0),
+                        _ => random(),
+                    })
+                    .collect();
+                let second: Vec<K> = (0..1usize << n).map(|_| random()).collect();
+                let words: Vec<u64> = first
+                    .iter()
+                    .flat_map(|x| [x.value() as u64, (x.value() >> 64) as u64])
+                    .collect();
+                let source = |i| {
+                    K::from_u128(u128::from(words[2 * i]) | (u128::from(words[2 * i + 1]) << 64))
+                };
+                assert_eq!(
+                    sumcheck_round_evals_mul2_source(first.len(), &source, &second).as_slice(),
+                    scalar_round(&first, &second),
+                    "initial n={n} kind={kind}"
+                );
+                for r in [K::ZERO, K::ONE, random()] {
+                    let expected = vec![bind_low(&first, r), bind_low(&second, r)];
+                    let next = expected[0]
+                        .iter()
+                        .zip(&expected[1])
+                        .fold(K::ZERO, |sum, (&a, &b)| sum + a * b);
+                    let expected_evals = if n == 1 {
+                        Vec::new()
+                    } else {
+                        scalar_round(&expected[0], &expected[1])
+                    };
+                    for known in [None, Some(next)] {
+                        let mut actual = Vec::new();
+                        prepare_bound_size(first.len(), 2, &mut actual);
+                        let evaluations = bind_low_and_round_evals_mul2_source(
+                            &source,
+                            &second,
+                            &mut actual,
+                            r,
+                            known,
+                            first.len(),
+                        );
+                        assert_eq!(actual, expected, "bound n={n} kind={kind} r={r:?}");
+                        assert_eq!(
+                            evaluations, expected_evals,
+                            "evaluations n={n} kind={kind} r={r:?} known={known:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
 }

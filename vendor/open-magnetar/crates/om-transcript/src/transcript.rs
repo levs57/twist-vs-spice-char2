@@ -132,6 +132,30 @@ impl Transcript {
         self.counter = 0;
     }
 
+    /// Absorb words as concatenated little-endian encodings, with exactly the
+    /// same framing as [`Self::absorb_bytes`]. Little-endian targets borrow
+    /// the existing word storage instead of allocating a serialized copy.
+    pub fn absorb_u64s(&mut self, label: &[u8], words: &[u64]) {
+        #[cfg(target_endian = "little")]
+        {
+            // SAFETY: u64 has no padding or uninitialized bytes; a byte view
+            // has alignment 1 and remains within this shared slice's lifetime.
+            // Native bytes equal to_le_bytes() on little-endian targets.
+            let bytes = unsafe {
+                std::slice::from_raw_parts(
+                    words.as_ptr().cast::<u8>(),
+                    std::mem::size_of_val(words),
+                )
+            };
+            self.absorb_bytes(label, bytes);
+        }
+        #[cfg(target_endian = "big")]
+        {
+            let bytes: Vec<u8> = words.iter().flat_map(|word| word.to_le_bytes()).collect();
+            self.absorb_bytes(label, &bytes);
+        }
+    }
+
     /// Absorb one `K` element as its 16-byte encoding.
     ///
     /// # Panics

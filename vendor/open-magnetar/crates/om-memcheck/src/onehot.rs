@@ -197,33 +197,39 @@ impl AddrComps {
     pub fn packed(&self, i: usize) -> PackedBits {
         match self {
             AddrComps::Bits { tables, .. } => PackedBits::from_bools(&tables[i]),
-            AddrComps::Addrs { addrs, .. } => {
-                let ac = self.ac();
-                let mut out = PackedBits::zero(addrs.len() << ac);
-                if ac <= 16 && out.words().len() >= 1024 {
-                    let shift = i * ac;
-                    let mask = (1usize << ac) - 1;
-                    let cycles_per_chunk = 65536 >> ac;
-                    out.words_mut()
-                        .par_chunks_mut(1024)
-                        .enumerate()
-                        .for_each(|(ci, wchunk)| {
-                            let j_start = ci * cycles_per_chunk;
-                            let j_end = (j_start + cycles_per_chunk).min(addrs.len());
-                            for (lj, &ad) in addrs[j_start..j_end].iter().enumerate() {
-                                let ch = ((ad as usize) >> shift) & mask;
-                                let bit = ch + (lj << ac);
-                                wchunk[bit / 64] |= 1u64 << (bit % 64);
-                            }
-                        });
-                    return out;
-                }
-                for (j, &ad) in addrs.iter().enumerate() {
-                    out.set(chunk(ad as usize, ac, i) + (j << ac));
-                }
-                out
-            }
+            AddrComps::Addrs { addrs, .. } => Self::packed_from_addrs(addrs, self.ac(), i),
         }
+    }
+
+    /// Pack one component directly from borrowed compact addresses, using the
+    /// same kernel as [`Self::packed`]. `ac` is the chunk's bit width and `i`
+    /// its low-first component index. Only that chunk's bits are inspected;
+    /// callers validate their complete address range separately.
+    pub fn packed_from_addrs(addrs: &[u32], ac: usize, i: usize) -> PackedBits {
+        assert!((1..=32).contains(&ac) && i < 32 / ac, "address component");
+        let mut out = PackedBits::zero(addrs.len() << ac);
+        if ac <= 16 && out.words().len() >= 1024 {
+            let shift = i * ac;
+            let mask = (1usize << ac) - 1;
+            let cycles_per_chunk = 65536 >> ac;
+            out.words_mut()
+                .par_chunks_mut(1024)
+                .enumerate()
+                .for_each(|(ci, wchunk)| {
+                    let j_start = ci * cycles_per_chunk;
+                    let j_end = (j_start + cycles_per_chunk).min(addrs.len());
+                    for (lj, &ad) in addrs[j_start..j_end].iter().enumerate() {
+                        let ch = ((ad as usize) >> shift) & mask;
+                        let bit = ch + (lj << ac);
+                        wchunk[bit / 64] |= 1u64 << (bit % 64);
+                    }
+                });
+            return out;
+        }
+        for (j, &ad) in addrs.iter().enumerate() {
+            out.set(chunk(ad as usize, ac, i) + (j << ac));
+        }
+        out
     }
 
     /// The address accessed in cycle `j`. For non-one-hot rows this is
@@ -851,6 +857,41 @@ pub fn virt_verify(
 mod optimized_tests {
     use super::*;
     use om_sumcheck::{combine_sum, mle_eval_bits, sumcheck_prove};
+
+    #[test]
+    fn borrowed_address_packing_matches_scalar_positions_and_owned_api() {
+        for (ac, component, cycles) in [
+            (4usize, 0usize, 0usize),
+            (1, 0, 33),
+            (4, 2, 8193),
+            (8, 1, 513),
+            (16, 0, 5),
+            (17, 0, 3),
+        ] {
+            let a = ac * (component + 1);
+            let mask = (1u64 << a) - 1;
+            let addresses: Vec<u32> = (0..cycles)
+                .map(|j| ((j as u64).wrapping_mul(0x9e37_79b9).wrapping_add(17) & mask) as u32)
+                .collect();
+            let packed = AddrComps::packed_from_addrs(&addresses, ac, component);
+            assert_eq!(packed.len(), cycles << ac);
+            assert_eq!(
+                packed
+                    .words()
+                    .iter()
+                    .map(|word| word.count_ones() as usize)
+                    .sum::<usize>(),
+                cycles
+            );
+            for (j, &address) in addresses.iter().enumerate() {
+                let position =
+                    ((address as usize >> (component * ac)) & ((1usize << ac) - 1)) + (j << ac);
+                assert!(packed.bit(position));
+            }
+            let owned = AddrComps::from_addrs(addresses, a, component + 1);
+            assert_eq!(owned.packed(component), packed);
+        }
+    }
 
     mod structural_tests {
         include!("onehot_structural_tests.rs");

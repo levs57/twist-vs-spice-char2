@@ -600,3 +600,90 @@ fn rejects_tampered_cpu_evaluations() {
         );
     }
 }
+
+#[test]
+fn compact_ordering_authenticates_native_planes_through_pcs_in_both_ram_contracts() {
+    let (n, a) = (13usize, 4usize);
+    let initial: Vec<u64> = (0..1usize << a).map(|k| 13 * k as u64 + 7).collect();
+    let mut memory = initial.clone();
+    let mut typed = AccessTrace {
+        initial: initial.clone(),
+        addresses: Vec::new(),
+        values: Vec::new(),
+        is_write: Vec::new(),
+    };
+    let mut reads = Vec::new();
+    let mut writes = Vec::new();
+    for j in 0..1usize << n {
+        let k = ((j * 13) ^ (j >> 4)) & ((1 << a) - 1);
+        let write = j % 3 != 1;
+        reads.push(memory[k]);
+        if write && j % 11 != 0 {
+            memory[k] = (j as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15);
+        }
+        typed.addresses.push(k as u32);
+        typed.values.push(memory[k]);
+        typed.is_write.push(write);
+        writes.push(memory[k]);
+    }
+    for fingerprints in [1, 2] {
+        for private_final_memory in [false, true] {
+            let options = operations::Options {
+                fingerprints,
+                private_final_memory,
+            };
+            let result = operations::prove_with(&config(a), &typed, &options).unwrap();
+            let interface =
+                operations::verify_with(&result.statement, &result.proof, &options).unwrap();
+            assert_eq!(result.final_memory, memory);
+            assert_eq!(
+                interface.address,
+                brute(&interface.point, typed.addresses.iter().map(|&k| k as u64))
+            );
+            assert_eq!(
+                interface.value,
+                brute(&interface.point, typed.values.iter().copied())
+            );
+            assert_eq!(
+                interface.is_write,
+                brute(
+                    &interface.point,
+                    typed.is_write.iter().map(|&w| u64::from(w))
+                )
+            );
+            // w=14 gates occupy 16 planes; six cycle bits go through Flock's
+            // univariate round, leaving n+4-6 multilinear rounds.
+            assert_eq!(result.proof.order.multilinear_rounds.len(), n + 4 - 6);
+            let populated: usize = result
+                .summary
+                .commitment_components
+                .iter()
+                .map(|c| 1usize << c.log_size)
+                .sum();
+            assert_eq!(
+                populated,
+                (65 + a + 2 * (n + 1)) * (1 << n)
+                    + (n + 2 + usize::from(private_final_memory) * 64) * (1 << a)
+            );
+            for source in 0..3 {
+                let mut proof = result.proof.clone();
+                match source {
+                    0 => proof.evaluations.previous_ab[0] += K::ONE,
+                    1 => proof.evaluations.carries_c[0] += K::ONE,
+                    _ => proof.mosaic.sumcheck.round_msgs[0][0] += K::ONE,
+                }
+                assert!(operations::verify_with(&result.statement, &proof, &options).is_err());
+            }
+        }
+    }
+    let rmw = spice_argument::AccessTrace {
+        initial,
+        reads: vec![typed.addresses.clone()],
+        writes: typed.addresses,
+        new_values: writes,
+        read_values: Some(vec![reads]),
+    };
+    let result = spice_argument::prove(&config(a), &rmw).unwrap();
+    spice_argument::verify(&result.statement, &result.proof).unwrap();
+    assert_eq!(result.statement.final_memory, memory);
+}

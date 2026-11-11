@@ -73,7 +73,7 @@ The proved statement is RAM consistency with public initial memory and, by defau
 cargo test --locked --release --workspace
 RUSTFLAGS='-C target-cpu=native' cargo test --locked --release --workspace
 python3 scripts/check_vendor.py
-python3 scripts/check_spice_port.py
+python3 vendor/flock-boolean/check_provenance.py
 python3 scripts/check_stage16.py
 python3 scripts/test_scripts.py
 ```

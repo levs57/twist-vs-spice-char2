@@ -6,7 +6,9 @@
 use lean_grandproduct::{GrandProductProof, LeafClaims, Leaves};
 use om_field::{K, mul_pairs};
 use om_memcheck::onehot::EvalClaim;
-use om_mosaic::{BatchProof, batch_prove_packed, batch_verify, compute_layout};
+use om_mosaic::{
+    BatchProof, batch_prove_packed_with_prefixes, batch_verify_with_prefixes, compute_layout,
+};
 use om_pcs::ligerito::make_params;
 use om_pcs::{BitPCS, BitProof, Commitment};
 use om_sumcheck::{PackedBits, SumcheckProof};
@@ -17,10 +19,11 @@ use om_transcript::{
 use std::collections::BTreeMap;
 
 use crate::{
-    ComponentSummary, Config, Error, OrderingMode, Schema, Statement, Summary, combine_bits, dims,
+    ComponentSummary, Config, Error, OrderingMode, Schema, Statement, Summary, TaggedClaim,
+    combine_bits, dims,
     masked_reduction::{self, MaskClaims},
-    order, order_flock, pack_columns, pack_values, planes, require, validate, validate_memory,
-    word_claim, word_eval,
+    order, order_flock, pack_columns, planes, require, validate, validate_memory, word_claim,
+    word_eval,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -367,55 +370,91 @@ fn place_planes(g: &mut PackedBits, schema: &Schema, prefix: &str, planes: &[Pac
 }
 
 /// A claim before the chunk combination challenge is drawn.
-enum Pending {
+enum Pending<'a> {
     /// All planes of one group evaluated at one point.
     Planes {
         prefix: &'static str,
-        point: Vec<K>,
-        values: Vec<K>,
+        point: &'a [K],
+        values: &'a [K],
+        prefix_weights: Option<&'a [K]>,
     },
     Direct(EvalClaim),
 }
 
-fn group(prefix: &'static str, point: &[K], values: &[K]) -> Pending {
+fn group<'a>(prefix: &'static str, point: &'a [K], values: &'a [K]) -> Pending<'a> {
     Pending::Planes {
         prefix,
-        point: point.to_vec(),
-        values: values.to_vec(),
+        point,
+        values,
+        prefix_weights: None,
+    }
+}
+
+fn order_group<'a>(
+    prefix: &'static str,
+    point: &'a [K],
+    values: &'a [K],
+    weights: &'a Option<Vec<K>>,
+) -> Pending<'a> {
+    Pending::Planes {
+        prefix,
+        point,
+        values,
+        prefix_weights: weights.as_deref(),
     }
 }
 
 /// Replace each group of per-plane values by one claim per chunk:
 /// `sum_i eq(rho[..k], i) * value_i` at `point || rho[..k]`. `rho` must be
 /// drawn after every per-plane value has been absorbed.
-fn finish_claims(pending: Vec<Pending>, rho: &[K]) -> Vec<EvalClaim> {
-    pending
+#[cfg(test)]
+fn finish_claims(pending: Vec<Pending<'_>>, rho: &[K]) -> Vec<EvalClaim> {
+    finish_tagged_claims(pending, rho)
         .into_iter()
-        .flat_map(|claim| match claim {
-            Pending::Direct(claim) => vec![claim],
+        .map(|(claim, _)| claim)
+        .collect()
+}
+
+fn finish_tagged_claims(pending: Vec<Pending<'_>>, rho: &[K]) -> Vec<TaggedClaim> {
+    let count = pending
+        .iter()
+        .map(|claim| match claim {
+            Pending::Direct(_) => 1,
+            Pending::Planes { values, .. } => values.len().count_ones() as usize,
+        })
+        .sum();
+    let mut claims = Vec::with_capacity(count);
+    for claim in pending {
+        match claim {
+            Pending::Direct(claim) => claims.push((claim, None)),
             Pending::Planes {
                 prefix,
                 point,
                 values,
-            } => plane_chunks(values.len())
-                .into_iter()
-                .map(|(start, k)| {
+                prefix_weights,
+            } => {
+                for (start, k) in plane_chunks(values.len()) {
                     let weights = om_sumcheck::eq_table(&rho[..k]);
                     let value = values[start..start + (1 << k)]
                         .iter()
                         .zip(&weights)
                         .fold(K::ZERO, |sum, (&v, &w)| sum + v * w);
-                    let mut at = point.clone();
+                    let mut at = Vec::with_capacity(point.len() + k);
+                    at.extend_from_slice(point);
                     at.extend_from_slice(&rho[..k]);
-                    EvalClaim {
-                        poly: chunk_name(prefix, start, k),
-                        point: at,
-                        value,
-                    }
-                })
-                .collect(),
-        })
-        .collect()
+                    claims.push((
+                        EvalClaim {
+                            poly: chunk_name(prefix, start, k),
+                            point: at,
+                            value,
+                        },
+                        prefix_weights.map(<[K]>::to_vec),
+                    ));
+                }
+            }
+        }
+    }
+    claims
 }
 
 fn group_rho(tr: &mut Transcript) -> Vec<K> {
@@ -460,15 +499,15 @@ fn scalar_claim(name: &str, point: &[K], value: K) -> EvalClaim {
 
 /// All Mosaic claims before chunk combination: every plane group at every
 /// point where the protocol needs it, the word value and the initial flag.
-fn pending_claims(
+fn pending_claims<'a>(
     s: &Statement,
-    cpu_point: &[K],
-    cpu: &CpuEvaluations,
-    leaf: &[K],
-    mask: &[K],
-    order: &order_flock::OrderClaims,
-    v: &Evaluations,
-) -> Vec<Pending> {
+    cpu_point: &'a [K],
+    cpu: &'a CpuEvaluations,
+    leaf: &'a [K],
+    mask: &'a [K],
+    order: &'a order_flock::OrderClaims,
+    v: &'a Evaluations,
+) -> Vec<Pending<'a>> {
     let (n, a, _, _) = dims(s);
     let final_value = v.final_value.map(|value| {
         Pending::Direct(word_claim(
@@ -502,10 +541,25 @@ fn pending_claims(
                 &mask[..a],
                 v.mask_initial_next_is_write,
             )),
-            group("input/previous", &order.point_ab, &order.previous_ab),
-            group("order/carry", &order.point_ab, &order.carries_ab),
+            order_group(
+                "input/previous",
+                &order.point_ab,
+                &order.previous_ab,
+                &order.prefix_weights,
+            ),
+            order_group(
+                "order/carry",
+                &order.point_ab,
+                &order.carries_ab,
+                &order.prefix_weights,
+            ),
             // Flock extracts the linear C column at a second cycle point.
-            group("order/carry", &order.point_c, &order.carries_c),
+            order_group(
+                "order/carry",
+                &order.point_c,
+                &order.carries_c,
+                &order.prefix_weights,
+            ),
             // The CPU interface: address planes, the word value and
             // is_write (plane 0 of input/flags, the high coordinate) at r_c.
             group("input/address", cpu_point, &cpu.address),
@@ -728,7 +782,7 @@ fn prove_hooked(
     )?;
     let (previous, next, initial_next, last, carries) = {
         let _span = Span::new("spice.witness");
-        let mut memory = trace.initial.clone();
+        let mut memory = std::mem::take(&mut statement.final_memory);
         let mut last: Vec<u32> = (0..cells as u32).collect();
         let mut previous = Vec::with_capacity(t);
         let mut next = vec![false; t];
@@ -765,11 +819,7 @@ fn prove_hooked(
         let flags = [pack_flags(&trace.is_write), pack_flags(&next)];
         let initial_flags = pack_flags(&initial_next);
         let mut g = PackedBits::zero(1usize << schema.layout.ell);
-        schema.place(
-            &mut g,
-            "input/value",
-            &pack_values(&trace.values, config.word_log_bits),
-        );
+        schema.place_values(&mut g, "input/value", &trace.values, config.word_log_bits);
         for (prefix, cols) in [
             ("input/address", &address[..]),
             ("input/previous", &prev[..]),
@@ -781,10 +831,11 @@ fn prove_hooked(
         }
         schema.place(&mut g, "initial/next_is_write", &initial_flags);
         if options.private_final_memory {
-            schema.place(
+            schema.place_values(
                 &mut g,
                 "boundary/final",
-                &pack_values(&statement.final_memory, config.word_log_bits),
+                &statement.final_memory,
+                config.word_log_bits,
             );
         }
         (address, prev, carry, last_columns, flags, initial_flags, g)
@@ -796,7 +847,7 @@ fn prove_hooked(
     let r_c = cpu_point(&mut tr, n);
     let cpu = {
         let _span = Span::new("spice.interface");
-        let planes = planes::evaluate(
+        let mut planes = planes::evaluate(
             &[&r_c],
             &[planes::Request {
                 planes: address_columns.iter().chain([&flags[0]]).collect(),
@@ -805,13 +856,15 @@ fn prove_hooked(
         )
         .pop()
         .expect("request");
+        let is_write = planes.pop().expect("flag plane");
         CpuEvaluations {
-            address: planes[..a].to_vec(),
-            is_write: planes[a],
+            address: planes,
+            is_write,
             value: ram_argument::word::mle(&trace.values, &r_c),
         }
     };
-    let computed = cpu.clone();
+    // Only adversarial test hooks need a second, unmodified CPU message.
+    let computed = hook.map(|_| cpu.clone());
     let mut cpu = cpu;
     if let Some(hook) = hook {
         hook(&mut cpu);
@@ -892,15 +945,14 @@ fn prove_hooked(
             &leaves.point[..n],
             config.word_log_bits,
         );
-        let initial: Vec<u64> = trace
-            .initial
-            .iter()
-            .zip(&initial_next)
-            .map(|(&v, &w)| v & 0u64.wrapping_sub(u64::from(!w)))
-            .collect();
         MaskClaims {
             cycle,
-            initial: word_eval(&initial, &leaves.point[..a], config.word_log_bits),
+            initial: planes::masked_word_eval(
+                &trace.initial,
+                &initial_next,
+                &leaves.point[..a],
+                config.word_log_bits,
+            ),
         }
     };
     absorb_masked(&mut tr, &masked);
@@ -920,11 +972,21 @@ fn prove_hooked(
     };
     let (order, order_terminal) = {
         let _span = Span::new("spice.order");
-        order_flock::prove_zerocheck(&previous, &carries, n, a, &mut tr, b"spice/typed/order")?
+        order_flock::prove_zerocheck_packed(
+            &previous,
+            &carries,
+            &previous_columns,
+            &carry_columns,
+            n,
+            a,
+            &mut tr,
+            b"spice/typed/order",
+        )?
     };
     let evaluations = {
         let _span = Span::new("spice.claims");
-        let (point_ab, point_c) = order_flock::terminal_points(n, &order_terminal);
+        let (point_ab, point_c) = order_flock::terminal_points(n, a, &order_terminal);
+        let prefix = order_flock::terminal_prefix_weights(n, a, &order_terminal);
         let cycle_points = [&leaves.point[..n], &mask_point[..n], &point_ab, &point_c];
         fn request(columns: &[PackedBits], point: usize) -> planes::Request<'_> {
             planes::Request {
@@ -932,8 +994,9 @@ fn prove_hooked(
                 point,
             }
         }
-        let mut cycle = planes::evaluate(
+        let mut cycle = planes::evaluate_with_prefixes(
             &cycle_points,
+            &[None, None, prefix.as_deref(), prefix.as_deref()],
             &[
                 request(&address_columns, 0),
                 request(&previous_columns, 0),
@@ -1003,11 +1066,11 @@ fn prove_hooked(
         &evaluations.carries_ab,
         &evaluations.carries_c,
     )?;
-    let claims = finish_claims(
+    let claims = finish_tagged_claims(
         pending_claims(
             &statement,
             &r_c,
-            &computed,
+            computed.as_ref().unwrap_or(&cpu),
             &leaves.point,
             &mask_point,
             &order_claims,
@@ -1017,7 +1080,8 @@ fn prove_hooked(
     );
     let (mosaic, r, value) = {
         let _span = Span::new("mosaic.batch");
-        batch_prove_packed(&schema.layout, &schema.claims(&claims)?, &g, &mut tr)
+        let (ordinary, prefixes) = schema.tagged_claims(&claims)?;
+        batch_prove_packed_with_prefixes(&schema.layout, &ordinary, &prefixes, &g, &mut tr)
     };
     let (opened, opening) = {
         let _span = Span::new("pcs.open");
@@ -1123,7 +1187,7 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<Interface
             &fps,
             options,
         )?;
-        let claims = finish_claims(
+        let claims = finish_tagged_claims(
             pending_claims(
                 s,
                 &r_c,
@@ -1135,11 +1199,11 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<Interface
             ),
             &group_rho(&mut tr),
         );
-        schema.claims(&claims)?
+        schema.tagged_claims(&claims)?
     };
     let (r, value) = {
         let _span = Span::new("verify.mosaic");
-        batch_verify(&schema.layout, &claims, &p.mosaic, &mut tr)?
+        batch_verify_with_prefixes(&schema.layout, &claims.0, &claims.1, &p.mosaic, &mut tr)?
     };
     let _span = Span::new("verify.pcs");
     schema
@@ -1283,7 +1347,7 @@ pub fn soundness_terms(s: &Statement, options: &Options) -> Vec<(String, f64)> {
     // coordinates count: at most `skip + rounds - fixed`. The univariate-skip
     // fold point `z` checks a polynomial of degree below `2 * 2^skip`; each
     // multilinear round is quadratic.
-    let (skip, flock_rounds, fixed) = order_flock::zerocheck_shape(n);
+    let (skip, flock_rounds, fixed) = order_flock::zerocheck_shape(n, a);
     push("flock.zerocheck", (skip + flock_rounds - fixed) as f64);
     push("flock.skip", ((2usize << skip) - 1) as f64);
     push("flock.sumcheck", 2.0 * flock_rounds as f64);
@@ -1336,6 +1400,7 @@ fn claim_count(s: &Statement, options: &Options) -> usize {
         previous_ab: v.previous_ab.clone(),
         carries_ab: v.carries_ab.clone(),
         carries_c: v.carries_c.clone(),
+        prefix_weights: None,
     };
     let point = zeros(l + 1);
     let cpu = CpuEvaluations {
@@ -1343,7 +1408,7 @@ fn claim_count(s: &Statement, options: &Options) -> usize {
         value: K::ZERO,
         is_write: K::ZERO,
     };
-    finish_claims(
+    finish_tagged_claims(
         pending_claims(s, &zeros(n), &cpu, &point, &point, &order, &v),
         &[K::ZERO; RHO_LEN],
     )
@@ -1451,6 +1516,7 @@ mod tests {
             previous_ab: p.evaluations.previous_ab.clone(),
             carries_ab: p.evaluations.carries_ab.clone(),
             carries_c: p.evaluations.carries_c.clone(),
+            prefix_weights: None,
         };
         let leaf: Vec<K> = (0..l + 1).map(|i| K::from_u128(5 + i as u128)).collect();
         let pending = pending_claims(
@@ -1518,7 +1584,7 @@ mod tests {
         assert_eq!(get(&one, "gkr.batch"), 11.0);
         assert_eq!(get(&one, "gkr.sumcheck"), 400.0);
         assert_eq!(get(&one, "gkr.child-point"), 21.0);
-        assert_eq!(get(&one, "flock.zerocheck"), 19.0);
+        assert_eq!(get(&one, "flock.zerocheck"), 18.0);
         assert_eq!(get(&one, "rho"), 4.0);
         // 22 claims, three of them for the CPU interface.
         assert_eq!(get(&one, "mosaic.batch"), 21.0);

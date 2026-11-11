@@ -39,10 +39,15 @@ pub use mle::{
 pub use sumcheck::{
     BoxedCombine, MAX_BATCH_CLAIMS, SumcheckProof, UnivariateSkipProof, VerificationError,
     batch_claims, batched_combine, bind_low_and_round_evals_into,
-    bind_low_and_round_evals_mul2_into, bind_low_subspace, combine_sum, interpolate_eval,
-    lagrange_subspace_weights, sumcheck_init, sumcheck_prove, sumcheck_prove_mul2,
-    sumcheck_prove_rounds, sumcheck_prove_rounds_mul2, sumcheck_prove_skip, sumcheck_round_evals,
-    sumcheck_round_evals_mul2, sumcheck_verify, sumcheck_verify_skip,
+    bind_low_and_round_evals_mul2_into, bind_low_and_round_evals_mul2_slices_into,
+    bind_low_subspace, combine_sum, interpolate_eval, lagrange_subspace_weights, sumcheck_init,
+    sumcheck_prove, sumcheck_prove_mul2, sumcheck_prove_mul2_borrowed_first,
+    sumcheck_prove_mul2_generated_first, sumcheck_prove_rounds, sumcheck_prove_rounds_mul2,
+    sumcheck_prove_skip, sumcheck_round_evals, sumcheck_round_evals_mul2, sumcheck_verify,
+    sumcheck_verify_skip,
 };
 
-pub use products::{product_sum, sumcheck_prove_rounds_eq_mul2, sumcheck_prove_weighted_mul2};
+pub use products::{
+    product_sum, sumcheck_prove_rounds_eq_mul2, sumcheck_prove_rounds_eq_mul2_borrowed,
+    sumcheck_prove_weighted_mul2,
+};

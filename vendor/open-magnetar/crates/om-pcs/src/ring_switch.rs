@@ -6,8 +6,8 @@
 
 use om_field::K;
 use om_sumcheck::{
-    PackedBits, SumcheckProof, VerificationError, eq_table, product_sum, sumcheck_prove_mul2,
-    sumcheck_verify,
+    PackedBits, SumcheckProof, VerificationError, eq_table, product_sum,
+    sumcheck_prove_mul2_generated_first, sumcheck_verify,
 };
 use om_transcript::Transcript;
 use rayon::prelude::*;
@@ -212,14 +212,40 @@ fn rs_prove_from_s(
     s: Vec<K>,
     tr: &mut Transcript,
 ) -> (RingSwitchProof, Vec<K>, K) {
-    absorb_claim(tr, r, y);
-    tr.absorb_ks(b"rs/s", &s);
-    let rho = tr.challenge_ks(b"rs/rho", KAPPA);
-    let target = target_of(&s, &rho);
-    let a = a_table(&r[KAPPA..], &rho);
-    let p = pack_packed(bits);
-    let (proof, r_s, finals) = sumcheck_prove_mul2(target, vec![p, a], tr, b"rs/sumcheck");
+    let (target, a) = prepare_from_s(r, y, &s, tr);
+    // The first field table is already present as pairs of packed u64 words.
+    // Read it directly for round zero and its first fold; allocating a full
+    // packed field table would duplicate this immutable input representation.
+    let words = bits.words();
+    let first = |i| K::from_u128(u128::from(words[2 * i]) | (u128::from(words[2 * i + 1]) << 64));
+    let (proof, r_s, finals) =
+        sumcheck_prove_mul2_generated_first(target, a.len(), first, a, tr, b"rs/sumcheck");
     (RingSwitchProof { s, sumcheck: proof }, r_s, finals[0])
+}
+
+/// Frozen allocation-based RingSwitch driver for proof/transcript regression
+/// tests. The production packed driver generates its first table on demand.
+#[cfg(test)]
+pub(crate) fn rs_prove_packed_value_owned_reference(
+    bits: &PackedBits,
+    r: &[K],
+    tr: &mut Transcript,
+) -> (RingSwitchProof, Vec<K>, K, K) {
+    let s = partial_evals_packed_checked(bits, r);
+    let y = product_sum(&eq_table(&r[..KAPPA]), &s);
+    let (target, a) = prepare_from_s(r, y, &s, tr);
+    let (sumcheck, r_s, finals) =
+        om_sumcheck::sumcheck_prove_mul2(target, vec![pack_packed(bits), a], tr, b"rs/sumcheck");
+    (RingSwitchProof { s, sumcheck }, r_s, finals[0], y)
+}
+
+fn prepare_from_s(r: &[K], y: K, s: &[K], tr: &mut Transcript) -> (K, Vec<K>) {
+    absorb_claim(tr, r, y);
+    tr.absorb_ks(b"rs/s", s);
+    let rho = tr.challenge_ks(b"rs/rho", KAPPA);
+    let target = target_of(s, &rho);
+    let a = a_table(&r[KAPPA..], &rho);
+    (target, a)
 }
 
 /// `s_j = Σ_v eq(r_hi, v) · bits[j + 128v]`.
@@ -415,4 +441,65 @@ pub fn rs_verify(
         ));
     }
     Ok((r_s, final_claim / a_val))
+}
+
+#[cfg(test)]
+mod generated_table_tests {
+    use super::*;
+
+    #[test]
+    fn generated_packed_table_preserves_owned_proof_and_transcript() {
+        let mut seed = 0x704a_91e8_4b38_c625u64;
+        let mut next = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            seed
+        };
+        // Packed dimensions 1/2 cover the final-fold edge cases; 14 reaches
+        // both generated parallel kernels without materializing their input.
+        for (n, pattern, point_kind) in [
+            (1usize, 0, 0),
+            (1, 1, 1),
+            (1, 2, 2),
+            (2, 3, 2),
+            (7, 0, 2),
+            (7, 1, 2),
+            (7, 2, 1),
+            (7, 3, 0),
+            (14, 3, 2),
+        ] {
+            let words = (0..1usize << (n + 1))
+                .map(|i| match pattern {
+                    0 => 0,
+                    1 => u64::MAX,
+                    2 => 1u64 << (i % 64),
+                    _ => next(),
+                })
+                .collect();
+            let bits = PackedBits::from_words(words, 1 << (n + KAPPA));
+            let point: Vec<K> = (0..n + KAPPA)
+                .map(|i| match point_kind {
+                    0 => K::ZERO,
+                    1 => K::from_bit(i % 2 == 0),
+                    _ => K::from_u128(u128::from(next()) | (u128::from(next()) << 64)),
+                })
+                .collect();
+            let mut owned_tr = Transcript::new_default(b"rs-generated");
+            let mut generated_tr = owned_tr.clone();
+            let owned = rs_prove_packed_value_owned_reference(&bits, &point, &mut owned_tr);
+            let generated = rs_prove_packed_value(&bits, &point, &mut generated_tr);
+            assert_eq!(
+                owned, generated,
+                "n={n} pattern={pattern} point={point_kind}"
+            );
+            let expected_after = owned_tr.challenge_k(b"after");
+            assert_eq!(expected_after, generated_tr.challenge_k(b"after"));
+
+            let mut explicit_tr = Transcript::new_default(b"rs-generated");
+            let explicit = rs_prove_packed(&bits, &point, owned.3, &mut explicit_tr);
+            assert_eq!(explicit, (owned.0, owned.1, owned.2));
+            assert_eq!(expected_after, explicit_tr.challenge_k(b"after"));
+        }
+    }
 }
