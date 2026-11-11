@@ -104,12 +104,25 @@ def analyze(out_dir, resamples=RESAMPLES, seed=SEED):
         present = set(per_round[r]["baseline"]) & set(per_round[r]["branch"])
         keys = present if keys is None else keys & present
     rows = []
+    unpaired = []
     for key in sorted(keys or (), key=lambda k: tuple(str(v) for v in k)):
+        traces = {per_round[r][label][key]["trace_sha256"] for r in rounds for label in LABELS}
+        if len(traces) != 1:
+            # The two binaries proved different traces; a ratio would compare
+            # different work, so the case is reported but not paired.
+            unpaired.append(key)
+            continue
+        implementations = {
+            label: sorted({per_round[r][label][key]["implementation"] for r in rounds})
+            for label in LABELS
+        }
         row = {
             "pattern": key[0],
             "method": key[1],
             "chunk_bits": key[2],
             "rounds": len(rounds),
+            "baseline_implementation": "; ".join(implementations["baseline"]),
+            "branch_implementation": "; ".join(implementations["branch"]),
         }
         for metric in ("prover_ms", "verifier_ms"):
             base = [per_round[r]["baseline"][key][metric] for r in rounds]
@@ -133,6 +146,7 @@ def analyze(out_dir, resamples=RESAMPLES, seed=SEED):
         "seed": seed,
         "load1_range": [min(loads), max(loads)] if loads else None,
         "cases": [row for _, row in rows],
+        "unpaired_trace_mismatch": [key_label(key) for key in unpaired],
     }
     lines = [
         f"Rounds: {len(rounds)}; bootstrap: {resamples} paired resamples, seed {seed:#x}.",
@@ -152,6 +166,19 @@ def analyze(out_dir, resamples=RESAMPLES, seed=SEED):
             f"| {key_label(key)} | {p['baseline_median']:.2f} | {p['branch_median']:.2f} | {cell(p)} "
             f"| {v['baseline_median']:.2f} | {v['branch_median']:.2f} | {cell(v)} |"
         )
+    differing = [
+        (key, row) for key, row in rows if row["baseline_implementation"] != row["branch_implementation"]
+    ]
+    if differing:
+        lines += ["", "The two binaries ran different provers under the same method name in these rows:"]
+        for key, row in differing:
+            lines.append(
+                f"- {key_label(key)}: baseline {row['baseline_implementation']}; "
+                f"branch {row['branch_implementation']}."
+            )
+    if unpaired:
+        lines += ["", "Not paired because the two binaries proved different traces:"]
+        lines += [f"- {key_label(key)}" for key in unpaired]
     if loads:
         lines += ["", f"One-minute load before invocations: {min(loads):.2f} to {max(loads):.2f}."]
     markdown = "\n".join(lines) + "\n"

@@ -60,6 +60,27 @@ fn sources_sha256() -> String {
     }
     hex(&Hasher::sha256().digest(&bytes))
 }
+/// The argument crates' sources and Cargo.lock as build.rs found them, so a
+/// report names the prover code it measured.
+const ARGUMENT_SOURCES: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/argument-sources.bin"));
+fn argument_sources_sha256() -> String {
+    let mut bytes = Vec::new();
+    let mut rest = ARGUMENT_SOURCES;
+    while !rest.is_empty() {
+        let nul = rest
+            .iter()
+            .position(|&b| b == 0)
+            .expect("argument source name");
+        let (name, tail) = rest.split_at(nul);
+        let len = u64::from_le_bytes(tail[1..9].try_into().expect("length")) as usize;
+        let contents = &tail[9..9 + len];
+        bytes.extend_from_slice(name);
+        bytes.push(0);
+        bytes.extend_from_slice(&Hasher::sha256().digest(contents));
+        rest = &tail[9 + len..];
+    }
+    hex(&Hasher::sha256().digest(&bytes))
+}
 const HELP: &str = "Chronological shared-address RAM: Twist versus ordered Spice
   --methods twist,twist-legacy,spice,spice-ripple,spice-typed,spice-typed-2fp|both
                                   Ordered methods; both=twist,spice (default).
@@ -281,6 +302,20 @@ fn validate_options(o: &Options) -> Result<()> {
     {
         return Err("distinct positive chunk sizes must divide address bits".into());
     }
+    if !["address", "cycle"].contains(&o.read_order.as_str()) {
+        return Err("--read-order must be address or cycle".into());
+    }
+    if !["public", "private"].contains(&o.final_memory.as_str()) {
+        return Err("--final-memory must be public or private".into());
+    }
+    if o.final_memory == "private" {
+        if let Some(m) = o.methods.iter().find(|m| !supports_private_final_memory(m)) {
+            return Err(format!(
+                "--final-memory private applies to twist, spice-typed and spice-typed-2fp only, not {m}"
+            )
+            .into());
+        }
+    }
     if !["repeat", "halt"].contains(&o.guest_fill.as_str()) {
         return Err("guest fill must be repeat or halt".into());
     }
@@ -403,6 +438,41 @@ fn ordering_name(method: &str) -> Option<&'static str> {
         "spice-typed" => Some("single-value-flock"),
         "spice-typed-2fp" => Some("single-value-flock-2fp"),
         _ => unreachable!("validated method"),
+    }
+}
+/// Which prover a method name runs in this binary. Baseline binaries built
+/// before schema 5 used `twist` for the prover that is now `twist-legacy`,
+/// so cross-binary comparisons read this field to label their rows.
+fn implementation_name(method: &str, o: &Options) -> String {
+    match method {
+        "twist" => format!("ram_argument::twist2, {}-first read check", o.read_order),
+        "twist-legacy" => "ram_argument BinaryTwist flat (as at 632855e)".into(),
+        "spice" => "untyped Spice, Flock ordering (as at 632855e)".into(),
+        "spice-ripple" => "untyped Spice, ripple eq-factor ordering (as at 632855e)".into(),
+        "spice-typed" => "spice_argument::operations, one fingerprint set".into(),
+        "spice-typed-2fp" => "spice_argument::operations, two fingerprint sets".into(),
+        _ => unreachable!("validated method"),
+    }
+}
+/// Whether this method's run committed final memory (`private`) or took it
+/// from the statement (`public`).
+fn final_memory_mode(method: &str, o: &Options) -> String {
+    if supports_private_final_memory(method) {
+        o.final_memory.clone()
+    } else {
+        "public".into()
+    }
+}
+fn supports_private_final_memory(method: &str) -> bool {
+    matches!(method, "twist" | "spice-typed" | "spice-typed-2fp")
+}
+/// Composed soundness bits for the console, marked when only the fingerprint
+/// term is derived, so a partial figure is not read as a full one.
+fn bits_label(s: &soundness::Soundness) -> String {
+    if s.iop_source == "partial" {
+        format!("{:.2} bits, fingerprint term only", s.bits)
+    } else {
+        format!("{:.2} bits", s.bits)
     }
 }
 fn typed_options(method: &str, o: &Options) -> spice_argument::operations::Options {
@@ -936,7 +1006,13 @@ fn measure(
             verifier_ms,
             verifier_metrics,
             proof_size::spice_typed_crate(&result.proof),
-            (&result.statement).into(),
+            // With private final memory the statement carries none, so the
+            // cross-method check uses the final memory the prover computed.
+            Public {
+                initial_memory: &result.statement.initial_memory,
+                log_cycles: result.statement.log_cycles,
+                final_memory: result.final_memory.clone(),
+            },
             result.metrics,
             &result.summary,
             trace,
@@ -976,6 +1052,10 @@ fn measure(
 #[derive(Debug, Serialize)]
 struct Case {
     method: String,
+    /// The prover this method name ran; see `implementation_name`.
+    implementation: String,
+    /// `public` or `private` final memory for this case.
+    final_memory: String,
     ordering: Option<String>,
     pattern: String,
     trace_format: String,
@@ -1194,10 +1274,10 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 o.final_memory == "public",
             );
             println!(
-                "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms [soundness {:.2} bits] commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",
+                "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms [soundness {}] commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",
                 median.times["prover_ms"],
                 median.times["verifier_ms"],
-                soundness.bits,
+                bits_label(&soundness),
                 median.times["commit_ms"],
                 median.times["opening_ms"],
                 median.times["iop_and_prep_ms"],
@@ -1275,6 +1355,8 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             let bound = method.starts_with("spice").then(|| serde_json::json!({"field_bits":128,"degree_numerator":l,"fingerprint_sets":sets,"probability_bound":2f64.powf(-fingerprint_bits),"fingerprint_bound_bits":fingerprint_bits,"scope":"GP fingerprint term only; excludes order/mask/GKR/batching/PCS/hash errors; not an equal-security claim"}));
             let ordering = ordering_name(&method).map(str::to_owned);
             cases.push(Case {
+                implementation: implementation_name(&method, o),
+                final_memory: final_memory_mode(&method, o),
                 method,
                 ordering,
                 pattern: pattern.clone(),
@@ -1449,6 +1531,8 @@ fn csv(report: &Report) -> String {
     let mut header: Vec<_> = [
         "case",
         "method",
+        "implementation",
+        "final_memory",
         "ordering",
         "pattern",
         "trace_format",
@@ -1498,6 +1582,8 @@ fn csv(report: &Report) -> String {
             let mut row = vec![
                 i.to_string(),
                 c.method.clone(),
+                c.implementation.clone(),
+                c.final_memory.clone(),
                 c.ordering.clone().unwrap_or_default(),
                 c.pattern.clone(),
                 c.trace_format.clone(),
@@ -1591,6 +1677,7 @@ fn main() -> Result<()> {
     let environment = platform::environment(
         hex(&Hasher::sha256().digest(&fs::read(env::current_exe()?)?)),
         sources_sha256(),
+        argument_sources_sha256(),
     );
     let provenance = serde_json::json!({
         "open_magnetar":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/open-magnetar/UPSTREAM.json"))?,
@@ -1600,7 +1687,7 @@ fn main() -> Result<()> {
         // stage manifests are not embedded because they describe older trees.
         "implementation_manifest":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage16-implementation.json"))?,
     });
-    let report = Report { schema_version:SCHEMA_VERSION,implementation:IMPLEMENTATION.into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods.".into(),"Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).".into(),"Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; IOP terms are a local fallback until the argument crates export soundness_terms), load averages per case and sample, host metadata, cases[].throughput (median prover ns per trace row and, for guests, per source load/store before narrow-store expansion) and metadata.reuse_distance (log2 buckets of operations since the previous access to the same word).".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial/final memory are public and transcript-bound.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
+    let report = Report { schema_version:SCHEMA_VERSION,implementation:IMPLEMENTATION.into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods. With public final memory each verifier checks the statement's final memory; with private final memory the cross-method check compares the final memories the provers computed, which the verifiers bind only through the commitment.".into(),"Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).".into(),"Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; soundness.iop_source says whether the IOP terms come from the argument crate, a local fallback derived from the verifier, or only the fingerprint term), load averages per case and sample, host metadata, cases[].throughput (median prover ns per trace row and, for guests, per source load/store before narrow-store expansion) and metadata.reuse_distance (log2 buckets of operations since the previous access to the same word).".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial memory is public and transcript-bound. Final memory is public and transcript-bound unless cases[].final_memory is private, in which case it is committed and bound by a Mosaic claim.".into(),"cases[].implementation names the prover a method name ran. In this binary twist is Twist v2 (ram_argument::twist2); binaries before schema 5 used twist for the prover now called twist-legacy.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
     if let Some(path) = &report.options.output {
         write(path, &serde_json::to_vec_pretty(&report)?)?;
         println!("JSON: {}", path.display());
@@ -1612,7 +1699,7 @@ fn main() -> Result<()> {
     for pair in &report.comparisons {
         let twist = &report.cases[pair.twist_case];
         println!(
-            "{} Twist({:?})/{} ratios: prover={:.3}× commitment-padding-adjusted ESTIMATE={:.3}× verifier={:.3}× populated={:.3}× committed={:.3}× [soundness {:.2} vs {:.2} bits]",
+            "{} Twist({:?})/{} ratios: prover={:.3}× commitment-padding-adjusted ESTIMATE={:.3}× verifier={:.3}× populated={:.3}× committed={:.3}× [soundness {} vs {}]",
             twist.pattern,
             twist.chunk_bits,
             pair.spice_method,
@@ -1621,8 +1708,8 @@ fn main() -> Result<()> {
             pair.spice_verifier_speedup,
             pair.twist_to_spice_populated_ratio,
             pair.twist_to_spice_committed_ratio,
-            pair.twist_soundness_bits,
-            pair.spice_soundness_bits
+            bits_label(&twist.soundness),
+            bits_label(&report.cases[pair.spice_case].soundness),
         );
     }
     for r in &report.paired_ratios {
@@ -1635,15 +1722,15 @@ fn main() -> Result<()> {
             })
         };
         println!(
-            "{} {}/{} median ratios, 95% paired bootstrap over {} rounds: {} {} [soundness {:.2} vs {:.2} bits]",
+            "{} {}/{} median ratios, 95% paired bootstrap over {} rounds: {} {} [soundness {} vs {}]",
             r.pattern,
             r.numerator,
             r.denominator,
             r.prover.map_or(0, |v| v.rounds),
             show("prover", &r.prover),
             show("verifier", &r.verifier),
-            report.cases[r.numerator_case].soundness.bits,
-            report.cases[r.denominator_case].soundness.bits,
+            bits_label(&report.cases[r.numerator_case].soundness),
+            bits_label(&report.cases[r.denominator_case].soundness),
         );
     }
     println!(

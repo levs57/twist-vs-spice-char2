@@ -29,6 +29,7 @@ Re-analyse an existing directory without running anything:
 import argparse
 import itertools
 import json
+import math
 import subprocess
 import sys
 import time
@@ -138,6 +139,8 @@ def analyze(out_dir):
                         "prover_ns_per_source_memory_instruction"
                     ),
                     "proof_bytes": (case.get("proof_size") or {}).get("total_bytes"),
+                    "populated_bits": (case.get("area") or {}).get("populated_bits"),
+                    "committed_bits": (case.get("area") or {}).get("committed_bits"),
                     "soundness_bits": (case.get("soundness") or {}).get("bits"),
                     "load1_before": (entry["uptime_before"].get("load") or [None])[0],
                 }
@@ -148,12 +151,15 @@ def analyze(out_dir):
     def number(value, digits):
         return "" if value is None else f"{value:.{digits}f}"
 
+    def log2(value):
+        return "" if not value else f"{math.log2(value):.2f}"
+
     lines = [
         f"Points: {len(index)} ({len(failed)} failed).",
         "",
         "| A | N | Threads | Case | Prover (ms) | Verifier (ms) | Prover ns/row "
-        "| Proof (B) | Soundness (bits) | Load before |",
-        "| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| log2 populated | log2 committed | Proof (B) | Soundness (bits) | Load before |",
+        "| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for r in rows:
         label = key_label((r["pattern"], r["method"], r["chunk_bits"]))
@@ -161,6 +167,7 @@ def analyze(out_dir):
             f"| {r['address_bits']} | {r['log_cycles']} | {r['threads']} | {label} "
             f"| {r['prover_ms']:.2f} | {r['verifier_ms']:.2f} "
             f"| {number(r['prover_ns_per_operation'], 1)} "
+            f"| {log2(r['populated_bits'])} | {log2(r['committed_bits'])} "
             f"| {'' if r['proof_bytes'] is None else r['proof_bytes']} "
             f"| {number(r['soundness_bits'], 2)} | {number(r['load1_before'], 2)} |"
         )

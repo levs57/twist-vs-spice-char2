@@ -144,7 +144,11 @@ fn native_features() -> serde_json::Value {
 }
 
 /// Static description of the host and build, recorded once per report.
-pub fn environment(executable_sha256: String, sources_sha256: String) -> serde_json::Value {
+pub fn environment(
+    executable_sha256: String,
+    sources_sha256: String,
+    argument_sources_sha256: String,
+) -> serde_json::Value {
     serde_json::json!({
         "architecture": std::env::consts::ARCH,
         "cpu_brand": cpu_brand(),
@@ -154,6 +158,9 @@ pub fn environment(executable_sha256: String, sources_sha256: String) -> serde_j
         "rustflags": env!("RAM_COMPARE_RUSTFLAGS"),
         "executable_sha256": executable_sha256,
         "ram_compare_sources_sha256": sources_sha256,
+        "argument_sources_sha256": argument_sources_sha256,
+        "git_commit": env!("RAM_COMPARE_GIT_COMMIT"),
+        "git_dirty": env!("RAM_COMPARE_GIT_DIRTY"),
         "native_features": native_features(),
     })
 }
@@ -174,7 +181,7 @@ mod tests {
 
     #[test]
     fn environment_records_aarch64_and_x86_features_and_host_identity() {
-        let env = environment("ab".into(), "cd".into());
+        let env = environment("ab".into(), "cd".into(), "ef".into());
         let compiled = &env["native_features"]["compiled"];
         for key in ["avx2", "pclmulqdq", "neon", "aes", "sha2", "sha3"] {
             assert!(compiled[key].is_boolean(), "{key}");
@@ -182,6 +189,8 @@ mod tests {
         assert!(env["rustc"].as_str().unwrap().contains("rustc"));
         assert!(env["cores"]["logical"].as_u64().unwrap() >= 1);
         assert_eq!(env["os"]["family"], std::env::consts::OS);
+        assert_eq!(env["argument_sources_sha256"], "ef");
+        assert!(env["git_commit"].is_string() && env["git_dirty"].is_string());
         if cfg!(target_arch = "aarch64") {
             assert!(env["native_features"]["detected"]["pmull"].is_boolean());
         }

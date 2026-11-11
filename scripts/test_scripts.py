@@ -38,11 +38,16 @@ report = {{
           "samples": [{{"prover_ms": 40.0 * scale, "verifier_ms": 5.0}}]}}
     ]
 }}
+if {schema} == 5:
+    report["cases"][0]["implementation"] = "ram_argument::twist2"
+    report["cases"][1]["implementation"] = "spice_argument::operations"
+for case in report["cases"]:
+    case["trace_sha256"] = "{trace}" if case["method"] == "spice-typed" else "same"
 json.dump(report, open(out, "w"))
 """
 
 
-def fake_binary(directory, label, scale, schema, order_log):
+def fake_binary(directory, label, scale, schema, order_log, trace="same"):
     path = Path(directory) / f"fake-{label}"
     path.write_text(
         FAKE.format(
@@ -51,6 +56,7 @@ def fake_binary(directory, label, scale, schema, order_log):
             label=label,
             scale=scale,
             schema=schema,
+            trace=trace,
         )
     )
     path.chmod(path.stat().st_mode | stat.S_IEXEC)
@@ -98,11 +104,32 @@ class InterleaveTests(unittest.TestCase):
             self.assertEqual(len(invocations), 8)
             self.assertTrue(all("raw" in inv["uptime_before"] for inv in invocations))
             self.assertIn("--warmup", invocations[0]["command"])
-            self.assertIn("| random/operations twist (chunk=4) |", (out / "summary.md").read_text())
+            markdown = (out / "summary.md").read_text()
+            self.assertIn("| random/operations twist (chunk=4) |", markdown)
+            # The schema-4 twist is the old prover and the schema-5 twist the
+            # new one, and the summary says so.
+            self.assertIn(
+                "- random/operations twist (chunk=4): baseline ram_argument BinaryTwist flat "
+                "(schema-4 twist); branch ram_argument::twist2.",
+                markdown,
+            )
             # Re-analysis of the directory is deterministic.
             first = (out / "summary.json").read_text()
             interleave.main(["--analyze", str(out)])
             self.assertEqual((out / "summary.json").read_text(), first)
+
+    def test_does_not_pair_different_traces(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            order = Path(tmp) / "order.log"
+            base = fake_binary(tmp, "baseline", 1.0, 5, order, trace="a")
+            branch = fake_binary(tmp, "branch", 0.5, 5, order, trace="b")
+            out = Path(tmp) / "run"
+            interleave.main(
+                ["--baseline", base, "--branch", branch, "--rounds", "2", "--out-dir", str(out)]
+            )
+            summary = json.loads((out / "summary.json").read_text())
+            self.assertEqual([c["method"] for c in summary["cases"]], ["twist"])
+            self.assertEqual(summary["unpaired_trace_mismatch"], ["random/operations spice-typed"])
 
     def test_rejects_reserved_flags(self):
         with tempfile.TemporaryDirectory() as tmp:

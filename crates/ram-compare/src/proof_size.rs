@@ -84,7 +84,6 @@ fn mosaic(p: &BatchProof) -> usize {
     sumcheck(&p.sumcheck) + FIELD
 }
 
-/// Upstream BinaryTwist (`ram_argument::RamProof`).
 /// Twist v2: PCS and Mosaic counted as for the other methods, the rest from
 /// `ram_argument::twist2::proof_size`.
 pub fn twist2(p: &ram_argument::twist2::Proof) -> ProofSize {
@@ -97,6 +96,7 @@ pub fn twist2(p: &ram_argument::twist2::Proof) -> ProofSize {
     size
 }
 
+/// Upstream BinaryTwist (`twist-legacy`, `ram_argument::RamProof`).
 pub fn twist(p: &ram_argument::RamProof) -> ProofSize {
     let c = &p.input_claims;
     let claims = fields(&c.r_o)
@@ -173,8 +173,7 @@ pub fn spice(p: &spice_argument::Proof) -> ProofSize {
     )
 }
 
-/// Typed Spice (`spice-typed`).
-/// Typed Spice: PCS and Mosaic counted as for the other methods, the rest
+/// Typed Spice (`spice-typed` and `spice-typed-2fp`): PCS and Mosaic counted as for the other methods, the rest
 /// from `spice_argument::operations::proof_size`.
 pub fn spice_typed_crate(p: &spice_argument::operations::Proof) -> ProofSize {
     let mut size = ProofSize::new(

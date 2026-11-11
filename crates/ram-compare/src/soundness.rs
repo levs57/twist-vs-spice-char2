@@ -40,8 +40,9 @@ pub struct Term {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Soundness {
-    /// `local-fallback`, or `partial` when IOP terms beyond the fingerprint
-    /// have not been derived for this method.
+    /// `crate` when the argument crate's `soundness_terms` supplies the IOP
+    /// terms, `local-fallback` when this module derives them from the
+    /// verifier, or `partial` when only the fingerprint term is derived.
     pub iop_source: &'static str,
     pub pcs_probability: f64,
     pub iop_probability: f64,
@@ -145,8 +146,6 @@ fn ring_switch(d: &Dims) -> Vec<Term> {
     ]
 }
 
-/// Upstream BinaryTwist with shared address, one read port, Flat
-/// virtualization and public final memory, as `ram_argument::verify` runs it.
 /// Twist v2, from `ram_argument::twist2::soundness_terms` (which includes
 /// Mosaic), plus the ring switch.
 pub fn twist2_iop(d: &Dims, public_final: bool) -> Vec<Term> {
@@ -177,6 +176,9 @@ pub fn twist2_iop(d: &Dims, public_final: bool) -> Vec<Term> {
     terms
 }
 
+/// Upstream BinaryTwist (`twist-legacy`) with shared address, one read
+/// port, Flat virtualization and public final memory, as
+/// `ram_argument::verify` runs it.
 pub fn twist_iop(d: &Dims) -> Vec<Term> {
     let (n, a, c, w) = (d.n, d.a, d.chunk_bits, d.word_log_bits);
     let components = a / c;

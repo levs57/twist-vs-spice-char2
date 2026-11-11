@@ -101,8 +101,23 @@ def case_medians(report):
                 values[metric] = med[metric]
             else:
                 values[metric] = median([s[metric] for s in case["samples"]])
+        values["implementation"] = case_implementation(case, version)
+        values["trace_sha256"] = case.get("trace_sha256")
         out[case_key(case)] = values
     return out
+
+
+def case_implementation(case, version):
+    """The prover a case's method name ran.
+
+    Current reports record it. Schema-4 reports do not, and their `twist` is
+    the prover that schema-5 binaries call `twist-legacy`.
+    """
+    if "implementation" in case:
+        return case["implementation"]
+    if version == 4 and case["method"] == "twist":
+        return "ram_argument BinaryTwist flat (schema-4 twist)"
+    return f"{case['method']} (implementation not recorded)"
 
 
 def load_report(path):
