@@ -13,6 +13,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod interface;
 mod platform;
 mod proof_size;
 mod soundness;
@@ -943,10 +944,16 @@ fn measure(
         let start = Instant::now();
         let result = ram_argument::twist2::prove(black_box(&config), black_box(trace))?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
+        // The interface check runs after the verifier's timer stops.
+        let mut cpu = None;
         let (verifier_ms, verifier_metrics) = timed_verify(|| {
-            ram_argument::twist2::verify(black_box(&result.statement), black_box(&result.proof))?;
+            cpu = Some(ram_argument::twist2::verify(
+                black_box(&result.statement),
+                black_box(&result.proof),
+            )?);
             Ok(())
         })?;
+        interface::check_twist(trace, &cpu.expect("verified"))?;
         observed(
             iteration,
             prover_ms,
@@ -993,14 +1000,16 @@ fn measure(
             &options,
         )?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let mut cpu = None;
         let (verifier_ms, verifier_metrics) = timed_verify(|| {
-            spice_argument::operations::verify_with(
+            cpu = Some(spice_argument::operations::verify_with(
                 black_box(&result.statement),
                 black_box(&result.proof),
                 &options,
-            )?;
+            )?);
             Ok(())
         })?;
+        interface::check_spice(operation_trace, &cpu.expect("verified"))?;
         observed(
             iteration,
             prover_ms,

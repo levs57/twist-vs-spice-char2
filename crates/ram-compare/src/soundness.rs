@@ -473,7 +473,7 @@ mod tests {
         );
         let typed = compose(
             "spice-typed",
-            &twist_dims(20, 16, 27, 19),
+            &twist_dims(20, 16, 27, 22),
             "provable-120",
             2,
             true,
@@ -482,7 +482,7 @@ mod tests {
         assert!((typed.bits - 107.91).abs() < 0.01, "{}", typed.bits);
         let two = compose(
             "spice-typed-2fp",
-            &twist_dims(20, 16, 27, 19),
+            &twist_dims(20, 16, 27, 22),
             "provable-120",
             2,
             true,
@@ -499,15 +499,35 @@ mod tests {
             true,
         );
         assert_eq!(partial.iop_source, "partial");
-        // Twist v2 at n=20, a=16, c=4 with 10 Mosaic claims.
+        // Twist v2 at n=20, a=16, c=4: ell = 27 and 10 Mosaic claims. The
+        // IOP numerator is 321 from the crate plus 47 for the ring switch.
         let v2 = compose(
             "twist",
-            &twist_dims(20, 16, 28, 10),
+            &twist_dims(20, 16, 27, 10),
             "provable-120",
             2,
             true,
         );
         assert_eq!(v2.iop_source, "crate");
+        assert_eq!(
+            numerator(
+                &v2.terms
+                    .iter()
+                    .filter(|t| t.group == "iop")
+                    .cloned()
+                    .collect::<Vec<_>>()
+            )
+            .round(),
+            368.0
+        );
+        assert!((v2.bits - 117.28).abs() < 0.01, "{}", v2.bits);
         assert!(v2.iop_probability < twist.iop_probability);
+        // Typed Spice's crate terms count the three interface claims.
+        let typed_terms = spice_typed_crate(&twist_dims(20, 16, 27, 22), 1, true);
+        let batch = typed_terms
+            .iter()
+            .find(|t| t.name.ends_with("mosaic.batch"))
+            .unwrap();
+        assert_eq!((batch.probability * 2f64.powi(FIELD_BITS)).round(), 21.0);
     }
 }
