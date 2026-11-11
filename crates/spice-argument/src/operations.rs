@@ -191,9 +191,44 @@ pub struct Evaluations {
     pub final_value: Option<K>,
 }
 
+/// The committed columns at the CPU point `r_c`, sent right after the
+/// commitment. A CPU proof would compare these with its own columns.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CpuEvaluations {
+    /// Address bitplane `b` at `r_c`, low bit first.
+    pub address: Vec<K>,
+    /// `W[value](r_c) = Σ_j eq(r_c, j) enc(value_j)`.
+    pub value: K,
+    /// `Σ_j eq(r_c, j) is_write_j`.
+    pub is_write: K,
+}
+
+/// What the verifier hands the CPU: the point `r_c` and the word-level
+/// claims `W[addr](r_c)`, `W[value](r_c)` and the `is_write` evaluation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Interface {
+    pub point: Vec<K>,
+    pub address: K,
+    pub value: K,
+    pub is_write: K,
+}
+
+impl Interface {
+    fn new(point: Vec<K>, cpu: &CpuEvaluations) -> Self {
+        Interface {
+            point,
+            address: combine_bits(&cpu.address),
+            value: cpu.value,
+            is_write: cpu.is_write,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Proof {
     pub commitment: Commitment,
+    /// The committed columns at the CPU point.
+    pub cpu: CpuEvaluations,
     pub permutation: GrandProductProof,
     /// Masked-value claims at the GKR leaf point, sent before the sum-check.
     pub masked: MaskClaims,
@@ -427,6 +462,8 @@ fn scalar_claim(name: &str, point: &[K], value: K) -> EvalClaim {
 /// point where the protocol needs it, the word value and the initial flag.
 fn pending_claims(
     s: &Statement,
+    cpu_point: &[K],
+    cpu: &CpuEvaluations,
     leaf: &[K],
     mask: &[K],
     order: &order_flock::OrderClaims,
@@ -469,8 +506,35 @@ fn pending_claims(
             group("order/carry", &order.point_ab, &order.carries_ab),
             // Flock extracts the linear C column at a second cycle point.
             group("order/carry", &order.point_c, &order.carries_c),
+            // The CPU interface: address planes, the word value and
+            // is_write (plane 0 of input/flags, the high coordinate) at r_c.
+            group("input/address", cpu_point, &cpu.address),
+            Pending::Direct(word_claim(
+                "input/value",
+                cpu_point,
+                cpu.value,
+                s.config.word_log_bits,
+            )),
+            Pending::Direct(scalar_claim(
+                &chunk_name("input/flags", 0, 1),
+                &[cpu_point, &[K::ZERO]].concat(),
+                cpu.is_write,
+            )),
         ])
         .collect()
+}
+
+/// `r_c`: `n` nonzero draws right after the commitment.
+fn cpu_point(tr: &mut Transcript, n: usize) -> Vec<K> {
+    (0..n)
+        .map(|_| tr.challenge_nonzero_k(b"spice/typed/cpu_point"))
+        .collect()
+}
+
+fn absorb_cpu(tr: &mut Transcript, cpu: &CpuEvaluations) {
+    let mut values = cpu.address.clone();
+    values.extend([cpu.value, cpu.is_write]);
+    tr.absorb_ks(b"spice/typed/cpu_claims", &values);
 }
 
 fn absorb_masked(tr: &mut Transcript, v: &MaskClaims) {
@@ -616,6 +680,20 @@ pub fn prove_with(
     trace: &AccessTrace,
     options: &Options,
 ) -> Result<ProveResult, Error> {
+    prove_hooked(config, trace, options, None)
+}
+
+/// A test hook that edits the CPU evaluations before they are sent and
+/// absorbed. The prover's own Mosaic claims keep the computed values, so a
+/// wrong evaluation reaches the verifier instead of tripping the prover.
+type CpuHook<'a> = Option<&'a dyn Fn(&mut CpuEvaluations)>;
+
+fn prove_hooked(
+    config: &Config,
+    trace: &AccessTrace,
+    options: &Options,
+    hook: CpuHook<'_>,
+) -> Result<ProveResult, Error> {
     profiling::clear();
     options.validate()?;
     let t = trace.addresses.len();
@@ -715,6 +793,30 @@ pub fn prove_with(
         let _span = Span::new("pcs.commit");
         schema.pcs.commit_packed(&g, &mut tr)
     };
+    let r_c = cpu_point(&mut tr, n);
+    let cpu = {
+        let _span = Span::new("spice.interface");
+        let planes = planes::evaluate(
+            &[&r_c],
+            &[planes::Request {
+                planes: address_columns.iter().chain([&flags[0]]).collect(),
+                point: 0,
+            }],
+        )
+        .pop()
+        .expect("request");
+        CpuEvaluations {
+            address: planes[..a].to_vec(),
+            is_write: planes[a],
+            value: ram_argument::word::mle(&trace.values, &r_c),
+        }
+    };
+    let computed = cpu.clone();
+    let mut cpu = cpu;
+    if let Some(hook) = hook {
+        hook(&mut cpu);
+    }
+    absorb_cpu(&mut tr, &cpu);
     let fps = fingerprints(&mut tr, options);
     let log_f = options.log_fingerprints();
     let leaves = {
@@ -904,6 +1006,8 @@ pub fn prove_with(
     let claims = finish_claims(
         pending_claims(
             &statement,
+            &r_c,
+            &computed,
             &leaves.point,
             &mask_point,
             &order_claims,
@@ -940,6 +1044,7 @@ pub fn prove_with(
         final_memory,
         proof: Proof {
             commitment,
+            cpu,
             permutation,
             masked,
             masks,
@@ -953,10 +1058,10 @@ pub fn prove_with(
     })
 }
 
-fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error> {
+fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<Interface, Error> {
     // Spans carry the `verify.` prefix because the harness clears the
     // profiler before verifying and reports only these stages.
-    let (n, a, l, schema, mut tr, fps) = {
+    let (n, a, l, schema, mut tr, fps, r_c) = {
         let _span = Span::new("verify.setup");
         validate_memory(s, !options.private_final_memory)?;
         require(
@@ -972,8 +1077,11 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error
         )?;
         let mut tr = transcript(s, &schema, options, "verify.statement");
         schema.pcs.absorb_commitment(&p.commitment, &mut tr);
+        require(p.cpu.address.len() == a, "malformed typed CPU evaluations")?;
+        let r_c = cpu_point(&mut tr, n);
+        absorb_cpu(&mut tr, &p.cpu);
         let fps = fingerprints(&mut tr, options);
-        (n, a, l, schema, tr, fps)
+        (n, a, l, schema, tr, fps, r_c)
     };
     let leaves = {
         let _span = Span::new("verify.gkr");
@@ -1016,7 +1124,15 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error
             options,
         )?;
         let claims = finish_claims(
-            pending_claims(s, &leaves.point, &mask.point, &order_claims, &p.evaluations),
+            pending_claims(
+                s,
+                &r_c,
+                &p.cpu,
+                &leaves.point,
+                &mask.point,
+                &order_claims,
+                &p.evaluations,
+            ),
             &group_rho(&mut tr),
         );
         schema.claims(&claims)?
@@ -1029,7 +1145,7 @@ fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error
     schema
         .pcs
         .verify(&p.commitment, &r, value, &p.opening, &mut tr)?;
-    Ok(())
+    Ok(Interface::new(r_c, &p.cpu))
 }
 
 /// Serialized proof size in bytes, split by component. A field element
@@ -1042,7 +1158,8 @@ pub struct ProofSize {
     pub pcs_bytes: usize,
     /// The Mosaic batching sum-check and the claimed value of `G`.
     pub mosaic_bytes: usize,
-    /// GKR, masked reduction, Flock zerocheck and the evaluation message.
+    /// The CPU evaluations, GKR, masked reduction, Flock zerocheck and the
+    /// evaluation message.
     pub iop_bytes: usize,
 }
 
@@ -1107,10 +1224,11 @@ pub fn proof_size(p: &Proof) -> ProofSize {
             + v.carries_ab.len()
             + v.carries_c.len()
             + usize::from(v.final_value.is_some()));
+    let cpu = FIELD_BYTES * (p.cpu.address.len() + 2);
     ProofSize {
         pcs_bytes,
         mosaic_bytes,
-        iop_bytes: gkr + masked + order + evaluations,
+        iop_bytes: cpu + gkr + masked + order + evaluations,
     }
 }
 
@@ -1184,6 +1302,8 @@ pub fn soundness_terms(s: &Statement, options: &Options) -> Vec<(String, f64)> {
 
     // Mosaic (`om_mosaic::batch_verify`): powers-of-gamma batching of `c`
     // claims (c - 1), then `ell` quadratic rounds over the committed `G`.
+    // The count includes the three CPU-interface claims at `r_c` (address
+    // chunks, value and is_write).
     let schema = schema(s, options);
     let claims = claim_count(s, options);
     push("mosaic.batch", (claims - 1) as f64);
@@ -1218,20 +1338,25 @@ fn claim_count(s: &Statement, options: &Options) -> usize {
         carries_c: v.carries_c.clone(),
     };
     let point = zeros(l + 1);
+    let cpu = CpuEvaluations {
+        address: zeros(a),
+        value: K::ZERO,
+        is_write: K::ZERO,
+    };
     finish_claims(
-        pending_claims(s, &point, &point, &order, &v),
+        pending_claims(s, &zeros(n), &cpu, &point, &point, &order, &v),
         &[K::ZERO; RHO_LEN],
     )
     .len()
 }
 
-pub fn verify(s: &Statement, p: &Proof) -> Result<(), Error> {
+pub fn verify(s: &Statement, p: &Proof) -> Result<Interface, Error> {
     verify_with(s, p, &Options::default())
 }
 
 /// Verify under explicit options. The verifier, not the proof, chooses the
 /// number of fingerprints, so a one-fingerprint proof never passes as 2fp.
-pub fn verify_with(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error> {
+pub fn verify_with(s: &Statement, p: &Proof, options: &Options) -> Result<Interface, Error> {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| verify_inner(s, p, options)))
         .map_err(|_| Error("malformed typed RAM proof".into()))?
 }
@@ -1328,7 +1453,15 @@ mod tests {
             carries_c: p.evaluations.carries_c.clone(),
         };
         let leaf: Vec<K> = (0..l + 1).map(|i| K::from_u128(5 + i as u128)).collect();
-        let pending = pending_claims(&r.statement, &leaf, &leaf, &order, &p.evaluations);
+        let pending = pending_claims(
+            &r.statement,
+            &leaf[..n],
+            &p.cpu,
+            &leaf,
+            &leaf,
+            &order,
+            &p.evaluations,
+        );
         let claims = finish_claims(pending, &[K::ONE; RHO_LEN]);
         let finals: Vec<_> = claims
             .iter()
@@ -1345,6 +1478,8 @@ mod tests {
         let public = finish_claims(
             pending_claims(
                 &r.statement,
+                &leaf[..n],
+                &p.cpu,
                 &leaf,
                 &leaf,
                 &order,
@@ -1385,7 +1520,8 @@ mod tests {
         assert_eq!(get(&one, "gkr.child-point"), 21.0);
         assert_eq!(get(&one, "flock.zerocheck"), 19.0);
         assert_eq!(get(&one, "rho"), 4.0);
-        assert_eq!(get(&one, "mosaic.batch"), 18.0);
+        // 22 claims, three of them for the CPU interface.
+        assert_eq!(get(&one, "mosaic.batch"), 21.0);
         assert_eq!(get(&one, "mosaic.sumcheck"), 54.0);
         // The fingerprint dominates: (2^20 + 2^16) / 2^128 = 2^-107.91.
         assert!(
@@ -1404,7 +1540,7 @@ mod tests {
             ..Options::default()
         };
         let terms = soundness_terms(&shipped(Vec::new()), &private);
-        assert_eq!(get(&terms, "mosaic.batch"), 19.0);
+        assert_eq!(get(&terms, "mosaic.batch"), 22.0);
         assert_eq!(get(&terms, "mosaic.sumcheck"), 56.0);
     }
 
@@ -1430,6 +1566,37 @@ mod tests {
         ] {
             let r = prove_with(&config, &trace, &options).unwrap();
             assert_eq!(claim_count(&r.statement, &options), r.summary.mosaic_claims,);
+        }
+        // At a = 16: 19 protocol claims plus one address chunk, the value
+        // and is_write at the CPU point.
+        let s = shipped(vec![0; 1 << 16]);
+        assert_eq!(claim_count(&s, &Options::default()), 22);
+    }
+
+    #[test]
+    fn mosaic_rejects_wrong_cpu_evaluations_sent_before_absorption() {
+        let config = Config {
+            address_bits: 2,
+            chunk_bits: 1,
+            ..Config::default()
+        };
+        let trace = AccessTrace {
+            initial: vec![7, 11, 19, 23],
+            addresses: vec![0, 1, 1, 3],
+            values: vec![9, 11, 4, 23],
+            is_write: vec![true, false, true, false],
+        };
+        let options = Options::default();
+        let honest = prove_with(&config, &trace, &options).unwrap();
+        verify(&honest.statement, &honest.proof).unwrap();
+        let edits: [&dyn Fn(&mut CpuEvaluations); 3] =
+            [&|c| c.value += K::ONE, &|c| c.is_write += K::ONE, &|c| {
+                c.address[1] += K::ONE
+            }];
+        for edit in edits {
+            let r = prove_hooked(&config, &trace, &options, Some(edit)).unwrap();
+            let err = verify(&r.statement, &r.proof).unwrap_err();
+            assert!(format!("{err:?}").contains("mosaic"), "{err:?}");
         }
     }
 

@@ -41,7 +41,8 @@ fn typed_read_write_semantics_write_first_and_precise_pricing() {
     // the flag pair is one chunk; carries (3) split into 2 + 1.
     // Leaf point: address, previous, boundary, flags, initial flag = 5.
     // Mask point: value, flags, initial flag = 3. Order: 1 + 2 + 2 = 5.
-    assert_eq!(r.summary.mosaic_claims, 5 + 3 + 5);
+    // CPU point: address, value, is_write = 3.
+    assert_eq!(r.summary.mosaic_claims, 5 + 3 + 5 + 3);
     assert!(
         r.summary
             .commitment_components
@@ -521,5 +522,81 @@ fn verifier_stages_are_profiled_under_the_verify_prefix() {
         ] {
             assert!(names.contains(&stage), "{stage} missing from {names:?}");
         }
+    }
+}
+
+/// `Σ_j eq(point, j) enc(x_j)`, computed from the trace without prover code.
+fn brute(point: &[K], xs: impl Iterator<Item = u64>) -> K {
+    om_sumcheck::eq_table(point)
+        .iter()
+        .zip(xs)
+        .fold(K::ZERO, |acc, (&e, x)| acc + e * K::from_u128(x as u128))
+}
+
+#[test]
+fn cpu_claims_match_trace() {
+    let mut seed = 0x1234_5678_9abc_def0u64;
+    let mut next = move || {
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+        seed
+    };
+    for (a, n) in [(2usize, 3usize), (3, 5), (5, 4), (4, 7)] {
+        let cells = 1usize << a;
+        let initial: Vec<u64> = (0..cells).map(|_| next()).collect();
+        let mut memory = initial.clone();
+        let mut t = AccessTrace {
+            initial,
+            addresses: Vec::new(),
+            values: Vec::new(),
+            is_write: Vec::new(),
+        };
+        for _ in 0..1usize << n {
+            let k = (next() as usize) % cells;
+            let write = next() & 1 == 1;
+            if write {
+                memory[k] = next();
+            }
+            t.addresses.push(k as u32);
+            t.values.push(memory[k]);
+            t.is_write.push(write);
+        }
+        for private_final_memory in [false, true] {
+            let options = operations::Options {
+                private_final_memory,
+                ..operations::Options::default()
+            };
+            let r = operations::prove_with(&config(a), &t, &options).unwrap();
+            let i = operations::verify_with(&r.statement, &r.proof, &options).unwrap();
+            assert_eq!(i.point.len(), n);
+            assert_eq!(
+                i.address,
+                brute(&i.point, t.addresses.iter().map(|&k| k as u64))
+            );
+            assert_eq!(i.value, brute(&i.point, t.values.iter().copied()));
+            assert_eq!(
+                i.is_write,
+                brute(&i.point, t.is_write.iter().map(|&w| w as u64))
+            );
+        }
+    }
+}
+
+#[test]
+fn rejects_tampered_cpu_evaluations() {
+    let r = fixture();
+    for field in 0..4 {
+        let mut p = r.proof.clone();
+        match field {
+            0 => p.cpu.value += K::ONE,
+            1 => p.cpu.is_write += K::ONE,
+            2 => p.cpu.address[0] += K::ONE,
+            _ => p.cpu.address.pop().map(|_| ()).unwrap(),
+        };
+        assert!(
+            operations::verify(&r.statement, &p).is_err(),
+            "field {field}"
+        );
     }
 }
