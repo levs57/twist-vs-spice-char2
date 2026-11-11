@@ -13,7 +13,6 @@ pub mod planes;
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::sync::OnceLock;
 use std::time::Duration;
 
 use lean_grandproduct::{GrandProductProof, LeafClaims, Leaves};
@@ -387,24 +386,7 @@ fn word_eval(values: &[u64], point: &[K], log_bits: usize) -> K {
     factor * word_mle_eval(values, &p, point)
 }
 fn word_encoding(log_bits: usize) -> (Vec<K>, K) {
-    static ENCODINGS: OnceLock<Vec<(Vec<K>, K)>> = OnceLock::new();
-    ENCODINGS.get_or_init(|| {
-        (0..=6)
-            .map(|log_bits| {
-                let mut power = K::X;
-                let mut factor = K::ONE;
-                let mut p = Vec::new();
-                for _ in 0..log_bits {
-                    let sum = K::ONE + power;
-                    factor *= sum;
-                    p.push(power / sum);
-                    power = power.square();
-                }
-                (p, factor)
-            })
-            .collect()
-    })[log_bits]
-        .clone()
+    ram_argument::word::encoding_point(log_bits)
 }
 fn combine_bits(values: &[K]) -> K {
     values
