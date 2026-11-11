@@ -5,7 +5,9 @@
 #     BRANCH=/path/to/ram-compare OUT=results/x86/final results/m4max/final/run.sh
 # BASE is ram-compare built at 632855e, PRE at 0e9aa9c (committed read value,
 # before the CPU interface) and BRANCH at this branch, each with
-# RUSTFLAGS='-C target-cpu=native' after `cargo clean --release`.
+# RUSTFLAGS='-C target-cpu=native' after `cargo clean --release`. If PREV is
+# set to ram-compare built at e896b64 (before the dense bit scans in Mosaic
+# and the ring switch), stage A3 also compares it with BRANCH.
 set -u
 : "${BASE:?set BASE to the baseline ram-compare binary}"
 : "${PRE:?set PRE to the ram-compare binary built at 0e9aa9c}"
@@ -24,6 +26,12 @@ log "A2: PRE vs branch, interleaved binaries, 10 rounds"
 scripts/interleave.py --baseline $PRE --branch $BRANCH --rounds 10 --warmup 1 --repeat 3 \
   --out-dir $R/interleave-pre-n20 -- $COMMON --methods twist,spice-typed --patterns random,guest $GUEST \
   > $R/interleave-pre-n20.txt 2>&1
+if [ -n "${PREV:-}" ]; then
+  log "A3: e896b64 vs branch, interleaved binaries, 10 rounds"
+  scripts/interleave.py --baseline $PREV --branch $BRANCH --rounds 10 --warmup 1 --repeat 3 \
+    --out-dir $R/interleave-prev-n20 -- $COMMON --methods twist,spice-typed --patterns random,guest $GUEST \
+    > $R/interleave-prev-n20.txt 2>&1
+fi
 log "B: branch methods in one process, 10 rounds"
 $BRANCH $COMMON --methods twist,twist-legacy,spice-typed,spice-typed-2fp --patterns random,guest,locality $GUEST \
   --warmup 1 --repeat 10 --output $R/branch-n20.json --csv $R/branch-n20.csv > $R/branch-n20.txt 2>&1
