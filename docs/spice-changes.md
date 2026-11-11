@@ -107,3 +107,27 @@ These agree with the issue's estimates (334 KB at 2^20, 236 KB at 2^18). Ligerit
 ## 7. Soundness terms (§2)
 
 `operations::soundness_terms(&Statement, &Options) -> Vec<(String, f64)>` returns the fingerprint, GKR, masked-reduction, Flock, ρ and Mosaic terms as probabilities. It takes `Options` as well as the statement, because the fingerprint count and private final memory change the terms. The Mosaic claim count comes from the same `pending_claims` / `finish_claims` path the prover uses, and a test checks it against a real proof. `docs/soundness-spice.md` has the derivations and the table. At n=20, a=16 the total for typed Spice is 2^-107.91, which confirms the issue's estimate: the fingerprint term `(2^20 + 2^16)/2^128` dominates, and everything else sums to `755/2^128 ≈ 2^-118.4`. With two fingerprints the total is about 2^-118.4. The Flock term relies on the zerocheck's seven fixed equality coordinates having F_2-independent weights; a new test checks this directly.
+
+## 8. Performance tuning at n=20
+
+**Method.** `ram-compare --trace-format operations --methods spice-typed --patterns random,guest --guest-program erc20-mixed-block,pointer-chase --guest-rows memory --guest-fill repeat --address-bits 16 --log-cycles 20 --threads 8 --warmup 1 --repeat 5`, with the before and after binaries run in turn (ABABAB) and `uptime` recorded before each run. The machine was shared with other agents (load average 14–56 during these runs), so single medians move by 20% or more between rounds. I report the minimum and median over all samples of each binary.
+
+**Profile before tuning** (commit `72d6f72`, guest workloads, ms): Ligerito open 19–29, PCS commit 16–25, Mosaic batch 7–17, ring switching 4–14, masked sum-check 5.4–8, GKR 4.5–7.8, Flock zerocheck 3–4.7, witness 2.1 (5.7 on random), leaves 1.9–3, pack 2.1–2.9, fused claims 1.6–2.3. About 75% of the prover is in vendor code (PCS, Mosaic, GKR, Flock, the eq-factored sum-check driver). The largest stages this crate controls are 2–8 ms each, so a single change here reaches 5% only by nearly removing one of them.
+
+**Attempt 1: parallel memory simulation (dropped).** I replaced the serial witness loop with a chunked one: per-chunk predecessors, a pass over cells that threads each cell's pointer through the chunks, and a parallel read check. It matched the serial loop in tests but gave no gain: the whole prover moved by 0.0–0.4% (interleaved), and the isolated simulation took 4.3–5.4 ms against 5.0–5.5 ms serial. A version with lazily zeroed tables was slower (15–35 ms), which points at page-fault and contention costs on this loaded machine. The serial loop is 5 ns per operation, bound by random access into the cell tables. I reverted it.
+
+**Attempt 2: transposed bit packing (kept, `a31361f`).** `pack_columns` read each word once per bit plane. It now transposes 64 words at a time with two 32x32 bit-matrix transposes. `spice.pack` went from 2.09–2.13 ms to 1.50–1.64 ms on all three workloads; the prover median moved by 3–3.5%, but the minima moved by under 1%, so the real gain is about 0.6 ms.
+
+**Stop.** Neither attempt improved any workload by more than 5%, which meets the stop rule. The candidates left in this crate are smaller than 5% by the profile: specializing the masked-reduction rows (about 3 ms at best) or moving the replicated initial-memory columns out of that sum-check (a protocol change, about 3 ms). The big stages are in `vendor/`.
+
+**Before and after** (the binary before any of these changes against `a31361f`, interleaved, load 29–34; minimum / median prover ms, minimum verifier ms):
+
+| workload | before | after |
+|---|---|---|
+| random | 96.6 / 127.3, 5.48 | 83.3 / 84.9, 5.47 |
+| ERC20 | 83.2 / 85.4, 5.56 | 70.7 / 71.5, 5.43 |
+| pointer chase | 80.4 / 84.1, 5.45 | 68.7 / 107.7, 5.46 |
+
+The prover is 14–15% faster by minimum on every workload. The fused claims pass (item 3) accounts for about 6.4 ms of the 12–13 ms in its own interleaved run; I did not attribute the rest stage by stage. An earlier interleaved run (load 16–25) gave the same picture: 103.3 → 84.2, 87.3 → 72.2 and 85.7 → 70.8 ms by minimum. The verifier is unchanged within noise.
+
+**Build hazard.** The worktrees share `CARGO_TARGET_DIR`, and Cargo gives a workspace member the same artifact hash in every worktree. A build in one worktree can therefore reuse another worktree's stale `spice-argument` rlib. I saw this once: `ram-compare` failed to compile against my own crate until I touched the sources. Every binary I benchmarked was built after touching the sources and checked with `--help | grep spice-typed-2fp`.
