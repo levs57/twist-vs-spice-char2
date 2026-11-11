@@ -60,9 +60,15 @@ fn sources_sha256() -> String {
     }
     hex(&Hasher::sha256().digest(&bytes))
 }
-const HELP: &str = "Chronological shared-address RAM: BinaryTwist Flat versus ordered Spice
-  --methods twist,spice,spice-ripple,spice-typed,spice-typed-2fp|both
-                                  Ordered methods; both=twist,spice (default)
+const HELP: &str = "Chronological shared-address RAM: Twist versus ordered Spice
+  --methods twist,twist-legacy,spice,spice-ripple,spice-typed,spice-typed-2fp|both
+                                  Ordered methods; both=twist,spice (default).
+                                  twist is Twist v2 (ram_argument::twist2);
+                                  twist-legacy is BinaryTwist Flat at 632855e;
+                                  spice-typed-2fp uses two fingerprints
+  --read-order address|cycle       Twist v2 read-check order (default address)
+  --final-memory public|private    Final memory in the statement or committed;
+                                  applies to twist and typed Spice (default public)
   --trace-format rmw|operations    Default rmw; spice-typed requires operations
   --patterns random,guest,locality|both
                                   Alias --payload; default both=random,guest.
@@ -70,7 +76,7 @@ const HELP: &str = "Chronological shared-address RAM: BinaryTwist Flat versus or
                                   scan and Zipf-heap locality (needs A >= 6)
   --address-bits A                 2^A public 64-bit words (default 12)
   --log-cycles N                   2^N rows in the chosen trace format (default 12)
-  --chunk-bits C[,C...]             Twist Flat only; Spice runs once/pattern (default 4)
+  --chunk-bits C[,C...]             Twist only; Spice runs once/pattern (default 4)
   --threads N --warmup N --repeat N (defaults 8,1,3)
                                   Per workload: warmups for every configuration,
                                   then --repeat rounds; each round runs every
