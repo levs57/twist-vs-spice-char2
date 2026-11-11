@@ -148,8 +148,7 @@ fn flock_order(p: &spice_argument::order_flock::OrderProof) -> usize {
 /// Untyped Spice (`spice` and `spice-ripple`).
 pub fn spice(p: &spice_argument::Proof) -> ProofSize {
     let i = &p.inputs;
-    let inputs =
-        fields(&i.address) + fields(&i.previous) + fields(&i.final_previous) + 2 * FIELD;
+    let inputs = fields(&i.address) + fields(&i.previous) + fields(&i.final_previous) + 2 * FIELD;
     let order = match &p.order {
         spice_argument::OrderingProof::Flock(o) => flock_order(o),
         spice_argument::OrderingProof::Ripple(o) => {

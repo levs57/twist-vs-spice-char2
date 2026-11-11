@@ -121,7 +121,9 @@ mod tests {
 
     #[test]
     fn interval_brackets_the_ratio_and_is_reproducible() {
-        let num = [100.0, 104.0, 98.0, 120.0, 101.0, 99.0, 103.0, 97.0, 110.0, 102.0];
+        let num = [
+            100.0, 104.0, 98.0, 120.0, 101.0, 99.0, 103.0, 97.0, 110.0, 102.0,
+        ];
         let den = [50.0, 49.0, 52.0, 51.0, 48.0, 50.0, 53.0, 47.0, 50.0, 49.0];
         let a = paired_ratio(&num, &den).unwrap();
         let b = paired_ratio(&num, &den).unwrap();
@@ -134,7 +136,11 @@ mod tests {
         // scripts/test_scripts.py asserts the same three numbers.
         assert_eq!(a.ratio, 2.03);
         assert!((a.ci95_low - 1.97).abs() < 1e-12, "{}", a.ci95_low);
-        assert!((a.ci95_high - 2.122448979591837).abs() < 1e-12, "{}", a.ci95_high);
+        assert!(
+            (a.ci95_high - 2.122448979591837).abs() < 1e-12,
+            "{}",
+            a.ci95_high
+        );
     }
 
     #[test]

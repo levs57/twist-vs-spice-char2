@@ -7,6 +7,7 @@ use om_elf::{Params, build_m0, extract_output, load};
 use om_isa::bytecode::{HALTED_UPC, VirtualMachine, expand, store_apply};
 use serde::{Deserialize, Serialize};
 
+pub mod locality;
 pub mod operations;
 
 pub const UPSTREAM_COMMIT: &str = "febfc0e66f5809e034dd1afac78202bd4882de27";

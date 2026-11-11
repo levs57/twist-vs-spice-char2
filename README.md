@@ -37,7 +37,7 @@ This runs both methods on random operations, an ERC20 mixed-block pattern and a 
 | `--guest-fill repeat` | Repeat the guest access pattern against continuous memory until the requested operation count is reached. |
 | `--seed 1` | Deterministic random seed; default is `1`. |
 
-For a smaller run, change `--log-cycles 20` to `18`. To check sensitivity to measurement order, repeat the command with `--methods spice-typed,twist` and different output filenames. `--patterns random` or `--patterns guest` selects one workload family; `--guest-program` accepts a single program as well as a comma-separated list.
+For a smaller run, change `--log-cycles 20` to `18`. To check sensitivity to measurement order, repeat the command with `--methods spice-typed,twist` and different output filenames. `--patterns random` or `--patterns guest` selects one workload family, and `--patterns locality` adds a seeded synthetic trace with stack, scan and Zipf-heap locality that does not repeat (see [docs/methodology.md](docs/methodology.md#workloads)); `--guest-program` accepts a single program as well as a comma-separated list.
 
 The comparison explicitly selects `--trace-format operations` and both methods, so it does not depend on executable defaults. Native CPU compilation enables the local machine's optimized kernels; rebuild when moving the binary to a different CPU.
 

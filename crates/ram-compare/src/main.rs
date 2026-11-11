@@ -1,6 +1,7 @@
 use om_transcript::Hasher;
 use om_transcript::profiling;
 use ram_argument::{AccessTrace, Config, Statement, Summary, VirtualizationMode};
+use ram_payload::locality::{locality_operations, reuse_distance};
 use ram_payload::operations::{OperationPayload, guest_operations, random_operations};
 use ram_payload::{GuestFill, GuestOptions, GuestProgram, GuestRows, RamPayload};
 use serde::Serialize;
@@ -16,10 +17,10 @@ mod platform;
 mod proof_size;
 mod soundness;
 mod stats;
-use stats::{RatioInterval, paired_ratio};
-use soundness::Soundness;
-use proof_size::ProofSize;
 use platform::{LoadWindow, load_average};
+use proof_size::ProofSize;
+use soundness::Soundness;
+use stats::{RatioInterval, paired_ratio};
 
 const SCHEMA_VERSION: usize = 5;
 const IMPLEMENTATION: &str = "typed-spice-vs-twist-gf128-v5";
@@ -27,13 +28,28 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 /// The harness's own sources, hashed into every report so a result names the
 /// exact comparison code that produced it.
 const SOURCES: &[(&str, &[u8])] = &[
-    ("crates/ram-compare/Cargo.toml", include_bytes!("../Cargo.toml")),
+    (
+        "crates/ram-compare/Cargo.toml",
+        include_bytes!("../Cargo.toml"),
+    ),
     ("crates/ram-compare/build.rs", include_bytes!("../build.rs")),
     ("crates/ram-compare/src/main.rs", include_bytes!("main.rs")),
-    ("crates/ram-compare/src/platform.rs", include_bytes!("platform.rs")),
-    ("crates/ram-compare/src/proof_size.rs", include_bytes!("proof_size.rs")),
-    ("crates/ram-compare/src/soundness.rs", include_bytes!("soundness.rs")),
-    ("crates/ram-compare/src/stats.rs", include_bytes!("stats.rs")),
+    (
+        "crates/ram-compare/src/platform.rs",
+        include_bytes!("platform.rs"),
+    ),
+    (
+        "crates/ram-compare/src/proof_size.rs",
+        include_bytes!("proof_size.rs"),
+    ),
+    (
+        "crates/ram-compare/src/soundness.rs",
+        include_bytes!("soundness.rs"),
+    ),
+    (
+        "crates/ram-compare/src/stats.rs",
+        include_bytes!("stats.rs"),
+    ),
 ];
 fn sources_sha256() -> String {
     let mut bytes = Vec::new();
@@ -48,7 +64,10 @@ const HELP: &str = "Chronological shared-address RAM: BinaryTwist Flat versus or
   --methods twist,spice,spice-ripple,spice-typed|both
                                   Ordered methods; both=twist,spice (default)
   --trace-format rmw|operations    Default rmw; spice-typed requires operations
-  --patterns random,guest|both     Alias --payload; default both
+  --patterns random,guest,locality|both
+                                  Alias --payload; default both=random,guest.
+                                  locality: seeded synthetic trace with stack,
+                                  scan and Zipf-heap locality (needs A >= 6)
   --address-bits A                 2^A public 64-bit words (default 12)
   --log-cycles N                   2^N rows in the chosen trace format (default 12)
   --chunk-bits C[,C...]             Twist Flat only; Spice runs once/pattern (default 4)
@@ -168,7 +187,11 @@ fn options() -> Result<Option<Options>> {
             }
             "--trace-format" => o.trace_format = value,
             "--patterns" | "--payload" => {
-                o.patterns = select(&value, &["random", "guest"], &["random", "guest"])?
+                o.patterns = select(
+                    &value,
+                    &["random", "guest", "locality"],
+                    &["random", "guest"],
+                )?
             }
             "--address-bits" => o.address_bits = number()?,
             "--log-cycles" => o.log_cycles = number()?,
@@ -262,7 +285,7 @@ fn program(name: &str) -> GuestProgram {
 fn workloads(o: &Options) -> Vec<(String, Option<(GuestProgram, GuestRows)>)> {
     let mut work = Vec::new();
     for pattern in &o.patterns {
-        if pattern == "random" {
+        if pattern == "random" || pattern == "locality" {
             work.push((pattern.clone(), None));
         } else {
             for p in &o.guest_program {
@@ -302,19 +325,26 @@ fn guest_options(o: &Options, program: GuestProgram, rows: GuestRows) -> GuestOp
     }
 }
 
-fn payload(o: &Options, guest: Option<(GuestProgram, GuestRows)>) -> Result<RamPayload> {
+fn payload(
+    o: &Options,
+    pattern: &str,
+    guest: Option<(GuestProgram, GuestRows)>,
+) -> Result<RamPayload> {
     Ok(if let Some((program, rows)) = guest {
         ram_payload::guest(
             o.log_cycles as u32,
             o.address_bits as u32,
             &guest_options(o, program, rows),
         )?
+    } else if pattern == "locality" {
+        locality_operations(o.log_cycles as u32, o.address_bits as u32, o.seed)?.into_rmw()?
     } else {
         ram_payload::random_ram(o.log_cycles as u32, o.address_bits as u32, o.seed)?
     })
 }
 fn operation_payload(
     o: &Options,
+    pattern: &str,
     guest: Option<(GuestProgram, GuestRows)>,
 ) -> Result<OperationPayload> {
     Ok(if let Some((program, rows)) = guest {
@@ -323,6 +353,8 @@ fn operation_payload(
             o.address_bits as u32,
             &guest_options(o, program, rows),
         )?
+    } else if pattern == "locality" {
+        locality_operations(o.log_cycles as u32, o.address_bits as u32, o.seed)?
     } else {
         random_operations(o.log_cycles as u32, o.address_bits as u32, o.seed)?
     })
@@ -741,11 +773,7 @@ fn observed(
     )?;
     sample.verifier_stages_ms = stage_map(verifier_metrics);
     sample.proof_size = proof_size;
-    Ok((
-        sample,
-        area,
-        statement.final_memory.clone(),
-    ))
+    Ok((sample, area, statement.final_memory.clone()))
 }
 fn sample(
     method: &str,
@@ -799,7 +827,10 @@ fn measure(
             spice_argument::operations::prove(black_box(config), black_box(operation_trace))?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
         let (verifier_ms, verifier_metrics) = timed_verify(|| {
-            spice_argument::operations::verify(black_box(&result.statement), black_box(&result.proof))?;
+            spice_argument::operations::verify(
+                black_box(&result.statement),
+                black_box(&result.proof),
+            )?;
             Ok(())
         })?;
         observed(
@@ -866,7 +897,9 @@ struct Case {
     median: Medians,
 }
 fn fmt_load(load: Option<platform::LoadAverage>) -> String {
-    load.map_or("n/a".into(), |l| format!("{:.2}/{:.2}/{:.2}", l.one, l.five, l.fifteen))
+    load.map_or("n/a".into(), |l| {
+        format!("{:.2}/{:.2}/{:.2}", l.one, l.five, l.fifteen)
+    })
 }
 /// One method/chunk configuration within a workload while it is measured.
 struct Run {
@@ -890,7 +923,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
     for (pattern, guest) in workloads(o) {
         let (pattern, data, operation_trace, operation_digest, metadata, expected_final) =
             if o.trace_format == "operations" {
-                let data = operation_payload(o, guest)?;
+                let data = operation_payload(o, &pattern, guest)?;
                 let digest = operation_trace_hash(&data);
                 let final_memory = data.replay()?;
                 let metadata = serde_json::to_value(&data.metadata)?;
@@ -910,7 +943,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                     Some(final_memory),
                 )
             } else {
-                let data = payload(o, guest)?;
+                let data = payload(o, &pattern, guest)?;
                 let metadata = serde_json::to_value(&data.metadata)?;
                 (pattern, data, None, None, metadata, None)
             };
@@ -922,6 +955,11 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             read_values: Some(data.read_values),
         };
         let digest = trace_hash(&trace);
+        // Shared-address rows: each row's write address is its read address,
+        // so `writes` is the one address sequence of either trace format.
+        let mut metadata = metadata;
+        metadata["reuse_distance"] =
+            serde_json::to_value(reuse_distance(&trace.writes, 1 << o.address_bits))?;
         let mut expected_final = expected_final;
         let mut runs = configurations(o)
             .into_iter()
@@ -1051,7 +1089,11 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 proof_size.mosaic_bytes,
                 proof_size.iop_bytes
             );
-            println!("  load(1/5/15m) start={} end={}", fmt_load(load.start), fmt_load(load.end));
+            println!(
+                "  load(1/5/15m) start={} end={}",
+                fmt_load(load.start),
+                fmt_load(load.end)
+            );
             let adjusted = &median.padding_adjusted_estimate;
             println!(
                 "  commitment-padding-adjusted ESTIMATE (populated/padded={:.4}): prove={:.3}ms commit={:.3}ms; modeled commitment padding={:.3}ms; all other costs unchanged",
@@ -1140,7 +1182,11 @@ fn by_round(case: &Case, get: impl Fn(&Sample) -> f64) -> Vec<f64> {
     values.sort_by_key(|v| v.0);
     values.into_iter().map(|v| v.1).collect()
 }
-fn paired_interval(a: &Case, b: &Case, get: impl Fn(&Sample) -> f64 + Copy) -> Option<RatioInterval> {
+fn paired_interval(
+    a: &Case,
+    b: &Case,
+    get: impl Fn(&Sample) -> f64 + Copy,
+) -> Option<RatioInterval> {
     paired_ratio(&by_round(a, get), &by_round(b, get))
 }
 fn same_trace(a: &Case, b: &Case) -> bool {
@@ -1315,7 +1361,12 @@ fn csv(report: &Report) -> String {
                 row.push(load.map(|l| format!("{:.2}", l.one)).unwrap_or_default());
             }
             let size = &s.proof_size;
-            for bytes in [size.pcs_bytes, size.mosaic_bytes, size.iop_bytes, size.total_bytes] {
+            for bytes in [
+                size.pcs_bytes,
+                size.mosaic_bytes,
+                size.iop_bytes,
+                size.total_bytes,
+            ] {
                 row.push(bytes.to_string());
             }
             row.push(format!("{:.4}", c.soundness.bits));
@@ -1696,7 +1747,11 @@ mod tests {
             // Case 0 runs first in even rounds and last in odd rounds.
             assert_eq!(
                 case.samples.iter().map(|s| s.position).collect::<Vec<_>>(),
-                if k == 0 { vec![0, 1, 0, 1] } else { vec![1, 0, 1, 0] }
+                if k == 0 {
+                    vec![0, 1, 0, 1]
+                } else {
+                    vec![1, 0, 1, 0]
+                }
             );
         }
         let ratios = paired_ratios(&cases);
@@ -1704,7 +1759,10 @@ mod tests {
         let prover = ratios[0].prover.unwrap();
         assert_eq!(prover.rounds, 4);
         assert!(prover.ci95_low <= prover.ratio && prover.ratio <= prover.ci95_high);
-        assert_eq!((ratios[0].numerator.as_str(), ratios[0].denominator.as_str()), ("spice-typed", "spice"));
+        assert_eq!(
+            (ratios[0].numerator.as_str(), ratios[0].denominator.as_str()),
+            ("spice-typed", "spice")
+        );
     }
     #[test]
     fn verifier_spans_are_isolated_from_prover_spans() {
@@ -1805,6 +1863,51 @@ mod tests {
     }
 
     #[test]
+    fn locality_pattern_runs_in_both_formats_and_records_reuse_distance() {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        for (format, methods) in [
+            ("operations", vec!["twist", "spice-typed"]),
+            ("rmw", vec!["spice"]),
+        ] {
+            let options = Options {
+                methods: methods.into_iter().map(Into::into).collect(),
+                trace_format: format.into(),
+                patterns: vec!["locality".into(), "random".into()],
+                address_bits: 6,
+                log_cycles: 8,
+                chunk_bits: vec![2],
+                threads: 2,
+                warmup: 0,
+                repeat: 1,
+                ..Default::default()
+            };
+            let cases = pool
+                .install(|| benchmark(&options).map_err(|e| e.to_string()))
+                .unwrap();
+            for case in &cases {
+                let reuse = &case.metadata["reuse_distance"];
+                let buckets: u64 = reuse["buckets"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|b| b.as_u64().unwrap())
+                    .sum();
+                assert_eq!(buckets + reuse["first_accesses"].as_u64().unwrap(), 256);
+            }
+            let locality = &cases[0];
+            assert!(
+                locality.pattern.starts_with("locality"),
+                "{}",
+                locality.pattern
+            );
+            assert_eq!(locality.metadata["kind"], "synthetic-locality-operations");
+        }
+    }
+
+    #[test]
     fn typed_and_baseline_cases_use_the_same_operation_rows_and_final_memory() {
         let options = Options {
             methods: vec![
@@ -1844,7 +1947,10 @@ mod tests {
             }
             let size = case.proof_size;
             assert!(size.pcs_bytes > 0 && size.mosaic_bytes > 0 && size.iop_bytes > 0);
-            assert_eq!(size.total_bytes, size.pcs_bytes + size.mosaic_bytes + size.iop_bytes);
+            assert_eq!(
+                size.total_bytes,
+                size.pcs_bytes + size.mosaic_bytes + size.iop_bytes
+            );
             assert!(case.soundness.bits > 100.0 && case.soundness.bits < 128.0);
             assert!(!case.soundness.terms.is_empty());
         }

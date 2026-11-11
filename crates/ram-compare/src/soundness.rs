@@ -364,9 +364,15 @@ mod tests {
     #[test]
     fn iop_totals_match_the_hand_derivation() {
         // n=20, a=16, c=4: d=4, ell=28, 7d+5=33 Mosaic claims.
-        assert_eq!(numerator(&twist_iop(&twist_dims(20, 16, 28, 33))).round(), 650.0);
+        assert_eq!(
+            numerator(&twist_iop(&twist_dims(20, 16, 28, 33))).round(),
+            650.0
+        );
         // n=16, a=12: d=3, ell=24, 26 claims.
-        assert_eq!(numerator(&twist_iop(&twist_dims(16, 12, 24, 26))).round(), 511.0);
+        assert_eq!(
+            numerator(&twist_iop(&twist_dims(16, 12, 24, 26))).round(),
+            511.0
+        );
         // Typed Spice: ell=27, 126 claims; ell=23, 102 claims.
         let typed = spice_typed_iop(&twist_dims(20, 16, 27, 126));
         assert_eq!(numerator(&typed).round(), (1_114_112 + 899) as f64);
@@ -377,7 +383,12 @@ mod tests {
     #[test]
     fn composed_bits_at_the_shipped_parameters() {
         let twist = compose("twist", &twist_dims(20, 16, 28, 33), "provable-120", 2);
-        let typed = compose("spice-typed", &twist_dims(20, 16, 27, 126), "provable-120", 2);
+        let typed = compose(
+            "spice-typed",
+            &twist_dims(20, 16, 27, 126),
+            "provable-120",
+            2,
+        );
         assert!((twist.bits - 117.06).abs() < 0.01, "{}", twist.bits);
         assert!((typed.bits - 107.91).abs() < 0.01, "{}", typed.bits);
         assert!(twist.pcs_probability > twist.iop_probability);

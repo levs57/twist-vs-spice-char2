@@ -31,6 +31,30 @@ The machine is shared and its load swings widely, so absolute times drift by ten
 
 **Across binaries.** `scripts/interleave.py` alternates two `ram-compare` binaries (for example the upstream baseline and a branch) for N rounds on the same arguments, flipping their order every round. Each invocation runs `--warmup 1 --repeat 1` by default and writes its own JSON and log, and the script records `uptime` before and after each one. The summary takes each invocation's per-case median, then reports per case the median over rounds for each binary and the branch/baseline ratio with the same paired bootstrap. `scripts/bench_stats.py` implements the bootstrap with the same random stream as the Rust code, and both test suites check one shared example. The script reads schema-4 and schema-5 reports.
 
+## Workloads
+
+**Why a synthetic locality trace.** The issue asks for one `2^20`-operation trace that does not repeat and has realistic locality. None of the three included guests can produce one. Their input buffer holds `2^12` words, so a guest run ends long before `2^20` memory operations, and the harness then repeats the template. Measured at `--address-bits 16 --log-cycles 18 --guest-rows memory` with the operations format:
+
+| Guest and parameters | Operations before repeating | Distinct words in 2^18 operations | Reads |
+| --- | --- | --- | --- |
+| `erc20-mixed-block`, size 1024, 1000 transfers | 55,155 | 5,885 | 80.1% |
+| `pointer-chase`, size 4000, 30,000 steps | 240,062 | 4,006 | 99.99% |
+| `binary-search`, 3,800 keys, 255 queries | 30,109 | 1,427 | 92.4% |
+
+All three have their median reuse distance in bucket 0 (the previous operation), largely because each narrow store becomes a read and a write of the same word. Pointer chase with 100,000 steps stops with `MaxCyclesExceeded`, because `guest_options` in `ram-compare` fixes `max_cycles` at `2^20` VM cycles, and even then it would be almost read-only. Writing a new guest program and widening the input ABI belongs to the payload owners, so this branch adds a generator instead.
+
+**The `locality` pattern.** `ram_payload::locality::locality_operations(log_operations, address_bits, seed)` produces a seeded trace that mixes three streams, the usual ingredients of synthetic memory-trace models. The module documentation gives every parameter. In short:
+
+- **Stack, 45% of operations, 65% reads.** The top 1/16 of memory is a downward-growing stack of frames of 2 to 16 words. Each stack access calls or returns with probability 1/48, and touches the current frame at a geometric offset (p = 1/4), so a few slots are hot.
+- **Sequential scans, 30% of operations, 2/3 reads.** Half of memory holds arrays. Four concurrent loops each scan `2^4` to `2^10` words from a random base, with stride 1 (90%) or 8 (10%). A new loop is read-only (60%), write-only (20%) or an in-place update (20%) that reads and then writes each word.
+- **Heap, 25% of operations, 75% reads.** The other 7/16 of memory holds 8-word objects. Objects are drawn from a Zipf(s = 1) distribution over a seeded permutation, and fields from a geometric distribution (p = 1/2). Every `2^16` operations the hot set rotates.
+
+The shares put the hot, short-reuse stack traffic first, as in compiled code, where most memory operations are spills, locals and return addresses. The 68% read fraction matches the usual 2:1 load-to-store ratio of integer workloads. Zipf with s = 1 is the standard model of object popularity, and the phase rotation keeps the trace from settling into one fixed working set. The parameters are judgement calls, not fitted to a measured program, so the pattern is a plausible locality profile rather than a model of any particular application.
+
+At `--log-cycles 20 --address-bits 16` with seed 1 the trace has 68.2% reads and touches 55,062 of 65,536 words. Its median reuse distance falls in bucket 7 (128 to 255 operations), while the median for `random` falls in bucket 15. The reuse histogram is bimodal: one mode below 16 operations from stack slots and in-place updates, and one near `2^16` from scans and the Zipf tail.
+
+**Reuse-distance histogram.** Every case's `metadata.reuse_distance` records, for the trace that was proved, the number of first accesses and `buckets[b]`, the number of accesses whose previous access to the same word was between `2^b` and `2^(b+1) - 1` operations earlier. `median_bucket` is the bucket holding the median repeated access. The histogram is computed over rows, so for the `rmw` format it counts each read-modify-write row once.
+
 ## Result schema and provenance
 
 Reports use schema 5. Relative to schema 4 they add `samples[].position`, `samples[].verifier_stages_ms`, `samples[].proof_size`, `samples[].load`, `cases[].load`, `cases[].proof_size`, `cases[].soundness`, `median.verifier_stages_ms`, `paired_ratios`, and confidence intervals on `comparisons`. All schema-4 fields keep their meaning, except that `samples[].iteration` is now the measured round.

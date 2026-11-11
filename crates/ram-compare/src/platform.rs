@@ -74,9 +74,7 @@ fn sysctl_usize(name: &str) -> Option<usize> {
 }
 
 fn cores() -> serde_json::Value {
-    let logical = std::thread::available_parallelism()
-        .map(|n| n.get())
-        .ok();
+    let logical = std::thread::available_parallelism().map(|n| n.get()).ok();
     if cfg!(target_os = "macos") {
         serde_json::json!({
             "logical": logical,
@@ -94,11 +92,13 @@ fn os() -> serde_json::Value {
     let product = if cfg!(target_os = "macos") {
         command("sw_vers", &["-productVersion"]).map(|v| format!("macOS {v}"))
     } else {
-        std::fs::read_to_string("/etc/os-release").ok().and_then(|text| {
-            text.lines()
-                .find_map(|l| l.strip_prefix("PRETTY_NAME="))
-                .map(|v| v.trim_matches('"').to_owned())
-        })
+        std::fs::read_to_string("/etc/os-release")
+            .ok()
+            .and_then(|text| {
+                text.lines()
+                    .find_map(|l| l.strip_prefix("PRETTY_NAME="))
+                    .map(|v| v.trim_matches('"').to_owned())
+            })
     };
     serde_json::json!({
         "family": std::env::consts::OS,
