@@ -285,6 +285,81 @@ fn bind_eval(rows: &Rows, r: K, degree: usize, last: bool) -> (Rows, Acc) {
     (Rows { d, width: w, data }, acc)
 }
 
+/// Round-0 accumulator over rows that `make_row(j, out)` writes on demand,
+/// so the full-size table is never stored.
+fn eval_virtual<G: Fn(usize, &mut [K]) + Sync>(
+    size: usize,
+    d: usize,
+    w: usize,
+    degree: usize,
+    make_row: &G,
+) -> Acc {
+    let half = size / 2;
+    let fold = |range: std::ops::Range<usize>| -> Acc {
+        let mut acc = Acc::new(degree);
+        let mut scratch = vec![K::ZERO; 2 * w];
+        let mut pair = vec![K::ZERO; 2 * w];
+        for m in range {
+            let (x0, x1) = pair.split_at_mut(w);
+            make_row(2 * m, x0);
+            make_row(2 * m + 1, x1);
+            pair_kernel(x0, x1, d, degree, &mut acc, &mut scratch);
+        }
+        acc
+    };
+    (0..half.div_ceil(CHUNK))
+        .into_par_iter()
+        .map(|c| fold(c * CHUNK..((c + 1) * CHUNK).min(half)))
+        .reduce(|| Acc::new(degree), Acc::merge)
+}
+
+/// Bind round 0 to `r` over rows from `make_row` and accumulate round 1 in
+/// the same pass. Needs at least four rows.
+fn bind_eval_virtual<G: Fn(usize, &mut [K]) + Sync>(
+    size: usize,
+    d: usize,
+    w: usize,
+    r: K,
+    degree: usize,
+    make_row: &G,
+) -> (Rows, Acc) {
+    let out_len = size / 2;
+    let last = out_len == 1;
+    let units = out_len / 2;
+    let chunk = if units >= PAR / 2 { CHUNK } else { units.max(1) };
+    let accs = std::sync::Mutex::new(Vec::new());
+    let data = par_build(out_len * w, chunk * 2 * w, |start, dst| {
+        let p0 = start / (2 * w);
+        let mut acc = Acc::new(degree);
+        let mut scratch = vec![K::ZERO; 2 * w];
+        let mut src = vec![K::ZERO; 4 * w];
+        let mut pair = vec![K::ZERO; 2 * w];
+        for (k, out_pair) in dst.chunks_mut(2 * w).enumerate() {
+            let p = p0 + k;
+            for (q, row) in src.chunks_mut(w).enumerate() {
+                make_row(4 * p + q, row);
+            }
+            let (o0, o1) = pair.split_at_mut(w);
+            bind_row(&src[..w], &src[w..2 * w], r, o0);
+            bind_row(&src[2 * w..3 * w], &src[3 * w..], r, o1);
+            for (o, &x) in out_pair.iter_mut().zip(pair.iter()) {
+                o.write(x);
+            }
+            if !last {
+                let (o0, o1) = pair.split_at(w);
+                pair_kernel(o0, o1, d, degree, &mut acc, &mut scratch);
+            }
+        }
+        accs.lock().unwrap().push(acc);
+    });
+    let acc = accs
+        .into_inner()
+        .unwrap()
+        .into_iter()
+        .fold(Acc::new(degree), Acc::merge);
+    (Rows { d, width: w, data }, acc)
+}
+
 /// Column-form tables, used by tests to build adversarial inputs.
 #[cfg(test)]
 pub(crate) struct Tables {
@@ -339,57 +414,77 @@ pub(crate) fn prove(
     let eq = SplitEq::new(r_j);
     let size = 1usize << n;
     let width = A0 + 2 * d;
-    let rows_per_chunk = 1usize << 10;
-    let data = par_build(size * width, rows_per_chunk * width, |start, out| {
-        let mut row = vec![K::ZERO; width];
-        for (k, dst) in out.chunks_mut(width).enumerate() {
-            let j = start / width + k;
-            let ad = w.addr[j];
-            row[TL] = lt.at(j) + ch.gamma;
-            row[ED] = ch.delta * eq.at(j);
-            row[INC] = w.inc_e[j];
-            for i in 0..d {
-                let u = ((ad >> (i * c)) & mask) as usize;
-                row[A0 + i] = eq_a[i][u];
-                row[A0 + d + i] = eq_am[i][u];
-            }
-            for (o, &x) in dst.iter_mut().zip(&row) {
-                o.write(x);
-            }
+    let make_row = |j: usize, row: &mut [K]| {
+        let ad = w.addr[j];
+        row[TL] = lt.at(j) + ch.gamma;
+        row[ED] = ch.delta * eq.at(j);
+        row[INC] = w.inc_e[j];
+        for i in 0..d {
+            let u = ((ad >> (i * c)) & mask) as usize;
+            row[A0 + i] = eq_a[i][u];
+            row[A0 + d + i] = eq_am[i][u];
         }
-    });
-    let rows = Rows { d, width, data };
+    };
     drop(tables_span);
     let _span = om_transcript::profiling::Span::new("twist.cycle.rounds");
-    prove_rows(rows, &eps_scaled, claim, tr)
+    if size < 4 {
+        let mut data = vec![K::ZERO; size * width];
+        for (j, row) in data.chunks_mut(width).enumerate() {
+            make_row(j, row);
+        }
+        return prove_rows(Rows { d, width, data }, &eps_scaled, claim, tr);
+    }
+    // Round 0 reads rows built on the fly, and its bind writes the first
+    // stored (half-size) table.
+    let degree = d + 2;
+    sumcheck_init(tr, LABEL, claim, n, degree);
+    let mut msgs = Vec::with_capacity(n);
+    let acc = eval_virtual(size, d, width, degree, &make_row);
+    let ys = acc.values(claim);
+    let (r, cur) = emit_round(&ys, tr, LABEL, &mut msgs);
+    let (rows, acc) = bind_eval_virtual(size, d, width, r, degree, &make_row);
+    finish_rounds(rows, acc, vec![r], msgs, cur, &eps_scaled, tr)
 }
 
 /// The sum-check on already built rows; `eps_scaled[i]` is the factor
 /// folded into `Ã_i`.
 pub(crate) fn prove_rows(
-    mut rows: Rows,
+    rows: Rows,
     eps_scaled: &[K],
     claim: K,
     tr: &mut Transcript,
 ) -> CycleResult {
     let n = rows.len().trailing_zeros() as usize;
-    let d = rows.d;
-    let degree = d + 2;
+    let degree = rows.d + 2;
     sumcheck_init(tr, LABEL, claim, n, degree);
-    let mut msgs = Vec::with_capacity(n);
-    let mut z = Vec::with_capacity(n);
-    let mut cur = claim;
-    let mut acc = if n > 0 {
+    let acc = if n > 0 {
         eval_rows(&rows, degree)
     } else {
         Acc::new(degree)
     };
-    for i in 0..n {
+    finish_rounds(rows, acc, Vec::new(), Vec::new(), claim, eps_scaled, tr)
+}
+
+/// The remaining rounds, given the rows bound to `z` so far, the next
+/// round's accumulator and the current claim.
+fn finish_rounds(
+    mut rows: Rows,
+    mut acc: Acc,
+    mut z: Vec<K>,
+    mut msgs: Vec<Vec<K>>,
+    mut cur: K,
+    eps_scaled: &[K],
+    tr: &mut Transcript,
+) -> CycleResult {
+    let d = rows.d;
+    let degree = d + 2;
+    let rest = rows.len().trailing_zeros() as usize;
+    for i in 0..rest {
         let ys = acc.values(cur);
         let (r, next) = emit_round(&ys, tr, LABEL, &mut msgs);
         cur = next;
         z.push(r);
-        (rows, acc) = bind_eval(&rows, r, degree, i + 1 == n);
+        (rows, acc) = bind_eval(&rows, r, degree, i + 1 == rest);
     }
     if checks_enabled() {
         // The last bound row must reproduce the final claim.
