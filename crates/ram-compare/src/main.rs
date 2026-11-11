@@ -893,8 +893,45 @@ struct Case {
     /// Composed PCS + IOP soundness error for this case's parameters.
     soundness: Soundness,
     grand_product_extra_bound: Option<serde_json::Value>,
+    /// Median prover time per trace row and, for guests, per source
+    /// memory instruction.
+    throughput: Throughput,
     samples: Vec<Sample>,
     median: Medians,
+}
+/// Prover time per unit of work, from the case's median prover time.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+struct Throughput {
+    /// Rows in the proved trace (T).
+    operations: usize,
+    prover_ns_per_operation: f64,
+    /// Guest traces only: the loads and stores among the proved rows, before
+    /// narrow-store expansion. Operations mode splits a narrow store into a
+    /// read and a write row; it counts once here. Dummy rows do not count.
+    source_memory_instructions: Option<usize>,
+    prover_ns_per_source_memory_instruction: Option<f64>,
+}
+impl Throughput {
+    fn new(operations: usize, source: Option<usize>, prover_ms: f64) -> Self {
+        let per = |count: usize| prover_ms * 1e6 / count as f64;
+        Self {
+            operations,
+            prover_ns_per_operation: per(operations),
+            source_memory_instructions: source,
+            prover_ns_per_source_memory_instruction: source.filter(|&c| c > 0).map(per),
+        }
+    }
+}
+/// Guest loads and stores in the proved rows, or `None` for synthetic traces.
+fn source_memory_instructions(trace_format: &str, metadata: &serde_json::Value) -> Option<usize> {
+    let guest = metadata.get("guest").filter(|g| !g.is_null())?;
+    let count = if trace_format == "operations" {
+        metadata["memory_operations"].as_u64()?
+            - metadata["narrow_store_write_operations"].as_u64()?
+    } else {
+        guest["memory_access_cycles"].as_u64()?
+    };
+    Some(count as usize)
 }
 fn fmt_load(load: Option<platform::LoadAverage>) -> String {
     load.map_or("n/a".into(), |l| {
@@ -1089,6 +1126,23 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 proof_size.mosaic_bytes,
                 proof_size.iop_bytes
             );
+            let throughput = Throughput::new(
+                area.cycles,
+                source_memory_instructions(&o.trace_format, &metadata),
+                median.times["prover_ms"],
+            );
+            match throughput.prover_ns_per_source_memory_instruction {
+                Some(per) => println!(
+                    "  prover per operation={:.1}ns per source memory instruction={per:.1}ns ({} instructions in {} rows)",
+                    throughput.prover_ns_per_operation,
+                    throughput.source_memory_instructions.unwrap_or(0),
+                    throughput.operations
+                ),
+                None => println!(
+                    "  prover per operation={:.1}ns",
+                    throughput.prover_ns_per_operation
+                ),
+            }
             println!(
                 "  load(1/5/15m) start={} end={}",
                 fmt_load(load.start),
@@ -1134,6 +1188,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 proof_size,
                 soundness,
                 grand_product_extra_bound: bound,
+                throughput,
                 samples,
                 median,
             });
@@ -1317,6 +1372,9 @@ fn csv(report: &Report) -> String {
         "iop_bytes",
         "proof_bytes",
         "soundness_bits",
+        "source_memory_instructions",
+        "prover_ns_per_operation",
+        "prover_ns_per_source_memory_instruction",
     ]
     .into_iter()
     .map(str::to_owned)
@@ -1370,6 +1428,24 @@ fn csv(report: &Report) -> String {
                 row.push(bytes.to_string());
             }
             row.push(format!("{:.4}", c.soundness.bits));
+            let per_sample = Throughput::new(
+                c.throughput.operations,
+                c.throughput.source_memory_instructions,
+                s.prover_ms,
+            );
+            row.push(
+                per_sample
+                    .source_memory_instructions
+                    .map(|v| v.to_string())
+                    .unwrap_or_default(),
+            );
+            row.push(format!("{:.3}", per_sample.prover_ns_per_operation));
+            row.push(
+                per_sample
+                    .prover_ns_per_source_memory_instruction
+                    .map(|v| format!("{v:.3}"))
+                    .unwrap_or_default(),
+            );
             row.extend(s.times().into_iter().map(|v| format!("{v:.9}")));
             row.extend(
                 s.padding_adjusted_estimate
@@ -1424,7 +1500,7 @@ fn main() -> Result<()> {
         // stage manifests are not embedded because they describe older trees.
         "implementation_manifest":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage16-implementation.json"))?,
     });
-    let report = Report { schema_version:SCHEMA_VERSION,implementation:IMPLEMENTATION.into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods.".into(),"Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).".into(),"Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; IOP terms are a local fallback until the argument crates export soundness_terms), load averages per case and sample, and host metadata.".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial/final memory are public and transcript-bound.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
+    let report = Report { schema_version:SCHEMA_VERSION,implementation:IMPLEMENTATION.into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods.".into(),"Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).".into(),"Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; IOP terms are a local fallback until the argument crates export soundness_terms), load averages per case and sample, host metadata, cases[].throughput (median prover ns per trace row and, for guests, per source load/store before narrow-store expansion) and metadata.reuse_distance (log2 buckets of operations since the previous access to the same word).".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial/final memory are public and transcript-bound.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
     if let Some(path) = &report.options.output {
         write(path, &serde_json::to_vec_pretty(&report)?)?;
         println!("JSON: {}", path.display());
@@ -1860,6 +1936,85 @@ mod tests {
             trace_hash(&into_trace(read)),
             trace_hash(&into_trace(write))
         );
+    }
+
+    #[test]
+    fn throughput_counts_a_narrow_store_once_and_skips_synthetic_traces() {
+        let operations = serde_json::json!({
+            "memory_operations": 40, "narrow_store_write_operations": 6, "guest": {}
+        });
+        assert_eq!(
+            source_memory_instructions("operations", &operations),
+            Some(34)
+        );
+        let rmw = serde_json::json!({"guest": {"memory_access_cycles": 25}});
+        assert_eq!(source_memory_instructions("rmw", &rmw), Some(25));
+        let random = serde_json::json!({"memory_operations": 64, "guest": null});
+        assert_eq!(source_memory_instructions("operations", &random), None);
+        let t = Throughput::new(64, Some(32), 2.0);
+        assert_eq!(t.prover_ns_per_operation, 31_250.0);
+        assert_eq!(t.prover_ns_per_source_memory_instruction, Some(62_500.0));
+        assert_eq!(
+            Throughput::new(64, Some(0), 2.0).prover_ns_per_source_memory_instruction,
+            None
+        );
+    }
+
+    #[test]
+    fn guest_cases_report_time_per_source_memory_instruction() {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        for format in ["operations", "rmw"] {
+            let options = Options {
+                methods: vec!["spice".into()],
+                trace_format: format.into(),
+                patterns: vec!["guest".into(), "random".into()],
+                guest_program: vec!["erc20-mixed-block".into()],
+                guest_rows: vec!["all".into()],
+                log_cycles: 10,
+                warmup: 0,
+                repeat: 1,
+                threads: 2,
+                ..Default::default()
+            };
+            let report_cases = pool
+                .install(|| benchmark(&options).map_err(|e| e.to_string()))
+                .unwrap();
+            let guest = &report_cases[0].throughput;
+            let source = guest.source_memory_instructions.unwrap();
+            assert!(source > 0 && source < 1 << 10, "{format}: {source}");
+            assert_eq!(guest.operations, 1 << 10);
+            let per = guest.prover_ns_per_source_memory_instruction.unwrap();
+            assert!(per > guest.prover_ns_per_operation);
+            assert_eq!(report_cases[1].throughput.source_memory_instructions, None);
+            let report = Report {
+                schema_version: SCHEMA_VERSION,
+                implementation: IMPLEMENTATION.into(),
+                options: options.clone(),
+                environment: serde_json::Value::Null,
+                provenance: serde_json::Value::Null,
+                notes: vec![],
+                comparisons: vec![],
+                paired_ratios: vec![],
+                verified_proofs: 0,
+                cases: report_cases,
+            };
+            let text = csv(&report);
+            let header: Vec<_> = text.lines().next().unwrap().split(',').collect();
+            let column = header
+                .iter()
+                .position(|h| *h == "prover_ns_per_source_memory_instruction")
+                .unwrap();
+            let rows: Vec<Vec<&str>> = text
+                .lines()
+                .skip(1)
+                .map(|l| l.split(',').collect())
+                .collect();
+            assert!(rows[0][column].parse::<f64>().unwrap() > 0.0);
+            assert_eq!(rows[1][column], "");
+        }
     }
 
     #[test]

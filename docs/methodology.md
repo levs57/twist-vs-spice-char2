@@ -55,9 +55,16 @@ At `--log-cycles 20 --address-bits 16` with seed 1 the trace has 68.2% reads and
 
 **Reuse-distance histogram.** Every case's `metadata.reuse_distance` records, for the trace that was proved, the number of first accesses and `buckets[b]`, the number of accesses whose previous access to the same word was between `2^b` and `2^(b+1) - 1` operations earlier. `median_bucket` is the bucket holding the median repeated access. The histogram is computed over rows, so for the `rmw` format it counts each read-modify-write row once.
 
+**Prover time per source memory instruction.** Per-row prover time is not comparable across trace formats or guest row policies, because a row can be a dummy (a non-memory VM instruction under `--guest-rows all`) or half of a narrow store (the operations format splits a byte, half-word or word store into a read and a full-word write). Every case therefore reports `throughput`: `operations` (T), `prover_ns_per_operation`, and for guest traces `source_memory_instructions` and `prover_ns_per_source_memory_instruction`, all from the median prover time. Source memory instructions are the guest loads and stores among the proved rows, before narrow-store expansion:
+
+- operations format: `memory_operations - narrow_store_write_operations`, so a narrow store counts once and dummy rows do not count;
+- `rmw` format: `guest.memory_access_cycles`, the VM rows whose instruction accesses memory.
+
+If the trace ends between the two halves of a narrow store, that store counts once. Synthetic traces (`random`, `locality`) have no source instructions, and the field is null. The CSV carries the same three columns per sample, computed from that sample's prover time.
+
 ## Result schema and provenance
 
-Reports use schema 5. Relative to schema 4 they add `samples[].position`, `samples[].verifier_stages_ms`, `samples[].proof_size`, `samples[].load`, `cases[].load`, `cases[].proof_size`, `cases[].soundness`, `median.verifier_stages_ms`, `paired_ratios`, and confidence intervals on `comparisons`. All schema-4 fields keep their meaning, except that `samples[].iteration` is now the measured round.
+Reports use schema 5. Relative to schema 4 they add `samples[].position`, `samples[].verifier_stages_ms`, `samples[].proof_size`, `samples[].load`, `cases[].load`, `cases[].proof_size`, `cases[].soundness`, `median.verifier_stages_ms`, `cases[].throughput`, `metadata.reuse_distance`, `paired_ratios`, and confidence intervals on `comparisons`. All schema-4 fields keep their meaning, except that `samples[].iteration` is now the measured round.
 
 The report's `provenance.implementation_manifest` embeds `audit/stage16-implementation.json`, and `environment.ram_compare_sources_sha256` hashes the harness sources compiled into the binary. The issue (§8) found that the Stage 1.4 and 1.5 manifests listed hashes from a later tree than the results they accompanied. To prevent that:
 
