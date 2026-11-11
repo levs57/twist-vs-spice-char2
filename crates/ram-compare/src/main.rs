@@ -1,4 +1,5 @@
 use om_transcript::Hasher;
+use om_transcript::profiling;
 use ram_argument::{AccessTrace, Config, Statement, Summary, VirtualizationMode};
 use ram_payload::operations::{OperationPayload, guest_operations, random_operations};
 use ram_payload::{GuestFill, GuestOptions, GuestProgram, GuestRows, RamPayload};
@@ -496,6 +497,9 @@ struct Sample {
     unattributed_ms: f64,
     stages_ms: BTreeMap<String, f64>,
     padding_adjusted_estimate: PaddingAdjustedEstimate,
+    /// Exclusive verifier spans: the profiler is cleared before `verify`
+    /// and read right after it. Empty when the verifier has no spans.
+    verifier_stages_ms: BTreeMap<String, f64>,
     /// Load averages immediately before proving and after verifying.
     load: LoadWindow,
 }
@@ -525,10 +529,7 @@ impl Sample {
         {
             return Err("invalid populated/committed fraction".into());
         }
-        let mut stages_ms = BTreeMap::new();
-        for (name, duration) in metrics {
-            *stages_ms.entry(name.to_owned()).or_insert(0.0) += duration.as_secs_f64() * 1000.0;
-        }
+        let stages_ms = stage_map(metrics);
         let get = |name| stages_ms.get(name).copied().unwrap_or(0.0);
         let commit_ms = get("pcs.commit");
         let opening_ms = get("pcs.open") + get("pcs.ringswitch") + get("pcs.ligerito_open");
@@ -593,6 +594,7 @@ impl Sample {
             unattributed_ms,
             stages_ms,
             padding_adjusted_estimate,
+            verifier_stages_ms: BTreeMap::new(),
             load: LoadWindow {
                 start: None,
                 end: None,
@@ -616,6 +618,14 @@ impl Sample {
         ]
     }
 }
+/// Sums exclusive span durations by name, in milliseconds.
+fn stage_map(metrics: Vec<(&'static str, Duration)>) -> BTreeMap<String, f64> {
+    let mut stages = BTreeMap::new();
+    for (name, duration) in metrics {
+        *stages.entry(name.to_owned()).or_insert(0.0) += duration.as_secs_f64() * 1000.0;
+    }
+    stages
+}
 fn median(mut values: Vec<f64>) -> f64 {
     values.sort_by(f64::total_cmp);
     let m = values.len() / 2;
@@ -630,6 +640,7 @@ struct Medians {
     #[serde(flatten)]
     times: BTreeMap<String, f64>,
     stages_ms: BTreeMap<String, f64>,
+    verifier_stages_ms: BTreeMap<String, f64>,
     padding_adjusted_estimate: PaddingAdjustedEstimate,
 }
 fn stage_medians(
@@ -667,14 +678,27 @@ impl Medians {
         Self {
             times,
             stages_ms: stage_medians(samples, |s| &s.stages_ms),
+            verifier_stages_ms: stage_medians(samples, |s| &s.verifier_stages_ms),
             padding_adjusted_estimate: PaddingAdjustedEstimate::medians(samples),
         }
     }
+}
+/// Times one verification and collects the verifier's own profiling spans.
+/// The profiler is cleared first so no prover span leaks into the result.
+fn timed_verify(
+    verify: impl FnOnce() -> Result<()>,
+) -> Result<(f64, Vec<(&'static str, Duration)>)> {
+    profiling::clear();
+    let start = Instant::now();
+    verify()?;
+    let verifier_ms = start.elapsed().as_secs_f64() * 1000.0;
+    Ok((verifier_ms, profiling::take()))
 }
 fn observed(
     iteration: usize,
     prover_ms: f64,
     verifier_ms: f64,
+    verifier_metrics: Vec<(&'static str, Duration)>,
     statement: &Statement,
     metrics: Vec<(&'static str, Duration)>,
     summary: &Summary,
@@ -686,14 +710,16 @@ fn observed(
         return Err("prover returned a different public input".into());
     }
     let area = Area::new(summary, method, o)?;
+    let mut sample = Sample::new(
+        iteration,
+        prover_ms,
+        verifier_ms,
+        metrics,
+        area.populated_fraction,
+    )?;
+    sample.verifier_stages_ms = stage_map(verifier_metrics);
     Ok((
-        Sample::new(
-            iteration,
-            prover_ms,
-            verifier_ms,
-            metrics,
-            area.populated_fraction,
-        )?,
+        sample,
         area,
         statement.final_memory.clone(),
     ))
@@ -727,13 +753,15 @@ fn measure(
     if method == "twist" {
         let result = ram_argument::prove(black_box(config), black_box(trace))?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
-        let verify = Instant::now();
-        ram_argument::verify(black_box(&result.statement), black_box(&result.proof))?;
-        let verifier_ms = verify.elapsed().as_secs_f64() * 1000.0;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            ram_argument::verify(black_box(&result.statement), black_box(&result.proof))?;
+            Ok(())
+        })?;
         observed(
             iteration,
             prover_ms,
             verifier_ms,
+            verifier_metrics,
             &result.statement,
             result.metrics,
             &result.summary,
@@ -746,13 +774,15 @@ fn measure(
         let result =
             spice_argument::operations::prove(black_box(config), black_box(operation_trace))?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
-        let verify = Instant::now();
-        spice_argument::operations::verify(black_box(&result.statement), black_box(&result.proof))?;
-        let verifier_ms = verify.elapsed().as_secs_f64() * 1000.0;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            spice_argument::operations::verify(black_box(&result.statement), black_box(&result.proof))?;
+            Ok(())
+        })?;
         observed(
             iteration,
             prover_ms,
             verifier_ms,
+            verifier_metrics,
             &result.statement,
             result.metrics,
             &result.summary,
@@ -771,13 +801,15 @@ fn measure(
             spice_argument::prove(black_box(config), black_box(trace))?
         };
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
-        let verify = Instant::now();
-        spice_argument::verify(black_box(&result.statement), black_box(&result.proof))?;
-        let verifier_ms = verify.elapsed().as_secs_f64() * 1000.0;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            spice_argument::verify(black_box(&result.statement), black_box(&result.proof))?;
+            Ok(())
+        })?;
         observed(
             iteration,
             prover_ms,
             verifier_ms,
+            verifier_metrics,
             &result.statement,
             result.metrics,
             &result.summary,
@@ -924,6 +956,12 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             for (name, value) in &median.stages_ms {
                 println!("    {name:<38} {value:>10.3}ms");
             }
+            if !median.verifier_stages_ms.is_empty() {
+                println!("  verifier stages (exclusive medians):");
+                for (name, value) in &median.verifier_stages_ms {
+                    println!("    {name:<38} {value:>10.3}ms");
+                }
+            }
             let l = area.cycles + area.memory_cells;
             if method.starts_with("spice") {
                 println!(
@@ -1025,10 +1063,14 @@ fn escaped(value: &str) -> String {
 }
 fn csv(report: &Report) -> String {
     let mut stages = BTreeMap::new();
+    let mut verifier_stages = BTreeMap::new();
     for c in &report.cases {
         for s in &c.samples {
             for name in s.stages_ms.keys() {
                 stages.insert(name.clone(), ());
+            }
+            for name in s.verifier_stages_ms.keys() {
+                verifier_stages.insert(name.clone(), ());
             }
         }
     }
@@ -1063,6 +1105,7 @@ fn csv(report: &Report) -> String {
             .map(|name| format!("padding_adjusted_estimate:{name}")),
     );
     header.extend(stages.keys().map(|s| format!("exclusive:{s}")));
+    header.extend(verifier_stages.keys().map(|s| format!("verifier:{s}")));
     let mut output = header
         .iter()
         .map(|s| escaped(s))
@@ -1105,6 +1148,12 @@ fn csv(report: &Report) -> String {
                     .keys()
                     .map(|name| format!("{:.9}", s.stages_ms.get(name).copied().unwrap_or(0.0))),
             );
+            row.extend(verifier_stages.keys().map(|name| {
+                format!(
+                    "{:.9}",
+                    s.verifier_stages_ms.get(name).copied().unwrap_or(0.0)
+                )
+            }));
             output.push_str(&row.iter().map(|s| escaped(s)).collect::<Vec<_>>().join(","));
             output.push('\n');
         }
@@ -1407,6 +1456,28 @@ mod tests {
         assert_eq!(ripple.populated_bits, flock.populated_bits);
         assert_eq!(ripple.committed_bits, flock.committed_bits);
         assert_eq!(flock.mosaic_claims - ripple.mosaic_claims, 2);
+    }
+    #[test]
+    fn verifier_spans_are_isolated_from_prover_spans() {
+        drop(profiling::Span::new("prove.leftover"));
+        let (ms, metrics) = timed_verify(|| {
+            let _outer = profiling::Span::new("verify.outer");
+            drop(profiling::Span::new("verify.inner"));
+            Ok(())
+        })
+        .unwrap();
+        assert!(ms >= 0.0);
+        let stages = stage_map(metrics);
+        assert_eq!(
+            stages.keys().map(String::as_str).collect::<Vec<_>>(),
+            vec!["verify.inner", "verify.outer"]
+        );
+        let mut a = padding_sample(1.0);
+        let mut b = padding_sample(1.0);
+        a.verifier_stages_ms = BTreeMap::from([("verify.x".into(), 1.0)]);
+        b.verifier_stages_ms = BTreeMap::from([("verify.x".into(), 3.0)]);
+        let medians = Medians::new(&[a, b]);
+        assert_eq!(medians.verifier_stages_ms["verify.x"], 2.0);
     }
     #[test]
     fn guest_order_and_csv_quoting() {
