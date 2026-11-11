@@ -85,3 +85,21 @@ Reimplementing the ordering argument in this crate as an eq-factored sum-check w
 **Why this and not the cheaper form.** The cheapest private variant, matching Twist's `None` final state, drops the final value from the tuple altogether (left `(last_k, k, 0, 1)` on the memory side with matching changes on the right), so nothing is committed. That variant proves only that the reads are consistent, not what memory holds at the end. The issue asks for final memory committed and bound, which a later proof can open, so I implemented that.
 
 **Cost at n=20, a=16.** Populated bits go from 130,416,640 to 134,610,944 (+2^22), which crosses 2^27, so the padded commitment doubles from 2^27 to 2^28 bits. There is one more Mosaic claim (19 to 20). Measured interleaved on a random workload (load 37–40): prove 92.7 to 118.9 ms, verify 6.18 to 5.92 ms. The verifier saves the 2^16-cell `word_eval` of final memory but checks a larger commitment. The doubling comes from the threshold, not from the 4M bits: at n=20, a=16 the primary layout has only 3.8M bits of slack.
+
+## 6. Verifier stages and proof size (§2)
+
+**Spans.** The typed verifier records `verify.setup`, `verify.statement` (hashing the public memory into the transcript), `verify.gkr`, `verify.mask`, `verify.order`, `verify.claims`, `verify.mosaic` and `verify.pcs`. Every span the verifier opens carries the `verify.` prefix, which a test checks when the `profiling` feature is on, so the harness's clear-then-verify reporting sees the whole verifier. The prover still records the statement hash as `spice.statement`.
+
+**Size.** `operations::proof_size(&Proof) -> ProofSize { pcs_bytes, mosaic_bytes, iop_bytes }` counts a field element as 16 bytes, a hash or root as 32, an index (the commitment's variable count) as 4 and a Flock PoW nonce as 8 (it is a `u64`; the grinding is off by default, so none are sent). Length prefixes count nothing, since every length follows from the statement and options. A test checks `pcs_bytes` against Ligerito's own `to_bytes` layout. The PCS part is the commitment root and variable count, the ring-switching message and the Ligerito proof. Mosaic is its sum-check plus the claimed value of `G`. The IOP part is the GKR, the masked-value claims and sum-check, the Flock zerocheck and the evaluation message.
+
+Measured with `--example typed_options` on a random workload (bytes):
+
+| n | variant | total | PCS | Mosaic | IOP |
+|---|---|---|---|---|---|
+| 20 | spice-typed | 331,252 | 316,836 | 880 | 13,536 |
+| 20 | spice-typed-2fp | 332,372 | 317,252 | 880 | 14,240 |
+| 20 | private final memory | 389,092 | 374,628 | 912 | 13,552 |
+| 18 | spice-typed | 234,900 | 222,212 | 816 | 11,872 |
+| 18 | spice-typed-2fp | 238,420 | 225,092 | 816 | 12,512 |
+
+These agree with the issue's estimates (334 KB at 2^20, 236 KB at 2^18). Ligerito is 96% of the proof. The 2fp IOP part is 704 bytes larger at n=20 (one more GKR layer). Its PCS part differs by a few hundred bytes only because the number of distinct query columns after deduplication depends on the challenges.

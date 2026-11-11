@@ -49,6 +49,7 @@ fn main() {
     };
     let sets = [
         ("public", Options::default()),
+        ("two-fingerprints", Options::TWO_FINGERPRINTS),
         (
             "private-final",
             Options {
@@ -59,6 +60,7 @@ fn main() {
     ];
     let mut prove = vec![vec![]; sets.len()];
     let mut verify = vec![vec![]; sets.len()];
+    let mut sizes = vec![operations::ProofSize::default(); sets.len()];
     for round in 0..=repeat {
         for (i, (_, options)) in sets.iter().enumerate() {
             let start = Instant::now();
@@ -68,6 +70,7 @@ fn main() {
             operations::verify_with(&r.statement, &r.proof, options).unwrap();
             let v = start.elapsed().as_secs_f64() * 1e3;
             assert_eq!(r.statement.final_memory, memory);
+            sizes[i] = operations::proof_size(&r.proof);
             if round > 0 {
                 prove[i].push(p);
                 verify[i].push(v);
@@ -79,10 +82,16 @@ fn main() {
         v[v.len() / 2]
     };
     for (i, (name, _)) in sets.iter().enumerate() {
+        let z = sizes[i];
         println!(
-            "{name}: prove {:.1} ms, verify {:.2} ms (median of {repeat}, n={n}, a={a})",
+            "{name}: prove {:.1} ms, verify {:.2} ms (median of {repeat}, n={n}, a={a}); \
+             proof {} B = pcs {} + mosaic {} + iop {}",
             median(&mut prove[i]),
-            median(&mut verify[i])
+            median(&mut verify[i]),
+            z.total(),
+            z.pcs_bytes,
+            z.mosaic_bytes,
+            z.iop_bytes
         );
     }
 }

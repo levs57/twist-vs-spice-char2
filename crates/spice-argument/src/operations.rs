@@ -381,12 +381,14 @@ fn group_rho(tr: &mut Transcript) -> Vec<K> {
     tr.challenge_ks(b"spice/typed/plane-chunks/rho", RHO_LEN)
 }
 
-fn transcript(s: &Statement, schema: &Schema, options: &Options) -> Transcript {
+/// `span` names the profiling stage that hashes the public statement.
+fn transcript(s: &Statement, schema: &Schema, options: &Options, span: &'static str) -> Transcript {
     let mut tr = crate::transcript_with(
         s,
         schema,
         &OrderingMode::FlockBoolean,
         !options.private_final_memory,
+        span,
     );
     tr.absorb_bytes(b"spice/trace-semantics", b"typed-single-value-masked/v1");
     options.absorb(&mut tr);
@@ -433,34 +435,36 @@ fn pending_claims(
             s.config.word_log_bits,
         ))
     });
-    final_value.into_iter().chain([
-        group("input/address", &leaf[..n], &v.address),
-        group("input/previous", &leaf[..n], &v.previous),
-        group("input/flags", &leaf[..n], &v.flags),
-        group("boundary/previous", &leaf[..a], &v.final_previous),
-        Pending::Direct(scalar_claim(
-            "initial/next_is_write",
-            &leaf[..a],
-            v.initial_next_is_write,
-        )),
-        Pending::Direct(word_claim(
-            "input/value",
-            &mask[..n],
-            v.mask_value,
-            s.config.word_log_bits,
-        )),
-        group("input/flags", &mask[..n], &v.mask_flags),
-        Pending::Direct(scalar_claim(
-            "initial/next_is_write",
-            &mask[..a],
-            v.mask_initial_next_is_write,
-        )),
-        group("input/previous", &order.point_ab, &order.previous_ab),
-        group("order/carry", &order.point_ab, &order.carries_ab),
-        // Flock extracts the linear C column at a second cycle point.
-        group("order/carry", &order.point_c, &order.carries_c),
-    ])
-    .collect()
+    final_value
+        .into_iter()
+        .chain([
+            group("input/address", &leaf[..n], &v.address),
+            group("input/previous", &leaf[..n], &v.previous),
+            group("input/flags", &leaf[..n], &v.flags),
+            group("boundary/previous", &leaf[..a], &v.final_previous),
+            Pending::Direct(scalar_claim(
+                "initial/next_is_write",
+                &leaf[..a],
+                v.initial_next_is_write,
+            )),
+            Pending::Direct(word_claim(
+                "input/value",
+                &mask[..n],
+                v.mask_value,
+                s.config.word_log_bits,
+            )),
+            group("input/flags", &mask[..n], &v.mask_flags),
+            Pending::Direct(scalar_claim(
+                "initial/next_is_write",
+                &mask[..a],
+                v.mask_initial_next_is_write,
+            )),
+            group("input/previous", &order.point_ab, &order.previous_ab),
+            group("order/carry", &order.point_ab, &order.carries_ab),
+            // Flock extracts the linear C column at a second cycle point.
+            group("order/carry", &order.point_c, &order.carries_c),
+        ])
+        .collect()
 }
 
 fn absorb_masked(tr: &mut Transcript, v: &MaskClaims) {
@@ -667,7 +671,7 @@ pub fn prove_with(
         (previous, next, initial_next, last, carries)
     };
     let schema = schema(&statement, options);
-    let mut tr = transcript(&statement, &schema, options);
+    let mut tr = transcript(&statement, &schema, options, "spice.statement");
     let (address_columns, previous_columns, carry_columns, last_columns, flags, initial_flags, g) = {
         let _span = Span::new("spice.pack");
         let address = pack_columns(&trace.addresses, a);
@@ -938,54 +942,160 @@ pub fn prove_with(
 }
 
 fn verify_inner(s: &Statement, p: &Proof, options: &Options) -> Result<(), Error> {
-    validate_memory(s, !options.private_final_memory)?;
-    options.validate()?;
-    let (n, a, l, _) = dims(s);
-    let schema = schema(s, options);
-    require(
-        p.commitment.n == schema.layout.ell - 7 && p.commitment.root.len() == 32,
-        "malformed typed commitment",
-    )?;
-    let mut tr = transcript(s, &schema, options);
-    schema.pcs.absorb_commitment(&p.commitment, &mut tr);
-    let fps = fingerprints(&mut tr, options);
-    let leaves = lean_grandproduct::verify(
-        l + 1 + options.log_fingerprints(),
-        &p.permutation,
-        &mut tr,
-        b"spice/typed/permutation",
-    )?;
-    check_products(&p.permutation, options)?;
-    absorb_masked(&mut tr, &p.masked);
-    let mask = masked_reduction::verify_sumcheck(
-        &s.initial_memory,
-        &leaves.point[..l + 1],
-        &p.masked,
-        &p.masks,
-        &mut tr,
-        b"spice/typed/masks",
-    )?;
-    let order = order_flock::verify_zerocheck_with(n, a, &p.order, &mut tr, b"spice/typed/order")?;
-    absorb_evaluations(&mut tr, &p.evaluations);
-    let order_claims = check_evaluations(
-        s,
-        &leaves,
-        &p.masked,
-        &mask,
-        &order,
-        &p.evaluations,
-        &fps,
-        options,
-    )?;
-    let claims = finish_claims(
-        pending_claims(s, &leaves.point, &mask.point, &order_claims, &p.evaluations),
-        &group_rho(&mut tr),
-    );
-    let (r, value) = batch_verify(&schema.layout, &schema.claims(&claims)?, &p.mosaic, &mut tr)?;
+    // Spans carry the `verify.` prefix because the harness clears the
+    // profiler before verifying and reports only these stages.
+    let (n, a, l, schema, mut tr, fps) = {
+        let _span = Span::new("verify.setup");
+        validate_memory(s, !options.private_final_memory)?;
+        options.validate()?;
+        let (n, a, l, _) = dims(s);
+        let schema = schema(s, options);
+        require(
+            p.commitment.n == schema.layout.ell - 7 && p.commitment.root.len() == 32,
+            "malformed typed commitment",
+        )?;
+        let mut tr = transcript(s, &schema, options, "verify.statement");
+        schema.pcs.absorb_commitment(&p.commitment, &mut tr);
+        let fps = fingerprints(&mut tr, options);
+        (n, a, l, schema, tr, fps)
+    };
+    let leaves = {
+        let _span = Span::new("verify.gkr");
+        let leaves = lean_grandproduct::verify(
+            l + 1 + options.log_fingerprints(),
+            &p.permutation,
+            &mut tr,
+            b"spice/typed/permutation",
+        )?;
+        check_products(&p.permutation, options)?;
+        leaves
+    };
+    let mask = {
+        let _span = Span::new("verify.mask");
+        absorb_masked(&mut tr, &p.masked);
+        masked_reduction::verify_sumcheck(
+            &s.initial_memory,
+            &leaves.point[..l + 1],
+            &p.masked,
+            &p.masks,
+            &mut tr,
+            b"spice/typed/masks",
+        )?
+    };
+    let order = {
+        let _span = Span::new("verify.order");
+        order_flock::verify_zerocheck_with(n, a, &p.order, &mut tr, b"spice/typed/order")?
+    };
+    let claims = {
+        let _span = Span::new("verify.claims");
+        absorb_evaluations(&mut tr, &p.evaluations);
+        let order_claims = check_evaluations(
+            s,
+            &leaves,
+            &p.masked,
+            &mask,
+            &order,
+            &p.evaluations,
+            &fps,
+            options,
+        )?;
+        let claims = finish_claims(
+            pending_claims(s, &leaves.point, &mask.point, &order_claims, &p.evaluations),
+            &group_rho(&mut tr),
+        );
+        schema.claims(&claims)?
+    };
+    let (r, value) = {
+        let _span = Span::new("verify.mosaic");
+        batch_verify(&schema.layout, &claims, &p.mosaic, &mut tr)?
+    };
+    let _span = Span::new("verify.pcs");
     schema
         .pcs
         .verify(&p.commitment, &r, value, &p.opening, &mut tr)?;
     Ok(())
+}
+
+/// Serialized proof size in bytes, split by component. A field element
+/// counts 16 bytes, a hash or Merkle root 32, an index or small integer 4,
+/// a PoW nonce 8, and length prefixes nothing: every length follows from
+/// the statement and options.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ProofSize {
+    /// Commitment root and variable count, ring-switching and Ligerito.
+    pub pcs_bytes: usize,
+    /// The Mosaic batching sum-check and the claimed value of `G`.
+    pub mosaic_bytes: usize,
+    /// GKR, masked reduction, Flock zerocheck and the evaluation message.
+    pub iop_bytes: usize,
+}
+
+impl ProofSize {
+    pub fn total(&self) -> usize {
+        self.pcs_bytes + self.mosaic_bytes + self.iop_bytes
+    }
+}
+
+const FIELD_BYTES: usize = 16;
+const HASH_BYTES: usize = 32;
+const INDEX_BYTES: usize = 4;
+const NONCE_BYTES: usize = 8;
+
+fn sumcheck_bytes(sc: &SumcheckProof) -> usize {
+    FIELD_BYTES * sc.round_msgs.iter().map(Vec::len).sum::<usize>()
+}
+
+pub fn proof_size(p: &Proof) -> ProofSize {
+    let (ring, ligerito) = &p.opening;
+    let pcs_bytes = HASH_BYTES
+        + INDEX_BYTES
+        + FIELD_BYTES * ring.s.len()
+        + sumcheck_bytes(&ring.sumcheck)
+        + HASH_BYTES * ligerito.roots.len()
+        + ligerito.sumchecks.iter().map(sumcheck_bytes).sum::<usize>()
+        + ligerito
+            .openings
+            .iter()
+            .map(|o| {
+                FIELD_BYTES * o.columns.iter().map(Vec::len).sum::<usize>()
+                    + HASH_BYTES * o.auth.len()
+            })
+            .sum::<usize>()
+        + FIELD_BYTES * ligerito.final_poly.len();
+    let mosaic_bytes = sumcheck_bytes(&p.mosaic.sumcheck) + FIELD_BYTES;
+    let gkr = FIELD_BYTES
+        * (p.permutation.roots.len()
+            + p.permutation
+                .layers
+                .iter()
+                .map(|layer| {
+                    4 * layer.rounds.len() + layer.children.iter().map(Vec::len).sum::<usize>()
+                })
+                .sum::<usize>());
+    let masked = FIELD_BYTES * (p.masked.cycle.len() + 1) + sumcheck_bytes(&p.masks);
+    let o = &p.order;
+    let order = FIELD_BYTES
+        * (o.round1_ab.len() + o.round1_c.len() + 2 * o.multilinear_rounds.len() + 3)
+        + NONCE_BYTES * o.grinding_nonces.len();
+    let v = &p.evaluations;
+    let evaluations = FIELD_BYTES
+        * (v.address.len()
+            + v.previous.len()
+            + v.flags.len()
+            + v.final_previous.len()
+            + 1
+            + 1
+            + v.mask_flags.len()
+            + 1
+            + v.previous_ab.len()
+            + v.carries_ab.len()
+            + v.carries_c.len()
+            + usize::from(v.final_value.is_some()));
+    ProofSize {
+        pcs_bytes,
+        mosaic_bytes,
+        iop_bytes: gkr + masked + order + evaluations,
+    }
 }
 
 pub fn verify(s: &Statement, p: &Proof) -> Result<(), Error> {
@@ -1093,7 +1203,10 @@ mod tests {
         let leaf: Vec<K> = (0..l + 1).map(|i| K::from_u128(5 + i as u128)).collect();
         let pending = pending_claims(&r.statement, &leaf, &leaf, &order, &p.evaluations);
         let claims = finish_claims(pending, &[K::ONE; RHO_LEN]);
-        let finals: Vec<_> = claims.iter().filter(|c| c.poly == "boundary/final").collect();
+        let finals: Vec<_> = claims
+            .iter()
+            .filter(|c| c.poly == "boundary/final")
+            .collect();
         let a = r.statement.config.address_bits;
         let expected = word_claim(
             "boundary/final",

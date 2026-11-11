@@ -440,3 +440,84 @@ fn private_final_memory_tampering_rejects() {
     s.initial_memory[1] ^= 2;
     assert!(operations::verify_with(&s, &r.proof, &options).is_err());
 }
+
+#[test]
+fn proof_size_counts_every_proof_field() {
+    let one = fixture();
+    let two = fixture_2fp();
+    for r in [one, two] {
+        let size = operations::proof_size(&r.proof);
+        let (ring, ligerito) = &r.proof.opening;
+        // Ligerito's canonical byte layout uses the same unit sizes.
+        let ring_bytes =
+            16 * (ring.s.len() + ring.sumcheck.round_msgs.iter().map(Vec::len).sum::<usize>());
+        assert_eq!(
+            size.pcs_bytes,
+            32 + 4 + ring_bytes + ligerito.to_bytes().len()
+        );
+        assert_eq!(
+            size.mosaic_bytes,
+            16 * (1 + r
+                .proof
+                .mosaic
+                .sumcheck
+                .round_msgs
+                .iter()
+                .map(Vec::len)
+                .sum::<usize>())
+        );
+        assert_eq!(
+            size.total(),
+            size.pcs_bytes + size.mosaic_bytes + size.iop_bytes
+        );
+    }
+    // The second fingerprint adds one GKR layer of sum-check rounds and
+    // doubles nothing else.
+    let (a, b) = (
+        operations::proof_size(&one.proof),
+        operations::proof_size(&two.proof),
+    );
+    let gkr = |p: &operations::Proof| {
+        16 * (2 + p
+            .permutation
+            .layers
+            .iter()
+            .map(|l| 4 * l.rounds.len() + l.children.iter().map(Vec::len).sum::<usize>())
+            .sum::<usize>())
+    };
+    assert_eq!(b.iop_bytes - gkr(&two.proof), a.iop_bytes - gkr(&one.proof));
+    assert!(gkr(&two.proof) > gkr(&one.proof));
+    // Private final memory adds one field element to the evaluation message.
+    let private = operations::Options {
+        private_final_memory: true,
+        ..Default::default()
+    };
+    let r = operations::prove_with(&config(2), &trace(), &private).unwrap();
+    let c = operations::proof_size(&r.proof);
+    assert_eq!(c.iop_bytes, a.iop_bytes + 16);
+}
+
+#[test]
+fn verifier_stages_are_profiled_under_the_verify_prefix() {
+    use om_transcript::profiling;
+    let r = fixture();
+    profiling::clear();
+    operations::verify(&r.statement, &r.proof).unwrap();
+    let names: Vec<&str> = profiling::take().into_iter().map(|(n, _)| n).collect();
+    // Without the `profiling` feature nothing is collected.
+    if !names.is_empty() {
+        assert!(names.iter().all(|n| n.starts_with("verify.")), "{names:?}");
+        for stage in [
+            "verify.setup",
+            "verify.statement",
+            "verify.gkr",
+            "verify.mask",
+            "verify.order",
+            "verify.claims",
+            "verify.mosaic",
+            "verify.pcs",
+        ] {
+            assert!(names.contains(&stage), "{stage} missing from {names:?}");
+        }
+    }
+}

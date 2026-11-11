@@ -236,7 +236,7 @@ impl Schema {
 }
 
 fn transcript(s: &Statement, schema: &Schema, ordering: &OrderingMode) -> Transcript {
-    transcript_with(s, schema, ordering, true)
+    transcript_with(s, schema, ordering, true, "spice.statement")
 }
 
 /// The statement transcript. Final memory is absorbed only when public.
@@ -245,8 +245,9 @@ fn transcript_with(
     schema: &Schema,
     ordering: &OrderingMode,
     public_final: bool,
+    span: &'static str,
 ) -> Transcript {
-    let _span = Span::new("spice.statement");
+    let _span = Span::new(span);
     let mut tr = Transcript::new_default(b"ordered-spice-ram/gf128/v2");
     tr.absorb_bytes(
         b"spice/ordering",
