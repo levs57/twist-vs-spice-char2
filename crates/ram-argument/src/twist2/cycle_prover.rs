@@ -19,6 +19,14 @@
 //! sums have degree `d + 1`. `LT(m, ·)` is split as
 //! `lt_hi[m_hi] + eq_hi[m_hi] · lt_lo[m_lo]`, so the inner sums need
 //! `Σ P`, `Σ lt_lo P` and `Σ eq_lo P`.
+//!
+//! **Round-0 tables.** Before binding, each one-hot column takes one of `2^c`
+//! values, so round 0 reads its values at every node from per-component
+//! tables over the `2^{2c}` pairs of chunk values (`PairTables`), and the
+//! round-0 bind reads tables bound to the challenge.
+//!
+//! **Inc skipping.** A pair whose rows both have `Inc = 0` contributes no
+//! `P` term, so the kernels skip it and stop one node earlier.
 
 use om_field::{K, U256};
 use om_sumcheck::{interpolate_eval, sumcheck_init};
