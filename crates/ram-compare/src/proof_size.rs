@@ -86,6 +86,18 @@ fn mosaic(p: &BatchProof) -> usize {
 }
 
 /// Upstream BinaryTwist (`ram_argument::RamProof`).
+/// Twist v2: PCS and Mosaic counted as for the other methods, the rest from
+/// `ram_argument::twist2::proof_size`.
+pub fn twist2(p: &ram_argument::twist2::Proof) -> ProofSize {
+    let mut size = ProofSize::new(
+        pcs(&p.commitment, &p.opening),
+        mosaic(&p.mosaic),
+        ram_argument::twist2::proof_size(p).iop_bytes,
+    );
+    size.source = "crate";
+    size
+}
+
 pub fn twist(p: &ram_argument::RamProof) -> ProofSize {
     let c = &p.input_claims;
     let claims = fields(&c.r_o)

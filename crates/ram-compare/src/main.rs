@@ -116,6 +116,10 @@ struct Options {
     guest_operations: usize,
     guest_keys: usize,
     guest_queries: usize,
+    /// Twist v2 read-check order: `address` (default) or `cycle`.
+    read_order: String,
+    /// Final memory in the statement (`public`) or committed (`private`).
+    final_memory: String,
     output: Option<PathBuf>,
     csv: Option<PathBuf>,
 }
@@ -141,6 +145,8 @@ impl Default for Options {
             guest_operations: 256,
             guest_keys: 64,
             guest_queries: 16,
+            read_order: "address".into(),
+            final_memory: "public".into(),
             output: None,
             csv: None,
         }
@@ -181,10 +187,18 @@ fn options() -> Result<Option<Options>> {
             "--methods" => {
                 o.methods = select(
                     &value,
-                    &["twist", "spice", "spice-ripple", "spice-typed"],
+                    &[
+                        "twist",
+                        "twist-legacy",
+                        "spice",
+                        "spice-ripple",
+                        "spice-typed",
+                    ],
                     &["twist", "spice"],
                 )?
             }
+            "--read-order" => o.read_order = value,
+            "--final-memory" => o.final_memory = value,
             "--trace-format" => o.trace_format = value,
             "--patterns" | "--payload" => {
                 o.patterns = select(
@@ -250,7 +264,7 @@ fn validate_options(o: &Options) -> Result<()> {
         return Err("invalid log rate".into());
     }
     if o.chunk_bits.is_empty()
-        || o.methods.iter().any(|m| m == "twist")
+        || o.methods.iter().any(|m| m.starts_with("twist"))
             && o.chunk_bits.iter().enumerate().any(|(i, &c)| {
                 c == 0
                     || c > o.address_bits
@@ -376,7 +390,7 @@ fn configurations(o: &Options) -> Vec<(String, Option<usize>)> {
 }
 fn ordering_name(method: &str) -> Option<&'static str> {
     match method {
-        "twist" => None,
+        "twist" | "twist-legacy" => None,
         "spice" => Some("flock-boolean"),
         "spice-ripple" => Some("ripple-eq-factor"),
         "spice-typed" => Some("single-value-flock"),
@@ -753,14 +767,15 @@ fn observed(
     verifier_ms: f64,
     verifier_metrics: Vec<(&'static str, Duration)>,
     proof_size: ProofSize,
-    statement: &Statement,
+    statement: Public<'_>,
     metrics: Vec<(&'static str, Duration)>,
     summary: &Summary,
     trace: &AccessTrace,
     method: &str,
     o: &Options,
 ) -> Result<(Sample, Area, Vec<u64>)> {
-    if statement.initial_memory != trace.initial || statement.log_cycles != o.log_cycles {
+    if statement.initial_memory != trace.initial.as_slice() || statement.log_cycles != o.log_cycles
+    {
         return Err("prover returned a different public input".into());
     }
     let area = Area::new(summary, method, o)?;
@@ -773,7 +788,38 @@ fn observed(
     )?;
     sample.verifier_stages_ms = stage_map(verifier_metrics);
     sample.proof_size = proof_size;
-    Ok((sample, area, statement.final_memory.clone()))
+    Ok((sample, area, statement.final_memory))
+}
+/// The public input a prover returned, and the final memory it computed.
+struct Public<'a> {
+    initial_memory: &'a [u64],
+    log_cycles: usize,
+    final_memory: Vec<u64>,
+}
+impl<'a> From<&'a Statement> for Public<'a> {
+    fn from(s: &'a Statement) -> Self {
+        Public {
+            initial_memory: &s.initial_memory,
+            log_cycles: s.log_cycles,
+            final_memory: s.final_memory.clone(),
+        }
+    }
+}
+/// The Twist v2 configuration for a run of `ram-compare`.
+fn twist2_config(config: &Config, o: &Options) -> Result<ram_argument::twist2::Config> {
+    use ram_argument::twist2::ReadOrder;
+    let mut c = ram_argument::twist2::Config::from_legacy(config);
+    c.order = match o.read_order.as_str() {
+        "address" => ReadOrder::AddressFirst,
+        "cycle" => ReadOrder::CycleFirst,
+        _ => return Err("--read-order must be address or cycle".into()),
+    };
+    c.public_final = match o.final_memory.as_str() {
+        "public" => true,
+        "private" => false,
+        _ => return Err("--final-memory must be public or private".into()),
+    };
+    Ok(c)
 }
 fn sample(
     method: &str,
@@ -802,6 +848,32 @@ fn measure(
 ) -> Result<(Sample, Area, Vec<u64>)> {
     let start = Instant::now();
     if method == "twist" {
+        let config = twist2_config(config, o)?;
+        let start = Instant::now();
+        let result = ram_argument::twist2::prove(black_box(&config), black_box(trace))?;
+        let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            ram_argument::twist2::verify(black_box(&result.statement), black_box(&result.proof))?;
+            Ok(())
+        })?;
+        observed(
+            iteration,
+            prover_ms,
+            verifier_ms,
+            verifier_metrics,
+            proof_size::twist2(&result.proof),
+            Public {
+                initial_memory: &result.statement.initial_memory,
+                log_cycles: result.statement.log_cycles,
+                final_memory: result.final_memory,
+            },
+            result.metrics,
+            &result.summary,
+            trace,
+            method,
+            o,
+        )
+    } else if method == "twist-legacy" {
         let result = ram_argument::prove(black_box(config), black_box(trace))?;
         let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
         let (verifier_ms, verifier_metrics) = timed_verify(|| {
@@ -814,7 +886,7 @@ fn measure(
             verifier_ms,
             verifier_metrics,
             proof_size::twist(&result.proof),
-            &result.statement,
+            (&result.statement).into(),
             result.metrics,
             &result.summary,
             trace,
@@ -839,7 +911,7 @@ fn measure(
             verifier_ms,
             verifier_metrics,
             proof_size::spice_typed(&result.proof),
-            &result.statement,
+            (&result.statement).into(),
             result.metrics,
             &result.summary,
             trace,
@@ -867,7 +939,7 @@ fn measure(
             verifier_ms,
             verifier_metrics,
             proof_size::spice(&result.proof),
-            &result.statement,
+            (&result.statement).into(),
             result.metrics,
             &result.summary,
             trace,
@@ -1094,6 +1166,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 },
                 &o.profile,
                 o.log_rate,
+                o.final_memory == "public",
             );
             println!(
                 "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms [soundness {:.2} bits] commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",

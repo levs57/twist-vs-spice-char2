@@ -109,7 +109,7 @@ pub fn pcs_terms(ell: usize, profile: &str, log_rate: usize) -> Vec<Term> {
 
 /// Mosaic batching and RingSwitch, shared by every method.
 fn mosaic_and_ring_switch(d: &Dims) -> Vec<Term> {
-    vec![
+    let mut terms = vec![
         // Powers of one gamma over all claims.
         iop(
             "mosaic.gamma_batch",
@@ -122,6 +122,13 @@ fn mosaic_and_ring_switch(d: &Dims) -> Vec<Term> {
             2 * d.ell,
             "om-mosaic/src/mosaic.rs batch_verify (sumcheck_verify)",
         ),
+    ];
+    terms.extend(ring_switch(d));
+    terms
+}
+
+fn ring_switch(d: &Dims) -> Vec<Term> {
+    vec![
         // rho in K^7 combines the 128 partial evaluations (multilinear in rho).
         iop(
             "ringswitch.rho",
@@ -139,6 +146,36 @@ fn mosaic_and_ring_switch(d: &Dims) -> Vec<Term> {
 
 /// Upstream BinaryTwist with shared address, one read port, Flat
 /// virtualization and public final memory, as `ram_argument::verify` runs it.
+/// Twist v2, from `ram_argument::twist2::soundness_terms` (which includes
+/// Mosaic), plus the ring switch.
+pub fn twist2_iop(d: &Dims, public_final: bool) -> Vec<Term> {
+    let config = ram_argument::twist2::Config {
+        address_bits: d.a,
+        chunk_bits: d.chunk_bits,
+        word_log_bits: d.word_log_bits,
+        public_final,
+        ..Default::default()
+    };
+    let statement = ram_argument::twist2::Statement {
+        config,
+        log_cycles: d.n,
+        initial_memory: Vec::new(),
+        final_memory: None,
+    };
+    let mut terms: Vec<Term> = ram_argument::twist2::soundness_terms(&statement)
+        .into_iter()
+        .map(|(name, probability)| Term {
+            name: format!("twist2.{name}"),
+            group: "iop",
+            probability,
+            bits: -probability.log2(),
+            location: "crates/ram-argument/src/twist2/mod.rs soundness_terms",
+        })
+        .collect();
+    terms.extend(ring_switch(d));
+    terms
+}
+
 pub fn twist_iop(d: &Dims) -> Vec<Term> {
     let (n, a, c, w) = (d.n, d.a, d.chunk_bits, d.word_log_bits);
     let components = a / c;
@@ -312,9 +349,16 @@ fn sum(terms: &[Term], group: &str) -> f64 {
 }
 
 /// Union bound over all PCS and IOP terms for one case.
-pub fn compose(method: &str, d: &Dims, profile: &str, log_rate: usize) -> Soundness {
+pub fn compose(
+    method: &str,
+    d: &Dims,
+    profile: &str,
+    log_rate: usize,
+    public_final: bool,
+) -> Soundness {
     let (iop_source, mut terms) = match method {
-        "twist" => ("local-fallback", twist_iop(d)),
+        "twist" => ("crate", twist2_iop(d, public_final)),
+        "twist-legacy" => ("local-fallback", twist_iop(d)),
         "spice-typed" => ("local-fallback", spice_typed_iop(d)),
         _ => ("partial", vec![fingerprint(d)]),
     };
@@ -382,19 +426,42 @@ mod tests {
 
     #[test]
     fn composed_bits_at_the_shipped_parameters() {
-        let twist = compose("twist", &twist_dims(20, 16, 28, 33), "provable-120", 2);
+        let twist = compose(
+            "twist-legacy",
+            &twist_dims(20, 16, 28, 33),
+            "provable-120",
+            2,
+            true,
+        );
         let typed = compose(
             "spice-typed",
             &twist_dims(20, 16, 27, 126),
             "provable-120",
             2,
+            true,
         );
         assert!((twist.bits - 117.06).abs() < 0.01, "{}", twist.bits);
         assert!((typed.bits - 107.91).abs() < 0.01, "{}", typed.bits);
         assert!(twist.pcs_probability > twist.iop_probability);
         assert!(typed.iop_probability > typed.pcs_probability);
         assert_eq!(twist.terms.iter().filter(|t| t.group == "pcs").count(), 12);
-        let partial = compose("spice", &twist_dims(20, 16, 28, 120), "provable-120", 2);
+        let partial = compose(
+            "spice",
+            &twist_dims(20, 16, 28, 120),
+            "provable-120",
+            2,
+            true,
+        );
         assert_eq!(partial.iop_source, "partial");
+        // Twist v2 at n=20, a=16, c=4 with 10 Mosaic claims.
+        let v2 = compose(
+            "twist",
+            &twist_dims(20, 16, 28, 10),
+            "provable-120",
+            2,
+            true,
+        );
+        assert_eq!(v2.iop_source, "crate");
+        assert!(v2.iop_probability < twist.iop_probability);
     }
 }
