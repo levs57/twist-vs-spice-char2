@@ -105,9 +105,9 @@ The harness adds the ring switch (`7 + 2(ell − 7) = 47`) for an IOP total of 3
 
 With private final memory, `ell = 28`, `mosaic.batch = 10`, `mosaic.sumcheck = 56` and the ring switch is 49. The crate total is 324 and the IOP total 373.
 
-## Where this departs from the written plan
+## Implementation notes
 
-The implementation follows the protocol plan for the virtual read value, with these differences in code paths. None of them changes the protocol or a soundness term.
+These choices in the code paths change neither the protocol nor a soundness term.
 
 - The address shift `γ_a enc(k)` is applied in `mod.rs` when the read witness is built, not inside `read.rs`. `ReadWitness` has no `address_batch` field.
 - The cycle-first read order needs the shifted per-cycle values `enc(rv_j) + γ_a enc(addr_j)`. The address-first order does not use them, so the prover builds them only for cycle-first.
