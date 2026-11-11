@@ -11,7 +11,27 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod platform;
+use platform::{LoadWindow, load_average};
+
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+/// The harness's own sources, hashed into every report so a result names the
+/// exact comparison code that produced it.
+const SOURCES: &[(&str, &[u8])] = &[
+    ("crates/ram-compare/Cargo.toml", include_bytes!("../Cargo.toml")),
+    ("crates/ram-compare/build.rs", include_bytes!("../build.rs")),
+    ("crates/ram-compare/src/main.rs", include_bytes!("main.rs")),
+    ("crates/ram-compare/src/platform.rs", include_bytes!("platform.rs")),
+];
+fn sources_sha256() -> String {
+    let mut bytes = Vec::new();
+    for (name, contents) in SOURCES {
+        bytes.extend_from_slice(name.as_bytes());
+        bytes.push(0);
+        bytes.extend_from_slice(&Hasher::sha256().digest(contents));
+    }
+    hex(&Hasher::sha256().digest(&bytes))
+}
 const HELP: &str = "Chronological shared-address RAM: BinaryTwist Flat versus ordered Spice
   --methods twist,spice,spice-ripple,spice-typed|both
                                   Ordered methods; both=twist,spice (default)
@@ -476,6 +496,8 @@ struct Sample {
     unattributed_ms: f64,
     stages_ms: BTreeMap<String, f64>,
     padding_adjusted_estimate: PaddingAdjustedEstimate,
+    /// Load averages immediately before proving and after verifying.
+    load: LoadWindow,
 }
 const TIMES: [&str; 12] = [
     "prover_ms",
@@ -571,6 +593,10 @@ impl Sample {
             unattributed_ms,
             stages_ms,
             padding_adjusted_estimate,
+            load: LoadWindow {
+                start: None,
+                end: None,
+            },
         })
     }
     fn times(&self) -> [f64; 12] {
@@ -680,6 +706,23 @@ fn sample(
     iteration: usize,
     o: &Options,
 ) -> Result<(Sample, Area, Vec<u64>)> {
+    let start = load_average();
+    let (mut sample, area, final_memory) =
+        measure(method, config, trace, operation_trace, iteration, o)?;
+    sample.load = LoadWindow {
+        start,
+        end: load_average(),
+    };
+    Ok((sample, area, final_memory))
+}
+fn measure(
+    method: &str,
+    config: &Config,
+    trace: &AccessTrace,
+    operation_trace: Option<&spice_argument::operations::AccessTrace>,
+    iteration: usize,
+    o: &Options,
+) -> Result<(Sample, Area, Vec<u64>)> {
     let start = Instant::now();
     if method == "twist" {
         let result = ram_argument::prove(black_box(config), black_box(trace))?;
@@ -754,10 +797,15 @@ struct Case {
     trace_sha256: String,
     operation_trace_sha256: Option<String>,
     metadata: serde_json::Value,
+    /// Load averages at the start and end of this case's measurements.
+    load: LoadWindow,
     area: Area,
     grand_product_extra_bound: Option<serde_json::Value>,
     samples: Vec<Sample>,
     median: Medians,
+}
+fn fmt_load(load: Option<platform::LoadAverage>) -> String {
+    load.map_or("n/a".into(), |l| format!("{:.2}/{:.2}/{:.2}", l.one, l.five, l.fifteen))
 }
 fn benchmark(o: &Options) -> Result<Vec<Case>> {
     let mut cases = Vec::new();
@@ -812,6 +860,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 "{pattern}/{method}/chunk={chunk_bits:?}: T=2^{} N=2^{} threads={}",
                 o.log_cycles, o.address_bits, o.threads
             );
+            let case_start = load_average();
             let mut area = None;
             let mut samples = Vec::new();
             for i in 0..o.warmup + o.repeat {
@@ -838,6 +887,10 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                     samples.push(sample);
                 }
             }
+            let load = LoadWindow {
+                start: case_start,
+                end: load_average(),
+            };
             let median = Medians::new(&samples);
             let area = area.ok_or("missing proof")?;
             println!(
@@ -859,6 +912,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 median.times["mosaic_ms"],
                 median.times["unattributed_ms"]
             );
+            println!("  load(1/5/15m) start={} end={}", fmt_load(load.start), fmt_load(load.end));
             let adjusted = &median.padding_adjusted_estimate;
             println!(
                 "  commitment-padding-adjusted ESTIMATE (populated/padded={:.4}): prove={:.3}ms commit={:.3}ms; modeled commitment padding={:.3}ms; all other costs unchanged",
@@ -888,6 +942,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 trace_sha256: digest.clone(),
                 operation_trace_sha256: operation_digest.clone(),
                 metadata: metadata.clone(),
+                load,
                 area,
                 grand_product_extra_bound: bound,
                 samples,
@@ -995,6 +1050,8 @@ fn csv(report: &Report) -> String {
         "padding_bits",
         "populated_fraction",
         "mosaic_claims",
+        "load1_start",
+        "load1_end",
     ]
     .into_iter()
     .map(str::to_owned)
@@ -1033,6 +1090,9 @@ fn csv(report: &Report) -> String {
                 format!("{:.12}", c.area.populated_fraction),
             ];
             row.push(c.area.mosaic_claims.to_string());
+            for load in [s.load.start, s.load.end] {
+                row.push(load.map(|l| format!("{:.2}", l.one)).unwrap_or_default());
+            }
             row.extend(s.times().into_iter().map(|v| format!("{v:.9}")));
             row.extend(
                 s.padding_adjusted_estimate
@@ -1068,7 +1128,10 @@ fn main() -> Result<()> {
     let cases = pool.install(|| benchmark(&o).map_err(|e| e.to_string()))?;
     let comparisons = pairs(&cases);
     let verified_proofs = cases.len() * (o.warmup + o.repeat);
-    let environment = serde_json::json!({"architecture":env::consts::ARCH,"executable_sha256":hex(&Hasher::sha256().digest(&fs::read(env::current_exe()?)?)),"native_features":{"avx2":cfg!(target_feature="avx2"),"pclmulqdq":cfg!(target_feature="pclmulqdq"),"vpclmulqdq":cfg!(target_feature="vpclmulqdq"),"sha":cfg!(target_feature="sha")}});
+    let environment = platform::environment(
+        hex(&Hasher::sha256().digest(&fs::read(env::current_exe()?)?)),
+        sources_sha256(),
+    );
     let provenance = serde_json::json!({
         "open_magnetar":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/open-magnetar/UPSTREAM.json"))?,
         "lean_grandproduct":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/lean-grandproduct/UPSTREAM.json"))?,
@@ -1455,6 +1518,10 @@ mod tests {
             assert_eq!(case.trace_sha256, cases[0].trace_sha256);
             assert_eq!(case.operation_trace_sha256, cases[0].operation_trace_sha256);
             assert!(case.operation_trace_sha256.is_some());
+            if cfg!(unix) {
+                assert!(case.load.start.is_some() && case.load.end.is_some());
+                assert!(case.samples.iter().all(|s| s.load.start.is_some()));
+            }
         }
         assert_eq!(
             cases[0].area.populated_bits,
