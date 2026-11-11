@@ -399,3 +399,24 @@ fn cycle_check_rejects_two_hot_component() {
     let mut vtr = tr.clone();
     assert!(cycle::verify(&result.proof, &r_j, claim, &ch, d, &mut vtr).is_err());
 }
+
+#[test]
+fn soundness_terms_at_n20_a16() {
+    let config = Config {
+        address_bits: 16,
+        chunk_bits: 4,
+        ..Config::default()
+    };
+    let statement = Statement {
+        config,
+        log_cycles: 20,
+        initial_memory: vec![0; 1 << 16],
+        final_memory: Some(vec![0; 1 << 16]),
+    };
+    let terms = soundness_terms(&statement);
+    let numerator: f64 = terms.iter().map(|t| t.1).sum::<f64>() * 2f64.powi(128);
+    let ell = Schema::new(&statement.config, 20).layout.ell;
+    // 26 + 92 + 22 + 1 + 120 + 28 + 9, plus the Mosaic rounds.
+    assert_eq!(numerator.round() as usize, 298 + 2 * ell);
+    assert_eq!(statement.config.components(), 4);
+}

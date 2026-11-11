@@ -491,23 +491,57 @@ fn merge_rows(l: Row<'_>, r: Row<'_>, mut f: impl FnMut(u32, K, K, K, K, K, K)) 
     while i < ln && j < rn {
         let (ki, kj) = (l.key[i], r.key[j]);
         if ki == kj {
-            f(ki, l.ra[i], r.ra[j], l.val[i], r.val[j], l.prev[i], r.next[j]);
+            f(
+                ki, l.ra[i], r.ra[j], l.val[i], r.val[j], l.prev[i], r.next[j],
+            );
             i += 1;
             j += 1;
         } else if ki < kj {
-            f(ki, l.ra[i], K::ZERO, l.val[i], l.next[i], l.prev[i], l.next[i]);
+            f(
+                ki,
+                l.ra[i],
+                K::ZERO,
+                l.val[i],
+                l.next[i],
+                l.prev[i],
+                l.next[i],
+            );
             i += 1;
         } else {
-            f(kj, K::ZERO, r.ra[j], r.prev[j], r.val[j], r.prev[j], r.next[j]);
+            f(
+                kj,
+                K::ZERO,
+                r.ra[j],
+                r.prev[j],
+                r.val[j],
+                r.prev[j],
+                r.next[j],
+            );
             j += 1;
         }
     }
     while i < ln {
-        f(l.key[i], l.ra[i], K::ZERO, l.val[i], l.next[i], l.prev[i], l.next[i]);
+        f(
+            l.key[i],
+            l.ra[i],
+            K::ZERO,
+            l.val[i],
+            l.next[i],
+            l.prev[i],
+            l.next[i],
+        );
         i += 1;
     }
     while j < rn {
-        f(r.key[j], K::ZERO, r.ra[j], r.prev[j], r.val[j], r.prev[j], r.next[j]);
+        f(
+            r.key[j],
+            K::ZERO,
+            r.ra[j],
+            r.prev[j],
+            r.val[j],
+            r.prev[j],
+            r.next[j],
+        );
         j += 1;
     }
 }
@@ -560,7 +594,11 @@ fn level_round(lv: &Level, w: &SplitEq) -> Acc3 {
     let pairs = lv.len.len() / 2;
     let one = |m: usize| -> Acc3 {
         let mut acc = Acc3::default();
-        weighted(&mut acc, w.at(m), pair_round(lv.row(2 * m), lv.row(2 * m + 1)));
+        weighted(
+            &mut acc,
+            w.at(m),
+            pair_round(lv.row(2 * m), lv.row(2 * m + 1)),
+        );
         acc
     };
     if pairs >= PAR {

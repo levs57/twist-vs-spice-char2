@@ -172,6 +172,52 @@ pub fn proof_size(proof: &Proof) -> ProofSize {
     }
 }
 
+/// Soundness error terms of Twist v2 outside the PCS and ring switch, as
+/// probabilities over `K = GF(2^128)`. Each term is one union-bound summand;
+/// Fiat-Shamir and PCS terms are added by the caller. `docs/soundness-twist.md`
+/// derives each term.
+pub fn soundness_terms(statement: &Statement) -> Vec<(String, f64)> {
+    let config = &statement.config;
+    let (n, a, c, w) = (
+        statement.log_cycles,
+        config.address_bits,
+        config.chunk_bits,
+        config.word_log_bits,
+    );
+    let d = config.components();
+    let schema = Schema::new(config, n);
+    let claims = 2 * d + 2 + usize::from(!config.public_final);
+    let field = 2f64.powi(-128);
+    let terms: [(&str, usize); 8] = [
+        // RV(r_o, r_c) against the read check's sum: multilinear in w + n
+        // variables. r_c is drawn from K \ {0}, which changes the bound by a
+        // factor |K| / (|K| - 1).
+        ("read.point", w + n),
+        // n cycle rounds of a cubic (eq times a quadratic) and a address
+        // rounds of a quadratic.
+        ("read.sumcheck", 3 * n + 2 * a),
+        // The final-memory identity Mf = M0 + sum ra Inc at (r_o, r_k),
+        // multilinear in w + a variables.
+        ("final.point", w + a),
+        // gamma, delta and eps_1..eps_d combine d + 2 identities linearly.
+        ("cycle.batch", 1),
+        // n rounds of degree d + 2.
+        ("cycle.sumcheck", (d + 2) * n),
+        // A_i(r, j) A_i(1 + r, j) - pi(r) is zero as a polynomial only for
+        // unit rows, and has degree 2c in r = r_k^i; the per-row errors are
+        // combined by eq(r_j, .), multilinear in n variables.
+        ("mirror.point", 2 * c + n),
+        // Powers of one gamma over all Mosaic claims.
+        ("mosaic.batch", claims - 1),
+        // ell quadratic rounds over the committed G.
+        ("mosaic.sumcheck", 2 * schema.layout.ell),
+    ];
+    terms
+        .iter()
+        .map(|&(name, numerator)| (name.to_string(), numerator as f64 * field))
+        .collect()
+}
+
 fn require(condition: bool, message: &str) -> Result<(), RamError> {
     if condition {
         Ok(())

@@ -250,7 +250,14 @@ fn bind_eval(rows: &Rows, r: K, degree: usize, last: bool) -> (Rows, Acc) {
     if out_len == 1 {
         let mut out = vec![K::ZERO; w];
         bind_row(rows.row(0), rows.row(1), r, &mut out);
-        return (Rows { d, width: w, data: out }, Acc::new(degree));
+        return (
+            Rows {
+                d,
+                width: w,
+                data: out,
+            },
+            Acc::new(degree),
+        );
     }
     // Each unit is one output pair (two output rows from four input rows).
     let units = out_len / 2;
@@ -326,7 +333,11 @@ fn bind_eval_virtual<G: Fn(usize, &mut [K]) + Sync>(
     let out_len = size / 2;
     let last = out_len == 1;
     let units = out_len / 2;
-    let chunk = if units >= PAR / 2 { CHUNK } else { units.max(1) };
+    let chunk = if units >= PAR / 2 {
+        CHUNK
+    } else {
+        units.max(1)
+    };
     let accs = std::sync::Mutex::new(Vec::new());
     let data = par_build(out_len * w, chunk * 2 * w, |start, dst| {
         let p0 = start / (2 * w);
