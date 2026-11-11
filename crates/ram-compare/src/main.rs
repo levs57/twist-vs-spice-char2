@@ -15,6 +15,8 @@ use std::{
 mod platform;
 mod proof_size;
 mod soundness;
+mod stats;
+use stats::{RatioInterval, paired_ratio};
 use soundness::Soundness;
 use proof_size::ProofSize;
 use platform::{LoadWindow, load_average};
@@ -29,6 +31,7 @@ const SOURCES: &[(&str, &[u8])] = &[
     ("crates/ram-compare/src/platform.rs", include_bytes!("platform.rs")),
     ("crates/ram-compare/src/proof_size.rs", include_bytes!("proof_size.rs")),
     ("crates/ram-compare/src/soundness.rs", include_bytes!("soundness.rs")),
+    ("crates/ram-compare/src/stats.rs", include_bytes!("stats.rs")),
 ];
 fn sources_sha256() -> String {
     let mut bytes = Vec::new();
@@ -48,6 +51,9 @@ const HELP: &str = "Chronological shared-address RAM: BinaryTwist Flat versus or
   --log-cycles N                   2^N rows in the chosen trace format (default 12)
   --chunk-bits C[,C...]             Twist Flat only; Spice runs once/pattern (default 4)
   --threads N --warmup N --repeat N (defaults 8,1,3)
+                                  Per workload: warmups for every configuration,
+                                  then --repeat rounds; each round runs every
+                                  configuration once, order reversed every round
   --seed N --profile NAME --log-rate N (defaults 1,provable-120,2)
   --guest-program NAME[,NAME...]   binary-search,erc20-mixed-block,pointer-chase,all
   --guest-rows all|memory|both      Ordered lists accepted (default all)
@@ -489,7 +495,10 @@ impl PaddingAdjustedEstimate {
 }
 #[derive(Debug, Serialize)]
 struct Sample {
+    /// Measured round; every configuration of the workload runs once per round.
     iteration: usize,
+    /// Position of this configuration within its round (0 = ran first).
+    position: usize,
     prover_ms: f64,
     verifier_ms: f64,
     commit_ms: f64,
@@ -589,6 +598,7 @@ impl Sample {
             PaddingAdjustedEstimate::new(prover_ms, commit_ms, populated_fraction);
         Ok(Self {
             iteration,
+            position: 0,
             prover_ms,
             verifier_ms,
             commit_ms,
@@ -856,6 +866,23 @@ struct Case {
 fn fmt_load(load: Option<platform::LoadAverage>) -> String {
     load.map_or("n/a".into(), |l| format!("{:.2}/{:.2}/{:.2}", l.one, l.five, l.fifteen))
 }
+/// One method/chunk configuration within a workload while it is measured.
+struct Run {
+    method: String,
+    chunk_bits: Option<usize>,
+    config: Config,
+    area: Option<Area>,
+    samples: Vec<Sample>,
+}
+/// Configuration order in measured round `round`: forward on even rounds,
+/// reversed on odd rounds.
+fn round_order(count: usize, round: usize) -> Box<dyn Iterator<Item = usize>> {
+    if round.is_multiple_of(2) {
+        Box::new(0..count)
+    } else {
+        Box::new((0..count).rev())
+    }
+}
 fn benchmark(o: &Options) -> Result<Vec<Case>> {
     let mut cases = Vec::new();
     for (pattern, guest) in workloads(o) {
@@ -894,52 +921,87 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
         };
         let digest = trace_hash(&trace);
         let mut expected_final = expected_final;
-        for (method, chunk_bits) in configurations(o) {
-            let config = Config {
-                address_bits: o.address_bits,
-                chunk_bits: chunk_bits.unwrap_or(o.chunk_bits[0]),
-                virtualization: VirtualizationMode::Flat,
-                read_ports: 1,
-                shared_address: true,
-                word_log_bits: 6,
-                profile: o.profile.clone(),
-                log_rate: o.log_rate,
-            };
-            eprintln!(
-                "{pattern}/{method}/chunk={chunk_bits:?}: T=2^{} N=2^{} threads={}",
-                o.log_cycles, o.address_bits, o.threads
-            );
-            let case_start = load_average();
-            let mut area = None;
-            let mut samples = Vec::new();
-            for i in 0..o.warmup + o.repeat {
-                let (sample, current, final_memory) = sample(
-                    &method,
-                    &config,
-                    &trace,
-                    operation_trace.as_ref(),
-                    i.saturating_sub(o.warmup),
-                    o,
-                )?;
-                if expected_final
-                    .as_ref()
-                    .is_some_and(|old| old != &final_memory)
-                {
-                    return Err("methods/repetitions disagree on public final memory".into());
-                }
-                expected_final = Some(final_memory);
-                if area.as_ref().is_some_and(|old| old != &current) {
-                    return Err("commitment summary changed across proofs".into());
-                }
-                area = Some(current);
-                if i >= o.warmup {
-                    samples.push(sample);
-                }
+        let mut runs = configurations(o)
+            .into_iter()
+            .map(|(method, chunk_bits)| Run {
+                config: Config {
+                    address_bits: o.address_bits,
+                    chunk_bits: chunk_bits.unwrap_or(o.chunk_bits[0]),
+                    virtualization: VirtualizationMode::Flat,
+                    read_ports: 1,
+                    shared_address: true,
+                    word_log_bits: 6,
+                    profile: o.profile.clone(),
+                    log_rate: o.log_rate,
+                },
+                method,
+                chunk_bits,
+                area: None,
+                samples: Vec::new(),
+            })
+            .collect::<Vec<_>>();
+        eprintln!(
+            "{pattern}: T=2^{} N=2^{} threads={} configurations={} warmup={} rounds={}",
+            o.log_cycles,
+            o.address_bits,
+            o.threads,
+            runs.len(),
+            o.warmup,
+            o.repeat
+        );
+        let workload_start = load_average();
+        // Warm every configuration before any measured round, then measure in
+        // rounds: each round runs every configuration once, and the order
+        // reverses every round so no method always follows the same one.
+        let mut schedule: Vec<(Option<usize>, usize)> = Vec::new();
+        for index in 0..runs.len() {
+            schedule.extend((0..o.warmup).map(|_| (None, index)));
+        }
+        for round in 0..o.repeat {
+            schedule.extend(round_order(runs.len(), round).map(|index| (Some(round), index)));
+        }
+        let count = runs.len();
+        for (round, index) in schedule {
+            let position = round.map_or(0, |r| {
+                round_order(count, r).position(|i| i == index).unwrap_or(0)
+            });
+            let run = &mut runs[index];
+            let (mut sample, current, final_memory) = sample(
+                &run.method,
+                &run.config,
+                &trace,
+                operation_trace.as_ref(),
+                round.unwrap_or(0),
+                o,
+            )?;
+            if expected_final
+                .as_ref()
+                .is_some_and(|old| old != &final_memory)
+            {
+                return Err("methods/repetitions disagree on public final memory".into());
             }
-            let load = LoadWindow {
-                start: case_start,
-                end: load_average(),
-            };
+            expected_final = Some(final_memory);
+            if run.area.as_ref().is_some_and(|old| old != &current) {
+                return Err("commitment summary changed across proofs".into());
+            }
+            run.area = Some(current);
+            if round.is_some() {
+                sample.position = position;
+                run.samples.push(sample);
+            }
+        }
+        let load = LoadWindow {
+            start: workload_start,
+            end: load_average(),
+        };
+        for Run {
+            method,
+            chunk_bits,
+            config,
+            area,
+            samples,
+        } in runs
+        {
             let median = Medians::new(&samples);
             let area = area.ok_or("missing proof")?;
             let proof_size = samples[0].proof_size;
@@ -1049,6 +1111,61 @@ struct Pair {
     twist_to_spice_committed_ratio: f64,
     twist_soundness_bits: f64,
     spice_soundness_bits: f64,
+    /// Paired-bootstrap 95% intervals for the two speedups above.
+    spice_prover_speedup_ci95: Option<RatioInterval>,
+    spice_verifier_speedup_ci95: Option<RatioInterval>,
+}
+/// Ratio of medians between two configurations measured on the same trace,
+/// with a paired bootstrap interval over rounds.
+#[derive(Debug, Serialize)]
+struct PairedRatio {
+    pattern: String,
+    numerator_case: usize,
+    denominator_case: usize,
+    numerator: String,
+    denominator: String,
+    prover: Option<RatioInterval>,
+    verifier: Option<RatioInterval>,
+}
+fn label(case: &Case) -> String {
+    match case.chunk_bits {
+        Some(c) => format!("{}(chunk={c})", case.method),
+        None => case.method.clone(),
+    }
+}
+fn by_round(case: &Case, get: impl Fn(&Sample) -> f64) -> Vec<f64> {
+    let mut values: Vec<_> = case.samples.iter().map(|s| (s.iteration, get(s))).collect();
+    values.sort_by_key(|v| v.0);
+    values.into_iter().map(|v| v.1).collect()
+}
+fn paired_interval(a: &Case, b: &Case, get: impl Fn(&Sample) -> f64 + Copy) -> Option<RatioInterval> {
+    paired_ratio(&by_round(a, get), &by_round(b, get))
+}
+fn same_trace(a: &Case, b: &Case) -> bool {
+    a.pattern == b.pattern
+        && a.trace_format == b.trace_format
+        && a.trace_sha256 == b.trace_sha256
+        && a.operation_trace_sha256 == b.operation_trace_sha256
+}
+/// Every pair of configurations within a workload, in configuration order.
+fn paired_ratios(cases: &[Case]) -> Vec<PairedRatio> {
+    let mut out = Vec::new();
+    for (i, a) in cases.iter().enumerate() {
+        for (j, b) in cases.iter().enumerate().skip(i + 1) {
+            if same_trace(a, b) {
+                out.push(PairedRatio {
+                    pattern: a.pattern.clone(),
+                    numerator_case: i,
+                    denominator_case: j,
+                    numerator: label(a),
+                    denominator: label(b),
+                    prover: paired_interval(a, b, |s| s.prover_ms),
+                    verifier: paired_interval(a, b, |s| s.verifier_ms),
+                });
+            }
+        }
+    }
+    out
 }
 fn pairs(cases: &[Case]) -> Vec<Pair> {
     cases
@@ -1087,6 +1204,8 @@ fn pairs(cases: &[Case]) -> Vec<Pair> {
                         / spice.area.committed_bits as f64,
                     twist_soundness_bits: twist.soundness.bits,
                     spice_soundness_bits: spice.soundness.bits,
+                    spice_prover_speedup_ci95: paired_interval(twist, spice, |s| s.prover_ms),
+                    spice_verifier_speedup_ci95: paired_interval(twist, spice, |s| s.verifier_ms),
                 })
         })
         .collect()
@@ -1101,6 +1220,7 @@ struct Report {
     notes: Vec<String>,
     cases: Vec<Case>,
     comparisons: Vec<Pair>,
+    paired_ratios: Vec<PairedRatio>,
     verified_proofs: usize,
 }
 fn escaped(value: &str) -> String {
@@ -1133,6 +1253,7 @@ fn csv(report: &Report) -> String {
         "trace_sha256",
         "operation_trace_sha256",
         "iteration",
+        "position",
         "address_bits",
         "log_cycles",
         "threads",
@@ -1178,6 +1299,7 @@ fn csv(report: &Report) -> String {
                 c.trace_sha256.clone(),
                 c.operation_trace_sha256.clone().unwrap_or_default(),
                 s.iteration.to_string(),
+                s.position.to_string(),
                 report.options.address_bits.to_string(),
                 report.options.log_cycles.to_string(),
                 report.options.threads.to_string(),
@@ -1235,6 +1357,7 @@ fn main() -> Result<()> {
         .build()?;
     let cases = pool.install(|| benchmark(&o).map_err(|e| e.to_string()))?;
     let comparisons = pairs(&cases);
+    let paired_ratios = paired_ratios(&cases);
     let verified_proofs = cases.len() * (o.warmup + o.repeat);
     let environment = platform::environment(
         hex(&Hasher::sha256().digest(&fs::read(env::current_exe()?)?)),
@@ -1247,7 +1370,7 @@ fn main() -> Result<()> {
         "adapter":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage14-implementation.json"))?,
         "typed_adapter":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage15-implementation.json"))?,
     });
-    let report = Report { schema_version:4,implementation:"typed-spice-vs-twist-gf128-v4".into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods.".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial/final memory are public and transcript-bound.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,verified_proofs };
+    let report = Report { schema_version:4,implementation:"typed-spice-vs-twist-gf128-v4".into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods.".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial/final memory are public and transcript-bound.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
     if let Some(path) = &report.options.output {
         write(path, &serde_json::to_vec_pretty(&report)?)?;
         println!("JSON: {}", path.display());
@@ -1270,6 +1393,27 @@ fn main() -> Result<()> {
             pair.twist_to_spice_committed_ratio,
             pair.twist_soundness_bits,
             pair.spice_soundness_bits
+        );
+    }
+    for r in &report.paired_ratios {
+        let show = |name: &str, v: &Option<RatioInterval>| {
+            v.map_or(format!("{name}=n/a"), |v| {
+                format!(
+                    "{name}={:.3}× [{:.3}, {:.3}]",
+                    v.ratio, v.ci95_low, v.ci95_high
+                )
+            })
+        };
+        println!(
+            "{} {}/{} median ratios, 95% paired bootstrap over {} rounds: {} {} [soundness {:.2} vs {:.2} bits]",
+            r.pattern,
+            r.numerator,
+            r.denominator,
+            r.prover.map_or(0, |v| v.rounds),
+            show("prover", &r.prover),
+            show("verifier", &r.verifier),
+            report.cases[r.numerator_case].soundness.bits,
+            report.cases[r.denominator_case].soundness.bits,
         );
     }
     println!(
@@ -1519,6 +1663,47 @@ mod tests {
         assert_eq!(flock.mosaic_claims - ripple.mosaic_claims, 2);
     }
     #[test]
+    fn rounds_alternate_order_and_pair_samples_by_round() {
+        assert_eq!(round_order(3, 0).collect::<Vec<_>>(), vec![0, 1, 2]);
+        assert_eq!(round_order(3, 1).collect::<Vec<_>>(), vec![2, 1, 0]);
+        let options = Options {
+            methods: vec!["spice-typed".into(), "spice".into()],
+            trace_format: "operations".into(),
+            patterns: vec!["random".into()],
+            address_bits: 2,
+            log_cycles: 2,
+            chunk_bits: vec![1],
+            threads: 2,
+            warmup: 1,
+            repeat: 4,
+            ..Default::default()
+        };
+        let cases = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap()
+            .install(|| benchmark(&options).map_err(|e| e.to_string()))
+            .unwrap();
+        assert_eq!(cases.len(), 2);
+        for (k, case) in cases.iter().enumerate() {
+            assert_eq!(
+                case.samples.iter().map(|s| s.iteration).collect::<Vec<_>>(),
+                vec![0, 1, 2, 3]
+            );
+            // Case 0 runs first in even rounds and last in odd rounds.
+            assert_eq!(
+                case.samples.iter().map(|s| s.position).collect::<Vec<_>>(),
+                if k == 0 { vec![0, 1, 0, 1] } else { vec![1, 0, 1, 0] }
+            );
+        }
+        let ratios = paired_ratios(&cases);
+        assert_eq!(ratios.len(), 1);
+        let prover = ratios[0].prover.unwrap();
+        assert_eq!(prover.rounds, 4);
+        assert!(prover.ci95_low <= prover.ratio && prover.ratio <= prover.ci95_high);
+        assert_eq!((ratios[0].numerator.as_str(), ratios[0].denominator.as_str()), ("spice-typed", "spice"));
+    }
+    #[test]
     fn verifier_spans_are_isolated_from_prover_spans() {
         drop(profiling::Span::new("prove.leftover"));
         let (ms, metrics) = timed_verify(|| {
@@ -1678,6 +1863,8 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec!["spice-typed", "spice", "spice-ripple"]
         );
+        let ratios = paired_ratios(&cases);
+        assert_eq!(ratios.len(), 6);
         let report = Report {
             schema_version: 4,
             implementation: "test".into(),
@@ -1686,6 +1873,7 @@ mod tests {
             provenance: serde_json::Value::Null,
             notes: vec![],
             cases,
+            paired_ratios: ratios,
             comparisons,
             verified_proofs: 4,
         };

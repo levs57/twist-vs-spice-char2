@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+"""Self-tests for the benchmark driver scripts. Run: python3 scripts/test_scripts.py"""
+
+import json
+import stat
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+SCRIPTS = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPTS))
+
+import bench_stats  # noqa: E402
+import interleave  # noqa: E402
+
+FAKE = """#!{python}
+import json, sys
+args = sys.argv[1:]
+out = args[args.index("--output") + 1]
+order = "{order_log}"
+with open(order, "a") as f:
+    f.write("{label}\\n")
+scale = {scale}
+report = {{
+    "schema_version": {schema},
+    "cases": [
+        {{"pattern": "random/operations", "method": "twist", "chunk_bits": 4,
+          "median": {{"prover_ms": 100.0 * scale, "verifier_ms": 10.0}},
+          "samples": [{{"prover_ms": 100.0 * scale, "verifier_ms": 10.0}}]}},
+        {{"pattern": "random/operations", "method": "spice-typed", "chunk_bits": None,
+          "median": {{"prover_ms": 40.0 * scale, "verifier_ms": 5.0}},
+          "samples": [{{"prover_ms": 40.0 * scale, "verifier_ms": 5.0}}]}}
+    ]
+}}
+json.dump(report, open(out, "w"))
+"""
+
+
+def fake_binary(directory, label, scale, schema, order_log):
+    path = Path(directory) / f"fake-{label}"
+    path.write_text(
+        FAKE.format(
+            python=sys.executable,
+            order_log=order_log,
+            label=label,
+            scale=scale,
+            schema=schema,
+        )
+    )
+    path.chmod(path.stat().st_mode | stat.S_IEXEC)
+    return str(path)
+
+
+class BootstrapTests(unittest.TestCase):
+    def test_matches_rust_stats(self):
+        # crates/ram-compare/src/stats.rs asserts the same three numbers.
+        num = [100.0, 104.0, 98.0, 120.0, 101.0, 99.0, 103.0, 97.0, 110.0, 102.0]
+        den = [50.0, 49.0, 52.0, 51.0, 48.0, 50.0, 53.0, 47.0, 50.0, 49.0]
+        r = bench_stats.paired_ratio(num, den)
+        self.assertEqual(r["ratio"], 2.03)
+        self.assertAlmostEqual(r["ci95_low"], 1.97, places=12)
+        self.assertAlmostEqual(r["ci95_high"], 2.122448979591837, places=12)
+
+    def test_schema_check(self):
+        with self.assertRaises(ValueError):
+            bench_stats.case_medians({"schema_version": 3, "cases": []})
+
+
+class InterleaveTests(unittest.TestCase):
+    def test_alternates_order_and_reads_schema_4_and_5(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            order = Path(tmp) / "order.log"
+            base = fake_binary(tmp, "baseline", 1.0, 4, order)
+            branch = fake_binary(tmp, "branch", 0.5, 5, order)
+            out = Path(tmp) / "run"
+            interleave.main(
+                ["--baseline", base, "--branch", branch, "--rounds", "4",
+                 "--out-dir", str(out), "--", "--methods", "twist,spice-typed"]
+            )
+            self.assertEqual(
+                order.read_text().split(),
+                ["baseline", "branch", "branch", "baseline"] * 2,
+            )
+            summary = json.loads((out / "summary.json").read_text())
+            self.assertEqual(summary["rounds"], 4)
+            self.assertEqual(len(summary["cases"]), 2)
+            for case in summary["cases"]:
+                r = case["prover_ms"]["branch_over_baseline"]
+                self.assertEqual((r["ratio"], r["ci95_low"], r["ci95_high"]), (0.5, 0.5, 0.5))
+                self.assertEqual(case["verifier_ms"]["branch_over_baseline"]["ratio"], 1.0)
+            invocations = json.loads((out / "invocations.json").read_text())
+            self.assertEqual(len(invocations), 8)
+            self.assertTrue(all("raw" in inv["uptime_before"] for inv in invocations))
+            self.assertIn("--warmup", invocations[0]["command"])
+            self.assertIn("| random/operations twist (chunk=4) |", (out / "summary.md").read_text())
+            # Re-analysis of the directory is deterministic.
+            first = (out / "summary.json").read_text()
+            interleave.main(["--analyze", str(out)])
+            self.assertEqual((out / "summary.json").read_text(), first)
+
+    def test_rejects_reserved_flags(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(SystemExit):
+                interleave.main(
+                    ["--baseline", "x", "--branch", "y", "--out-dir", tmp, "--", "--repeat", "3"]
+                )
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=1)
