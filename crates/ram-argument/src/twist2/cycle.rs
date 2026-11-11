@@ -27,7 +27,7 @@ use om_sumcheck::{
 use om_transcript::Transcript;
 use rayon::prelude::*;
 
-use super::util::{PAR, SplitEq, SplitLt, checks_enabled, emit_round, node};
+use super::util::{PAR, SplitEq, SplitLt, checks_enabled, emit_round, node, par_build};
 
 const LABEL: &[u8] = b"ram/cycle";
 
@@ -100,87 +100,193 @@ pub(crate) struct CycleResult {
     pub z: Vec<K>,
 }
 
-/// Round values `g(t_0..t_D)` of the summand over pairs of the bound tables.
-///
-/// Table order: `tl = LT + γ`, `ed = δ eq(r_j, ·)`, `inc`, `A_1..A_d`,
-/// `Ã_1..Ã_d` where `Ã_i = ε_i' A_i(1 + r_k^i, ·)`.
-#[allow(clippy::needless_range_loop)]
-fn round_values(t: &Tables, degree: usize) -> Vec<K> {
-    let d = t.a.len();
-    let half = t.inc.len() / 2;
-    let pair = |m: usize, high: &mut [U256], low: &mut [U256; 4], av: &mut [K]| {
-        let at = |tab: &[K], e: usize| -> K {
-            let (f0, f1) = (tab[2 * m], tab[2 * m + 1]);
-            match e {
-                0 => f0,
-                1 => f1,
-                _ => f0 + (f0 + f1).mul_t(e as u128),
-            }
-        };
-        for e in 0..=degree {
-            let mut prod = at(&t.a[0], e);
-            if e < 4 {
-                av[0] = prod;
-            }
-            for i in 1..d {
-                let x = at(&t.a[i], e);
-                if e < 4 {
-                    av[i] = x;
-                }
-                prod *= x;
-            }
-            let lin = at(&t.tl, e) * at(&t.inc, e) + at(&t.ed, e);
-            high[e] += lin.clmul(prod);
-            if e < 4 {
-                let mut mir = U256::ZERO;
-                for i in 0..d {
-                    mir += av[i].clmul(at(&t.am[i], e));
-                }
-                low[e] += at(&t.ed, e).clmul(mir.reduce());
-            }
-        }
-    };
-    let fold = |range: std::ops::Range<usize>| -> (Vec<U256>, [U256; 4]) {
-        let mut high = vec![U256::ZERO; degree + 1];
-        let mut low = [U256::ZERO; 4];
-        let mut av = vec![K::ZERO; d];
-        for m in range {
-            pair(m, &mut high, &mut low, &mut av);
-        }
-        (high, low)
-    };
-    let merge = |mut x: (Vec<U256>, [U256; 4]), y: (Vec<U256>, [U256; 4])| {
-        for (a, b) in x.0.iter_mut().zip(y.0) {
-            *a += b;
-        }
-        for (a, b) in x.1.iter_mut().zip(y.1) {
-            *a += b;
-        }
-        x
-    };
-    let (high, low) = if half >= PAR {
-        let chunk = 1 << 10;
-        (0..half.div_ceil(chunk))
-            .into_par_iter()
-            .map(|ch| fold(ch * chunk..((ch + 1) * chunk).min(half)))
-            .reduce(|| (vec![U256::ZERO; degree + 1], [U256::ZERO; 4]), merge)
-    } else {
-        fold(0..half)
-    };
-    let low: Vec<K> = low.iter().map(|x| x.reduce()).collect();
-    high.into_iter()
-        .enumerate()
-        .map(|(e, h)| {
-            let l = if e < 4 {
-                low[e]
-            } else {
-                interpolate_eval(&low, node(e))
-            };
-            h.reduce() + l
-        })
-        .collect()
+/// Per-thread round accumulator: the high-degree part at nodes
+/// `t_0, t_2..t_D` (slot `e` holds node `e`; slot 1 is unused) and the
+/// eq-weighted mirror part at `t_0..t_3`.
+#[derive(Clone)]
+struct Acc {
+    high: Vec<U256>,
+    low: [U256; 4],
 }
 
+impl Acc {
+    fn new(degree: usize) -> Self {
+        Acc {
+            high: vec![U256::ZERO; degree + 1],
+            low: [U256::ZERO; 4],
+        }
+    }
+
+    fn merge(mut self, o: Acc) -> Acc {
+        for (a, b) in self.high.iter_mut().zip(o.high) {
+            *a += b;
+        }
+        for (a, b) in self.low.iter_mut().zip(o.low) {
+            *a += b;
+        }
+        self
+    }
+
+    /// `[g(t_0), g(t_1), …, g(t_D)]`, with `g(t_1) = cur + g(t_0)`.
+    fn values(&self, cur: K) -> Vec<K> {
+        let low: Vec<K> = self.low.iter().map(|x| x.reduce()).collect();
+        let mut ys: Vec<K> = self
+            .high
+            .iter()
+            .enumerate()
+            .map(|(e, h)| {
+                let l = if e < 4 {
+                    low[e]
+                } else {
+                    interpolate_eval(&low, node(e))
+                };
+                h.reduce() + l
+            })
+            .collect();
+        ys[1] = cur + ys[0];
+        ys
+    }
+}
+
+/// Row-major tables: row `j` is `[tl, ed, inc, A_1..A_d, Ã_1..Ã_d](j)` with
+/// `tl = LT(·, r_j) + γ`, `ed = δ eq(r_j, ·)` and `Ã_i = ε_i' A_i(1 + r_k^i, ·)`.
+/// A pair of rows is contiguous, which keeps each round's reads sequential.
+pub(crate) struct Rows {
+    d: usize,
+    width: usize,
+    data: Vec<K>,
+}
+
+const TL: usize = 0;
+const ED: usize = 1;
+const INC: usize = 2;
+const A0: usize = 3;
+
+impl Rows {
+    fn len(&self) -> usize {
+        self.data.len() / self.width
+    }
+
+    fn row(&self, j: usize) -> &[K] {
+        &self.data[j * self.width..(j + 1) * self.width]
+    }
+}
+
+/// Add one pair's contribution, given the pair's two rows.
+#[inline]
+fn pair_kernel(x0: &[K], x1: &[K], d: usize, degree: usize, acc: &mut Acc, scratch: &mut [K]) {
+    let width = x0.len();
+    let (delta, val) = scratch.split_at_mut(width);
+    for t in 0..width {
+        delta[t] = x0[t] + x1[t];
+    }
+    let top = degree.max(3);
+    for e in 0..=top {
+        match e {
+            0 => val.copy_from_slice(x0),
+            1 => val.copy_from_slice(x1),
+            _ => {
+                for t in 0..width {
+                    val[t] = x0[t] + delta[t].mul_t(e as u128);
+                }
+            }
+        }
+        if e != 1 && e <= degree {
+            let mut prod = val[A0];
+            for i in 1..d {
+                prod *= val[A0 + i];
+            }
+            let lin = val[TL] * val[INC] + val[ED];
+            acc.high[e] += lin.clmul(prod);
+        }
+        if e < 4 {
+            let mut mir = U256::ZERO;
+            for i in 0..d {
+                mir += val[A0 + i].clmul(val[A0 + d + i]);
+            }
+            acc.low[e] += val[ED].clmul(mir.reduce());
+        }
+    }
+}
+
+const CHUNK: usize = 1 << 9;
+
+/// Round accumulator over all pairs of `rows`.
+fn eval_rows(rows: &Rows, degree: usize) -> Acc {
+    let (d, w) = (rows.d, rows.width);
+    let half = rows.len() / 2;
+    let fold = |range: std::ops::Range<usize>| -> Acc {
+        let mut acc = Acc::new(degree);
+        let mut scratch = vec![K::ZERO; 2 * w];
+        for m in range {
+            let pair = &rows.data[2 * m * w..(2 * m + 2) * w];
+            let (x0, x1) = pair.split_at(w);
+            pair_kernel(x0, x1, d, degree, &mut acc, &mut scratch);
+        }
+        acc
+    };
+    if half >= PAR {
+        (0..half.div_ceil(CHUNK))
+            .into_par_iter()
+            .map(|c| fold(c * CHUNK..((c + 1) * CHUNK).min(half)))
+            .reduce(|| Acc::new(degree), Acc::merge)
+    } else {
+        fold(0..half)
+    }
+}
+
+#[inline]
+fn bind_row(src0: &[K], src1: &[K], r: K, dst: &mut [K]) {
+    for ((o, &a), &b) in dst.iter_mut().zip(src0).zip(src1) {
+        *o = a + r * (a + b);
+    }
+}
+
+/// Bind the low variable to `r` and, unless `last`, accumulate the next
+/// round over the bound rows in the same pass.
+fn bind_eval(rows: &Rows, r: K, degree: usize, last: bool) -> (Rows, Acc) {
+    let (d, w) = (rows.d, rows.width);
+    let out_len = rows.len() / 2;
+    if out_len == 1 {
+        let mut out = vec![K::ZERO; w];
+        bind_row(rows.row(0), rows.row(1), r, &mut out);
+        return (Rows { d, width: w, data: out }, Acc::new(degree));
+    }
+    // Each unit is one output pair (two output rows from four input rows).
+    let units = out_len / 2;
+    let chunk = if units >= PAR / 2 { CHUNK } else { units };
+    let accs = std::sync::Mutex::new(Vec::new());
+    let data = par_build(out_len * w, chunk * 2 * w, |start, dst| {
+        let p0 = start / (2 * w);
+        let mut acc = Acc::new(degree);
+        let mut scratch = vec![K::ZERO; 2 * w];
+        let mut pair = vec![K::ZERO; 2 * w];
+        for (k, out_pair) in dst.chunks_mut(2 * w).enumerate() {
+            let p = p0 + k;
+            let src = &rows.data[4 * p * w..(4 * p + 4) * w];
+            let (o0, o1) = pair.split_at_mut(w);
+            bind_row(&src[..w], &src[w..2 * w], r, o0);
+            bind_row(&src[2 * w..3 * w], &src[3 * w..], r, o1);
+            for (o, &x) in out_pair.iter_mut().zip(pair.iter()) {
+                o.write(x);
+            }
+            if !last {
+                let (o0, o1) = pair.split_at(w);
+                pair_kernel(o0, o1, d, degree, &mut acc, &mut scratch);
+            }
+        }
+        accs.lock().unwrap().push(acc);
+    });
+    let acc = accs
+        .into_inner()
+        .unwrap()
+        .into_iter()
+        .fold(Acc::new(degree), Acc::merge);
+    (Rows { d, width: w, data }, acc)
+}
+
+/// Column-form tables, used by tests to build adversarial inputs.
+#[cfg(test)]
 pub(crate) struct Tables {
     pub(crate) tl: Vec<K>,
     pub(crate) ed: Vec<K>,
@@ -189,27 +295,19 @@ pub(crate) struct Tables {
     pub(crate) am: Vec<Vec<K>>,
 }
 
+#[cfg(test)]
 impl Tables {
-    fn bind(&mut self, r: K) {
-        let bind = |t: &mut Vec<K>| {
-            let half = t.len() / 2;
-            let out: Vec<K> = if half >= PAR {
-                (0..half)
-                    .into_par_iter()
-                    .with_min_len(1 << 10)
-                    .map(|m| t[2 * m] + r * (t[2 * m] + t[2 * m + 1]))
-                    .collect()
-            } else {
-                (0..half)
-                    .map(|m| t[2 * m] + r * (t[2 * m] + t[2 * m + 1]))
-                    .collect()
-            };
-            *t = out;
-        };
-        let mut all: Vec<&mut Vec<K>> = vec![&mut self.tl, &mut self.ed, &mut self.inc];
-        all.extend(self.a.iter_mut());
-        all.extend(self.am.iter_mut());
-        all.into_par_iter().for_each(bind);
+    pub(crate) fn into_rows(self) -> Rows {
+        let d = self.a.len();
+        let width = A0 + 2 * d;
+        let len = self.inc.len();
+        let mut data = Vec::with_capacity(len * width);
+        for j in 0..len {
+            data.extend([self.tl[j], self.ed[j], self.inc[j]]);
+            data.extend(self.a.iter().map(|t| t[j]));
+            data.extend(self.am.iter().map(|t| t[j]));
+        }
+        Rows { d, width, data }
     }
 }
 
@@ -228,83 +326,87 @@ pub(crate) fn prove(
     let delta_inv = ch.delta.inverse();
     let eps_scaled: Vec<K> = ch.eps.iter().map(|&e| e * delta_inv).collect();
     let mask = (1u32 << c) - 1;
-    let lookup = |tab: Vec<K>, i: usize| -> Vec<K> {
-        let shift = i * c;
-        w.addr
-            .par_iter()
-            .with_min_len(1 << 12)
-            .map(|&ad| tab[((ad >> shift) & mask) as usize])
-            .collect()
-    };
-    let a: Vec<Vec<K>> = (0..d)
-        .map(|i| lookup(eq_table(chunk_point(r_k, c, i)), i))
-        .collect();
-    let am: Vec<Vec<K>> = (0..d)
+    let eq_a: Vec<Vec<K>> = (0..d).map(|i| eq_table(chunk_point(r_k, c, i))).collect();
+    let eq_am: Vec<Vec<K>> = (0..d)
         .map(|i| {
-            let tab: Vec<K> = eq_table(&mirrored(chunk_point(r_k, c, i)))
+            eq_table(&mirrored(chunk_point(r_k, c, i)))
                 .into_iter()
                 .map(|x| x * eps_scaled[i])
-                .collect();
-            lookup(tab, i)
+                .collect()
         })
         .collect();
     let lt = SplitLt::new(r_j);
     let eq = SplitEq::new(r_j);
     let size = 1usize << n;
-    let tl: Vec<K> = (0..size)
-        .into_par_iter()
-        .with_min_len(1 << 12)
-        .map(|j| lt.at(j) + ch.gamma)
-        .collect();
-    let ed: Vec<K> = (0..size)
-        .into_par_iter()
-        .with_min_len(1 << 12)
-        .map(|j| ch.delta * eq.at(j))
-        .collect();
-    let tables = Tables {
-        tl,
-        ed,
-        inc: w.inc_e.to_vec(),
-        a,
-        am,
-    };
+    let width = A0 + 2 * d;
+    let rows_per_chunk = 1usize << 10;
+    let data = par_build(size * width, rows_per_chunk * width, |start, out| {
+        let mut row = vec![K::ZERO; width];
+        for (k, dst) in out.chunks_mut(width).enumerate() {
+            let j = start / width + k;
+            let ad = w.addr[j];
+            row[TL] = lt.at(j) + ch.gamma;
+            row[ED] = ch.delta * eq.at(j);
+            row[INC] = w.inc_e[j];
+            for i in 0..d {
+                let u = ((ad >> (i * c)) & mask) as usize;
+                row[A0 + i] = eq_a[i][u];
+                row[A0 + d + i] = eq_am[i][u];
+            }
+            for (o, &x) in dst.iter_mut().zip(&row) {
+                o.write(x);
+            }
+        }
+    });
+    let rows = Rows { d, width, data };
     drop(tables_span);
     let _span = om_transcript::profiling::Span::new("twist.cycle.rounds");
-    prove_tables(tables, &eps_scaled, claim, tr)
+    prove_rows(rows, &eps_scaled, claim, tr)
 }
 
-/// The sum-check on already built tables; `eps_scaled[i]` is the factor
+/// The sum-check on already built rows; `eps_scaled[i]` is the factor
 /// folded into `Ã_i`.
-pub(crate) fn prove_tables(
-    mut tables: Tables,
+pub(crate) fn prove_rows(
+    mut rows: Rows,
     eps_scaled: &[K],
     claim: K,
     tr: &mut Transcript,
 ) -> CycleResult {
-    let n = tables.inc.len().trailing_zeros() as usize;
-    let degree = tables.a.len() + 2;
+    let n = rows.len().trailing_zeros() as usize;
+    let d = rows.d;
+    let degree = d + 2;
     sumcheck_init(tr, LABEL, claim, n, degree);
     let mut msgs = Vec::with_capacity(n);
     let mut z = Vec::with_capacity(n);
     let mut cur = claim;
-    for _ in 0..n {
-        let ys = round_values(&tables, degree);
-        if checks_enabled() {
-            assert_eq!(ys[0] + ys[1], cur, "cycle check round sum");
-        }
+    let mut acc = if n > 0 {
+        eval_rows(&rows, degree)
+    } else {
+        Acc::new(degree)
+    };
+    for i in 0..n {
+        let ys = acc.values(cur);
         let (r, next) = emit_round(&ys, tr, LABEL, &mut msgs);
         cur = next;
         z.push(r);
-        tables.bind(r);
+        (rows, acc) = bind_eval(&rows, r, degree, i + 1 == n);
     }
-    let a_z: Vec<K> = tables.a.iter().map(|t| t[0]).collect();
-    let am_z: Vec<K> = tables
-        .am
+    if checks_enabled() {
+        // The last bound row must reproduce the final claim.
+        let row = rows.row(0);
+        let prod: K = (0..d).fold(K::ONE, |p, i| p * row[A0 + i]);
+        let mir: K = (0..d).fold(K::ZERO, |s, i| s + row[A0 + i] * row[A0 + d + i]);
+        let value = (row[TL] * row[INC] + row[ED]) * prod + row[ED] * mir;
+        assert_eq!(value, cur, "cycle check final value");
+    }
+    let row = rows.row(0);
+    let a_z: Vec<K> = row[A0..A0 + d].to_vec();
+    let am_z: Vec<K> = row[A0 + d..A0 + 2 * d]
         .iter()
         .zip(eps_scaled)
-        .map(|(t, &e)| t[0] * e.inverse())
+        .map(|(&t, &e)| t * e.inverse())
         .collect();
-    let inc_z = tables.inc[0];
+    let inc_z = row[INC];
     let mut evals = a_z.clone();
     evals.extend_from_slice(&am_z);
     evals.push(inc_z);

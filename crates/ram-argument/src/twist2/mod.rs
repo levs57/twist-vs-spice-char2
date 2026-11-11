@@ -65,7 +65,7 @@ impl Default for Config {
             word_log_bits: 6,
             profile: "provable-120".into(),
             log_rate: 2,
-            order: ReadOrder::CycleFirst,
+            order: ReadOrder::AddressFirst,
             merge_loads: true,
             public_final: true,
         }

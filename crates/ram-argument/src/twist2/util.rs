@@ -185,3 +185,35 @@ pub(crate) fn checks_enabled() -> bool {
 pub(crate) fn set_lenient() {
     LENIENT.store(true, std::sync::atomic::Ordering::Relaxed);
 }
+
+/// A zeroed vector, filled in parallel when large. `vec![K::ZERO; len]`
+/// fills serially because `K` is not a primitive.
+pub(crate) fn zeros(len: usize) -> Vec<K> {
+    if len >= 1 << 16 {
+        (0..len)
+            .into_par_iter()
+            .with_min_len(1 << 14)
+            .map(|_| K::ZERO)
+            .collect()
+    } else {
+        vec![K::ZERO; len]
+    }
+}
+
+/// Build a vector of `len` elements in parallel chunks of `chunk` elements.
+/// `fill(start, out)` must write every element of `out`, which starts at
+/// index `start`. This avoids zero-filling memory that is overwritten.
+pub(crate) fn par_build<T: Copy + Send + Sync>(
+    len: usize,
+    chunk: usize,
+    fill: impl Fn(usize, &mut [std::mem::MaybeUninit<T>]) + Sync,
+) -> Vec<T> {
+    let mut v: Vec<T> = Vec::with_capacity(len);
+    v.spare_capacity_mut()[..len]
+        .par_chunks_mut(chunk.max(1))
+        .enumerate()
+        .for_each(|(c, out)| fill(c * chunk.max(1), out));
+    // SAFETY: every element in 0..len was written by `fill`.
+    unsafe { v.set_len(len) };
+    v
+}

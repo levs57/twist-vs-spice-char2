@@ -395,7 +395,7 @@ fn cycle_check_rejects_two_hot_component() {
         am: vec![am],
     };
     let mut ptr = tr.clone();
-    let result = cycle::prove_tables(tables, &[eps], claim, &mut ptr);
+    let result = cycle::prove_rows(tables.into_rows(), &[eps], claim, &mut ptr);
     let mut vtr = tr.clone();
     assert!(cycle::verify(&result.proof, &r_j, claim, &ch, d, &mut vtr).is_err());
 }

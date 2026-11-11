@@ -23,17 +23,18 @@ use om_sumcheck::{VerificationError, eq_eval};
 use om_transcript::Transcript;
 use rayon::prelude::*;
 
-use super::util::{PAR, SplitEq, checks_enabled, sublabel};
+use super::util::{PAR, SplitEq, checks_enabled, sublabel, zeros};
 
 /// Which variables the read sum-check binds first.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum ReadOrder {
     /// Cycle variables first, over a sparse matrix whose entries carry the
     /// memory value before and after their accesses (issue item 1).
-    #[default]
     CycleFirst,
     /// Address variables first, with per-block memory checkpoints
-    /// (issue item 2).
+    /// (issue item 2). The default: it was faster on every workload we
+    /// measured, and by 4x at 24 address bits.
+    #[default]
     AddressFirst,
 }
 
@@ -455,159 +456,222 @@ struct Level {
     next: Vec<K>,
 }
 
-/// One entry of the merge of a row pair: values on the left and right rows,
-/// with a missing side filled from its neighbour.
-#[inline]
-fn merged_entry(lv: &Level, li: Option<usize>, ri: Option<usize>) -> (u32, K, K, K, K, K, K) {
-    // Returns (key, ra0, ra1, v0, v1, prev, next).
-    match (li, ri) {
-        (Some(l), Some(r)) => (
-            lv.key[l], lv.ra[l], lv.ra[r], lv.val[l], lv.val[r], lv.prev[l], lv.next[r],
-        ),
-        (Some(l), None) => (
-            lv.key[l],
-            lv.ra[l],
-            K::ZERO,
-            lv.val[l],
-            lv.next[l],
-            lv.prev[l],
-            lv.next[l],
-        ),
-        (None, Some(r)) => (
-            lv.key[r],
-            K::ZERO,
-            lv.ra[r],
-            lv.prev[r],
-            lv.val[r],
-            lv.prev[r],
-            lv.next[r],
-        ),
-        (None, None) => unreachable!(),
+/// One row's entries.
+#[derive(Clone, Copy)]
+struct Row<'a> {
+    key: &'a [u32],
+    ra: &'a [K],
+    val: &'a [K],
+    prev: &'a [K],
+    next: &'a [K],
+}
+
+impl Level {
+    fn row(&self, m: usize) -> Row<'_> {
+        let off = m << self.level;
+        let end = off + self.len[m] as usize;
+        Row {
+            key: &self.key[off..end],
+            ra: &self.ra[off..end],
+            val: &self.val[off..end],
+            prev: &self.prev[off..end],
+            next: &self.next[off..end],
+        }
     }
 }
 
-/// Walk the sorted merge of rows `2m` and `2m+1` of `lv`.
+/// Walk the sorted merge of two rows. For each address, `f` gets the key,
+/// `ra` and `V` on the left and right rows (a missing side has `ra = 0` and
+/// its value taken from the present side's `prev` or `next`), and the merged
+/// `prev` and `next`.
 #[inline]
-fn for_each_merged(lv: &Level, m: usize, mut f: impl FnMut(Option<usize>, Option<usize>)) {
-    let cap = 1usize << lv.level;
-    let (lo, ro) = (2 * m * cap, (2 * m + 1) * cap);
-    let (le, re) = (lo + lv.len[2 * m] as usize, ro + lv.len[2 * m + 1] as usize);
-    let (mut i, mut j) = (lo, ro);
-    while i < le && j < re {
-        let (ki, kj) = (lv.key[i], lv.key[j]);
+fn merge_rows(l: Row<'_>, r: Row<'_>, mut f: impl FnMut(u32, K, K, K, K, K, K)) {
+    let (mut i, mut j) = (0, 0);
+    let (ln, rn) = (l.key.len(), r.key.len());
+    while i < ln && j < rn {
+        let (ki, kj) = (l.key[i], r.key[j]);
         if ki == kj {
-            f(Some(i), Some(j));
+            f(ki, l.ra[i], r.ra[j], l.val[i], r.val[j], l.prev[i], r.next[j]);
             i += 1;
             j += 1;
         } else if ki < kj {
-            f(Some(i), None);
+            f(ki, l.ra[i], K::ZERO, l.val[i], l.next[i], l.prev[i], l.next[i]);
             i += 1;
         } else {
-            f(None, Some(j));
+            f(kj, K::ZERO, r.ra[j], r.prev[j], r.val[j], r.prev[j], r.next[j]);
             j += 1;
         }
     }
-    while i < le {
-        f(Some(i), None);
+    while i < ln {
+        f(l.key[i], l.ra[i], K::ZERO, l.val[i], l.next[i], l.prev[i], l.next[i]);
         i += 1;
     }
-    while j < re {
-        f(None, Some(j));
+    while j < rn {
+        f(r.key[j], K::ZERO, r.ra[j], r.prev[j], r.val[j], r.prev[j], r.next[j]);
         j += 1;
     }
 }
 
+/// `(q(0), q(1), q_inf)` of `Σ_k ra(k, X) V(k, X)` over one row pair.
+#[inline]
+fn pair_round(l: Row<'_>, r: Row<'_>) -> (K, K, K) {
+    let mut s = Acc3::default();
+    merge_rows(l, r, |_, a0, a1, v0, v1, _, _| {
+        s.q0 += a0.clmul(v0);
+        s.q1 += a1.clmul(v1);
+        s.qinf += (a0 + a1).clmul(v0 + v1);
+    });
+    s.reduce()
+}
+
+/// Bind one row pair at `rch` into the output slices; returns the length.
+#[inline]
+#[allow(clippy::too_many_arguments)]
+fn pair_bind(
+    l: Row<'_>,
+    r: Row<'_>,
+    rch: K,
+    key: &mut [u32],
+    ra: &mut [K],
+    val: &mut [K],
+    prev: &mut [K],
+    next: &mut [K],
+) -> u32 {
+    let mut o = 0;
+    merge_rows(l, r, |k, a0, a1, v0, v1, p, nx| {
+        key[o] = k;
+        ra[o] = a0 + rch * (a0 + a1);
+        val[o] = v0 + rch * (v0 + v1);
+        prev[o] = p;
+        next[o] = nx;
+        o += 1;
+    });
+    o as u32
+}
+
+fn weighted(acc: &mut Acc3, w: K, (q0, q1, qinf): (K, K, K)) {
+    acc.q0 += w.clmul(q0);
+    acc.q1 += w.clmul(q1);
+    acc.qinf += w.clmul(qinf);
+}
+
+/// The first round's accumulator over all row pairs of `lv`.
 fn level_round(lv: &Level, w: &SplitEq) -> Acc3 {
     let pairs = lv.len.len() / 2;
-    let row = |m: usize| -> Acc3 {
-        let mut s = Acc3::default();
-        for_each_merged(lv, m, |li, ri| {
-            let (_, a0, a1, v0, v1, _, _) = merged_entry(lv, li, ri);
-            s.q0 += a0.clmul(v0);
-            s.q1 += a1.clmul(v1);
-            s.qinf += (a0 + a1).clmul(v0 + v1);
-        });
-        let wm = w.at(m);
-        let (q0, q1, qinf) = s.reduce();
-        Acc3 {
-            q0: wm.clmul(q0),
-            q1: wm.clmul(q1),
-            qinf: wm.clmul(qinf),
-        }
+    let one = |m: usize| -> Acc3 {
+        let mut acc = Acc3::default();
+        weighted(&mut acc, w.at(m), pair_round(lv.row(2 * m), lv.row(2 * m + 1)));
+        acc
     };
-    if pairs * (1 << lv.level) >= PAR && pairs > 1 {
-        let min = (1usize << 11 >> lv.level).max(1);
+    if pairs >= PAR {
         (0..pairs)
             .into_par_iter()
-            .with_min_len(min)
-            .map(row)
+            .with_min_len(1 << 10)
+            .map(one)
             .reduce(Acc3::default, Acc3::add)
     } else {
-        (0..pairs).map(row).fold(Acc3::default(), Acc3::add)
+        (0..pairs).map(one).fold(Acc3::default(), Acc3::add)
     }
 }
 
-fn level_bind(lv: Level, r: K) -> Level {
-    let pairs = lv.len.len() / 2;
+/// Bind `lv` at `r` and, given the next round's weights, accumulate the next
+/// round over the new level in the same pass: each unit of work builds two
+/// adjacent output rows from four input rows and then merges them.
+fn level_bind_eval(lv: Level, r: K, next_w: Option<&SplitEq>) -> (Level, Acc3) {
+    let out_rows = lv.len.len() / 2;
     let total = lv.key.len();
-    let cap = 2usize << lv.level;
+    let cap = 1usize << (lv.level + 1);
     let mut out = Level {
         level: lv.level + 1,
-        len: vec![0; pairs],
+        len: vec![0; out_rows],
         key: vec![0; total],
-        ra: vec![K::ZERO; total],
-        val: vec![K::ZERO; total],
-        prev: vec![K::ZERO; total],
-        next: vec![K::ZERO; total],
+        ra: zeros(total),
+        val: zeros(total),
+        prev: zeros(total),
+        next: zeros(total),
     };
-    let fill = |m: usize,
-                len: &mut u32,
+    if out_rows == 1 {
+        out.len[0] = pair_bind(
+            lv.row(0),
+            lv.row(1),
+            r,
+            &mut out.key,
+            &mut out.ra,
+            &mut out.val,
+            &mut out.prev,
+            &mut out.next,
+        );
+        return (out, Acc3::default());
+    }
+    // Units of two output rows.
+    let unit = 2 * cap;
+    let work = |p: usize,
+                len: &mut [u32],
                 key: &mut [u32],
                 ra: &mut [K],
                 val: &mut [K],
                 prev: &mut [K],
-                next: &mut [K]| {
-        let mut o = 0;
-        for_each_merged(&lv, m, |li, ri| {
-            let (k, a0, a1, v0, v1, p, nx) = merged_entry(&lv, li, ri);
-            key[o] = k;
-            ra[o] = a0 + r * (a0 + a1);
-            val[o] = v0 + r * (v0 + v1);
-            prev[o] = p;
-            next[o] = nx;
-            o += 1;
-        });
-        *len = o as u32;
+                next: &mut [K]|
+     -> Acc3 {
+        let (k0, k1) = key.split_at_mut(cap);
+        let (r0, r1) = ra.split_at_mut(cap);
+        let (v0, v1) = val.split_at_mut(cap);
+        let (p0, p1) = prev.split_at_mut(cap);
+        let (n0, n1) = next.split_at_mut(cap);
+        len[0] = pair_bind(lv.row(4 * p), lv.row(4 * p + 1), r, k0, r0, v0, p0, n0);
+        len[1] = pair_bind(lv.row(4 * p + 2), lv.row(4 * p + 3), r, k1, r1, v1, p1, n1);
+        let mut acc = Acc3::default();
+        if let Some(w) = next_w {
+            let (l0, l1) = (len[0] as usize, len[1] as usize);
+            let left = Row {
+                key: &k0[..l0],
+                ra: &r0[..l0],
+                val: &v0[..l0],
+                prev: &p0[..l0],
+                next: &n0[..l0],
+            };
+            let right = Row {
+                key: &k1[..l1],
+                ra: &r1[..l1],
+                val: &v1[..l1],
+                prev: &p1[..l1],
+                next: &n1[..l1],
+            };
+            weighted(&mut acc, w.at(p), pair_round(left, right));
+        }
+        acc
     };
-    if total >= PAR && pairs > 1 {
+    let units = out_rows / 2;
+    let acc = if total >= PAR && units > 1 {
         let min = (1usize << 11 >> lv.level).max(1);
         out.len
-            .par_iter_mut()
-            .zip(out.key.par_chunks_mut(cap))
-            .zip(out.ra.par_chunks_mut(cap))
-            .zip(out.val.par_chunks_mut(cap))
-            .zip(out.prev.par_chunks_mut(cap))
-            .zip(out.next.par_chunks_mut(cap))
+            .par_chunks_mut(2)
+            .zip(out.key.par_chunks_mut(unit))
+            .zip(out.ra.par_chunks_mut(unit))
+            .zip(out.val.par_chunks_mut(unit))
+            .zip(out.prev.par_chunks_mut(unit))
+            .zip(out.next.par_chunks_mut(unit))
             .enumerate()
             .with_min_len(min)
-            .for_each(|(m, (((((len, key), ra), val), prev), next))| {
-                fill(m, len, key, ra, val, prev, next)
-            });
+            .map(|(p, (((((len, key), ra), val), prev), next))| {
+                work(p, len, key, ra, val, prev, next)
+            })
+            .reduce(Acc3::default, Acc3::add)
     } else {
-        for (m, (((((len, key), ra), val), prev), next)) in out
-            .len
-            .iter_mut()
-            .zip(out.key.chunks_mut(cap))
-            .zip(out.ra.chunks_mut(cap))
-            .zip(out.val.chunks_mut(cap))
-            .zip(out.prev.chunks_mut(cap))
-            .zip(out.next.chunks_mut(cap))
+        out.len
+            .chunks_mut(2)
+            .zip(out.key.chunks_mut(unit))
+            .zip(out.ra.chunks_mut(unit))
+            .zip(out.val.chunks_mut(unit))
+            .zip(out.prev.chunks_mut(unit))
+            .zip(out.next.chunks_mut(unit))
             .enumerate()
-        {
-            fill(m, len, key, ra, val, prev, next);
-        }
-    }
-    out
+            .map(|(p, (((((len, key), ra), val), prev), next))| {
+                work(p, len, key, ra, val, prev, next)
+            })
+            .fold(Acc3::default(), Acc3::add)
+    };
+    (out, acc)
 }
 
 fn prove_cycle_first(w: &ReadWitness<'_>, r_c: &[K], claim: K, tr: &mut Transcript) -> ReadResult {
@@ -617,7 +681,11 @@ fn prove_cycle_first(w: &ReadWitness<'_>, r_c: &[K], claim: K, tr: &mut Transcri
         level: 0,
         len: vec![1; t],
         key: w.addr.to_vec(),
-        ra: vec![K::ONE; t],
+        ra: if t >= PAR {
+            (0..t).into_par_iter().map(|_| K::ONE).collect()
+        } else {
+            vec![K::ONE; t]
+        },
         val: w.rv_e.to_vec(),
         prev: w.rv_e.to_vec(),
         next: if t >= PAR {
@@ -634,9 +702,9 @@ fn prove_cycle_first(w: &ReadWitness<'_>, r_c: &[K], claim: K, tr: &mut Transcri
     let mut r_j = Vec::with_capacity(n);
     let mut cur = claim;
     let mut scale = K::ONE;
+    let mut acc = level_round(&lv, &SplitEq::new(&r_c[1..]));
     for i in 0..n {
-        let weights = SplitEq::new(&r_c[i + 1..]);
-        let (q0, q1, qinf) = level_round(&lv, &weights).reduce();
+        let (q0, q1, qinf) = acc.reduce();
         let (q0, q1, qinf) = (scale * q0, scale * q1, scale * qinf);
         if checks_enabled() {
             assert_eq!(
@@ -651,7 +719,8 @@ fn prove_cycle_first(w: &ReadWitness<'_>, r_c: &[K], claim: K, tr: &mut Transcri
         let e = eq_lin(r_c[i], r);
         cur = e * quad_at(q0, q1, qinf, r);
         scale *= e;
-        lv = level_bind(lv, r);
+        let next_w = (i + 1 < n).then(|| SplitEq::new(&r_c[i + 2..]));
+        (lv, acc) = level_bind_eval(lv, r, next_w.as_ref());
     }
     let len = lv.len[0] as usize;
     lv.key.truncate(len);
@@ -714,75 +783,95 @@ fn build_units(w: &ReadWitness<'_>, eq_c: Vec<K>, merge: bool) -> Units {
             of_cycle: Vec::new(),
         };
     }
-    // Segments end at (and include) each store.
-    let mut ends: Vec<usize> = (0..t).filter(|&j| w.store[j]).map(|j| j + 1).collect();
-    if ends.last() != Some(&t) {
-        ends.push(t);
+    // Segments end at (and include) each store. Work on chunks of cycles
+    // whose boundaries are segment boundaries, so no allocation is per
+    // segment.
+    let parts = (4 * rayon::current_num_threads()).max(1);
+    let mut cuts = vec![0usize];
+    for p in 1..parts {
+        let mut b = (t * p / parts).max(*cuts.last().unwrap());
+        while b < t && b > 0 && !w.store[b - 1] {
+            b += 1;
+        }
+        if b > *cuts.last().unwrap() && b < t {
+            cuts.push(b);
+        }
     }
-    let starts: Vec<usize> = std::iter::once(0)
-        .chain(ends.iter().copied())
-        .take(ends.len())
-        .collect();
-    type Seg = (Vec<u32>, Vec<K>, Vec<K>, Vec<bool>, Vec<(usize, u32)>);
-    let seg = |(s, e): (usize, usize)| -> Seg {
-        let mut idx: Vec<usize> = (s..e).collect();
-        let last_store = if w.store[e - 1] { Some(e - 1) } else { None };
-        idx.sort_unstable_by_key(|&j| (w.addr[j], j));
-        let (mut ad, mut wt, mut inc, mut st) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
-        let mut map = Vec::with_capacity(e - s);
-        let mut store_unit = None;
-        for &j in &idx {
-            if ad.last() != Some(&w.addr[j]) || ad.is_empty() {
-                ad.push(w.addr[j]);
-                wt.push(K::ZERO);
-                inc.push(K::ZERO);
-                st.push(false);
+    cuts.push(t);
+    type Part = (Vec<u32>, Vec<K>, Vec<K>, Vec<bool>, Vec<u32>);
+    let part = |range: std::ops::Range<usize>| -> Part {
+        let cap = range.len();
+        let (mut ad, mut wt, mut inc, mut st) = (
+            Vec::with_capacity(cap),
+            Vec::with_capacity(cap),
+            Vec::with_capacity(cap),
+            Vec::with_capacity(cap),
+        );
+        let mut of = Vec::with_capacity(cap);
+        let mut idx: Vec<u32> = Vec::new();
+        let mut s = range.start;
+        while s < range.end {
+            let mut e = s;
+            while e < range.end && !w.store[e] {
+                e += 1;
             }
-            let u = ad.len() - 1;
-            wt[u] += eq_c[j];
-            if Some(j) == last_store {
-                inc[u] = w.inc_e[j];
-                st[u] = true;
-                store_unit = Some(u);
+            let e = (e + 1).min(range.end);
+            let base = ad.len() as u32;
+            if e - s == 1 {
+                ad.push(w.addr[s]);
+                wt.push(eq_c[s]);
+                inc.push(w.inc_e[s]);
+                st.push(w.store[s]);
+                of.push(base);
+                s = e;
+                continue;
             }
-            map.push((j, u as u32));
-        }
-        if let Some(u) = store_unit {
-            // Move the storing unit last.
-            let last = ad.len() - 1;
-            ad.swap(u, last);
-            wt.swap(u, last);
-            inc.swap(u, last);
-            st.swap(u, last);
-            for m in &mut map {
-                if m.1 as usize == u {
-                    m.1 = last as u32;
-                } else if m.1 as usize == last {
-                    m.1 = u as u32;
+            // Group the segment's cycles by address; the storing cycle (the
+            // last one, if it stores) goes in the last unit.
+            let last_store = w.store[e - 1].then_some(e - 1);
+            let store_addr = last_store.map(|j| w.addr[j]);
+            idx.clear();
+            idx.extend((s as u32)..(e as u32));
+            idx.sort_unstable_by_key(|&j| {
+                let a = w.addr[j as usize];
+                (Some(a) == store_addr, a)
+            });
+            let mut local: Vec<(u32, u32)> = Vec::with_capacity(e - s);
+            for &j in idx.iter() {
+                let j = j as usize;
+                if ad.len() as u32 == base || *ad.last().unwrap() != w.addr[j] {
+                    ad.push(w.addr[j]);
+                    wt.push(K::ZERO);
+                    inc.push(K::ZERO);
+                    st.push(false);
                 }
+                let u = ad.len() - 1;
+                wt[u] += eq_c[j];
+                if Some(j) == last_store {
+                    inc[u] = w.inc_e[j];
+                    st[u] = true;
+                }
+                local.push((j as u32, u as u32));
             }
+            local.sort_unstable_by_key(|x| x.0);
+            of.extend(local.iter().map(|x| x.1));
+            s = e;
         }
-        (ad, wt, inc, st, map)
+        (ad, wt, inc, st, of)
     };
-    let segs: Vec<Seg> = starts
-        .into_par_iter()
-        .zip(ends.into_par_iter())
-        .with_min_len(64)
-        .map(seg)
-        .collect();
-    let total: usize = segs.iter().map(|s| s.0.len()).sum();
+    let ranges: Vec<std::ops::Range<usize>> = cuts.windows(2).map(|c| c[0]..c[1]).collect();
+    let parts: Vec<Part> = ranges.into_par_iter().map(part).collect();
+    let total: usize = parts.iter().map(|p| p.0.len()).sum();
     let mut units = Units {
         addr: Vec::with_capacity(total),
         weight: Vec::with_capacity(total),
         inc: Vec::with_capacity(total),
         store: Vec::with_capacity(total),
-        of_cycle: vec![0; t],
+        of_cycle: Vec::with_capacity(t),
     };
-    for (ad, wt, inc, st, map) in segs {
+    for (ad, wt, inc, st, of) in parts {
         let base = units.addr.len() as u32;
-        for (j, u) in map {
-            units.of_cycle[j] = base + u;
-        }
+        units.of_cycle.extend(of.into_iter().map(|u| u + base));
         units.addr.extend(ad);
         units.weight.extend(wt);
         units.inc.extend(inc);
@@ -874,7 +963,7 @@ fn prove_address_first(
         starts.par_iter_mut().for_each(|st| *st = bind_dense(st, r));
     }
     // Values per unit at r_k: a running scalar per block.
-    let mut val_u = vec![K::ZERO; nu];
+    let mut val_u = zeros(nu);
     {
         let mut chunks: Vec<&mut [K]> = Vec::with_capacity(blocks);
         let mut rest = val_u.as_mut_slice();
