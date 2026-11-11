@@ -1,5 +1,6 @@
 #!/bin/bash
-# The benchmarks behind results/m4max/final, as run for issue #1.
+# The benchmarks behind results/m4max/final-committed-rv (Twist v2 with a
+# committed read value), as run for issue #1.
 # Run from the repository root:
 #   BASE=/path/to/ram-compare-at-632855e BRANCH=/path/to/ram-compare OUT=results/x86/final \
 #     results/m4max/final/run.sh
@@ -8,7 +9,7 @@
 set -u
 : "${BASE:?set BASE to the baseline ram-compare binary}"
 : "${BRANCH:?set BRANCH to the branch ram-compare binary}"
-R=${OUT:-results/m4max/final}
+R=${OUT:-results/m4max/final-committed-rv}
 mkdir -p $R
 GUEST="--guest-program erc20-mixed-block,pointer-chase --guest-rows memory"
 COMMON="--trace-format operations --address-bits 16 --log-cycles 20 --chunk-bits 4 --threads 8"

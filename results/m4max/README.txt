@@ -4,10 +4,28 @@ RUSTFLAGS='-C target-cpu=native'. The baseline binary is ram-compare built at
 632855e (upstream master).
 
 final/
-    All results for the pull request, from ram-compare built at ed1c284
-    (environment.git_commit in each JSON). final/run.sh is the script that
-    produced them. The one-minute load was 17 to 48 during this run, so the
-    branch/baseline intervals in final/interleave-n20.txt are wide.
+    The current results: Twist v2 with a virtual read value and the CPU
+    interface claims in both methods, from ram-compare built at deb2bfb
+    (environment.git_commit in each JSON; later commits change only docs and
+    results). final/run.sh is the script that produced them:
+    - interleave-n20: baseline (632855e) against the branch, 10 rounds;
+    - interleave-pre-n20: PRE (0e9aa9c, the round-2 head with a committed
+      read value and no interface claims) against the branch, 10 rounds.
+      For twist it measures the virtual read value; for spice-typed it
+      measures the cost of the interface claims alone;
+    - branch-n20: all four methods in one process, 10 rounds;
+    - private-n20, cycle-order-n20, chunk-sweep-n20, chunk-sweep-a20-n20,
+      sweep-na and sweep-threads, as named in run.sh.
+    Every sample of twist, spice-typed and spice-typed-2fp passed the
+    harness check of the interface claims against the trace. The load before
+    each run is in run.log and the .txt logs. All three binaries were built
+    after `cargo clean --release` in one target directory.
+
+final-committed-rv/
+    The first-round results, when Twist v2 committed its read value, from
+    ram-compare built at ed1c284. final-committed-rv/run.sh produced them.
+    The one-minute load was 17 to 48 during this run, so the
+    branch/baseline intervals in interleave-n20.txt are wide.
 
 final-192c417/
     An earlier baseline/branch interleaved run (10 rounds, 3 samples per

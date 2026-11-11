@@ -2,10 +2,10 @@
 
 This repository compares the current optimized implementations of two RAM arguments over GF(2^128):
 
-- **Twist:** Twist v2 (`ram_argument::twist2`, method `twist`): a read check with no write term, then one sum-check over the cycles that proves the value, final-memory, virtualization and one-hot claims together. It binds address variables first and merges loads between stores by default. `twist-legacy` runs the previous BinaryTwist prover with Flat virtualization and packed OneHot checks. [docs/soundness-twist.md](docs/soundness-twist.md) explains why the changes are sound.
+- **Twist:** Twist v2 (`ram_argument::twist2`, method `twist`). As in Jolt, it commits only the one-hot address chunks and `Inc`, and keeps the read value virtual. A read check that also folds in the address, then one sum-check over the cycles that proves the value, final-memory, virtualization and one-hot claims together. It binds address variables first and merges loads between stores by default. `twist-legacy` runs the previous BinaryTwist prover with Flat virtualization and packed OneHot checks. [docs/soundness-twist.md](docs/soundness-twist.md) explains why the changes are sound.
 - **Spice:** single-value read/write records (`spice-typed`), a batched masked-value reduction, leanVM-derived grand-product kernels and Flock's packed Boolean ordering argument.
 
-Both use the same Mosaic, RingSwitch and Ligerito commitment stack. Each benchmark case uses identical ordered word operations and public initial memory. Final memory is public by default; `--final-memory private` commits it instead, for `twist`, `spice-typed` and `spice-typed-2fp` only. Every warmup and measured proof is independently verified.
+Both use the same Mosaic, RingSwitch and Ligerito commitment stack. Both end with the same CPU interface: after the commitment the verifier draws a cycle point `r_c`, and `verify` returns word-level claims at it (address, read and write value for Twist; address, value and `is_write` for Spice). The harness checks these claims against the trace outside the timed regions, and the load constraint belongs to the CPU, as in Jolt ([docs/methodology.md](docs/methodology.md#cpu-interface)). Each benchmark case uses identical ordered word operations and public initial memory. Final memory is public by default; `--final-memory private` commits it instead, for `twist`, `spice-typed` and `spice-typed-2fp` only. Every warmup and measured proof is independently verified.
 
 ## Run the comparison
 
@@ -61,11 +61,11 @@ Padding-adjusted estimates are reported separately from measured values and appl
 
 These are linear commitment-cost estimates, not measured timings of an unpadded implementation; fixed setup and logarithmic effects are approximated. JSON schema 5 keeps actual timings in the existing sample/median fields and puts estimates under `padding_adjusted_estimate`, with `prover_ms`, `commit_ms` and `removed_padding_ms`. CSV uses the `padding_adjusted_estimate:` prefix. Each adjusted sample is computed before its median, so independently reported medians need not add up exactly.
 
-At `address-bits=16, log-cycles=20`, Twist has 24 MiB populated and 32 MiB padded commitment input; Spice has about 15.55 MiB populated and 16 MiB padded input. These are witness footprints, not proof sizes or total process memory.
+At `address-bits=16, log-cycles=20`, Twist v2 has 16 MiB populated and 16 MiB padded commitment input (128 bits per cycle, exactly `2^27`); Spice has about 15.55 MiB populated and 16 MiB padded input. These are witness footprints, not proof sizes or total process memory.
 
 Both methods use GF(2^128), the inherited `provable-120` PCS profile and `log-rate=2` by default. Common field/PCS parameters do not establish equal composed security: Spice's grand-product fingerprint error grows with the trace and memory sizes. Every case therefore reports composed soundness bits (PCS plus IOP terms), and `spice-typed-2fp` runs typed Spice with two independent fingerprints; [docs/methodology.md](docs/methodology.md) gives the numbers.
 
-The proved statement is RAM consistency with public initial memory and, by default, public final memory. It does not prove execution of the guest CPU program.
+The proved statement is RAM consistency with public initial memory and, by default, public final memory, plus the word-level claims at the CPU point. It does not prove execution of the guest CPU program.
 
 ## Check the implementation
 

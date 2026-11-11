@@ -14,16 +14,26 @@ At `n = 20`, `a = 16`, chunk 4, `provable-120`, log rate 2:
 
 | Method | PCS | IOP | Composed | Dominant term |
 | --- | --- | --- | --- | --- |
-| `twist` (v2) | 2^-117.63 | 403/2^128 (2^-119.35) | 2^-117.25 | Ligerito query and batch terms, about 2^-120 per level |
+| `twist` (v2) | 2^-117.64 | 368/2^128 (2^-119.48) | 2^-117.28 | Ligerito query and batch terms, about 2^-120 per level |
 | `twist-legacy` | 2^-117.63 | 650/2^128 (2^-118.66) | 2^-117.06 | Ligerito query and batch terms, about 2^-120 per level |
-| `spice-typed` | 2^-117.64 | 1,114,914/2^128 (2^-107.91) | 2^-107.91 | Grand-product fingerprint (T+K)/2^128 = 1,114,112/2^128 |
-| `spice-typed-2fp` | 2^-117.64 | 843/2^128 (2^-118.28) | 2^-116.92 | Ligerito query and batch terms; the fingerprint term becomes ((T+K)/2^128)^2 and the second GKR adds 41/2^128 |
+| `spice-typed` | 2^-117.64 | 1,114,917/2^128 (2^-107.91) | 2^-107.91 | Grand-product fingerprint (T+K)/2^128 = 1,114,112/2^128 |
+| `spice-typed-2fp` | 2^-117.64 | 846/2^128 (2^-118.28) | 2^-116.92 | Ligerito query and batch terms; the fingerprint term becomes ((T+K)/2^128)^2 and the second GKR adds 41/2^128 |
 
-The `twist-legacy` and `spice-typed` rows agree with the issue's estimates (about 2^-117 and 2^-107.9). The non-fingerprint IOP sums are somewhat lower than the issue's (650 against about 670 for the old Twist, 802 against about 1030 for typed Spice). The likely reasons: the GKR round messages carry four coefficients with the eq factor divided out, so the enforced degree is 4, not 5; the seven fixed inner coordinates of Flock's zero-check point add nothing, so its term is 6 + 20 − 7 = 19; and Twist's input identities share one random point, so their `w + n` term is counted once. None of these differences moves the composed totals.
+The `twist-legacy` and `spice-typed` rows agree with the issue's estimates (about 2^-117 and 2^-107.9). The non-fingerprint IOP sums are somewhat lower than the issue's (650 against about 670 for the old Twist, 805 against about 1030 for typed Spice). The likely reasons: the GKR round messages carry four coefficients with the eq factor divided out, so the enforced degree is 4, not 5; the seven fixed inner coordinates of Flock's zero-check point add nothing, so its term is 6 + 20 − 7 = 19; and Twist's input identities share one random point, so their `w + n` term is counted once. None of these differences moves the composed totals.
 
-The local derivation of typed Spice at 632855e, kept as `spice_typed_iop`, gave 899. Grouped Mosaic chunks cut the claim count from 126 to 19, which lowers the Mosaic batch term by 107; the crate's other terms add 10.
+The local derivation of typed Spice at 632855e, kept as `spice_typed_iop`, gave 899. Grouped Mosaic chunks cut the claim count from 126 to 19, which lowers the Mosaic batch term by 107; the crate's other terms add 10. The CPU interface then adds three claims (22), which raises the batch term by 3. Twist v2 with a committed read value had 403 (ell = 28); the virtual read value moves it to ell = 27 and drops `read.point`, for 368.
 
 The Flock fixed coordinates cost nothing only if the 128 values `eq(c, x)` form an F2-basis of GF(2^128). The test `fixed_inner_equality_weights_form_an_f2_basis` in `crates/spice-argument/src/order_flock_tests.rs` checks this by elimination.
+
+## CPU interface
+
+A RAM argument in a zkVM proves the memory columns that a CPU proof consumes. Both arguments now end the same way: after the commitment, the verifier draws a CPU point `r_c ∈ (K \ {0})^n`, the prover sends word-level claims at it, and `verify` returns the point and the claims. Twist v2 sends `W[addr](r_c)`, `W[rv](r_c)` and `W[wv](r_c)`; typed Spice sends `W[addr](r_c)`, `W[value](r_c)` and the `is_write` evaluation. Words enter the field as `enc(x) = K::from_u128(x)`. For one operation trace, Twist's `wv_j` equals Spice's `value_j`.
+
+**The stand-in check.** The harness has no CPU, so `crates/ram-compare/src/interface.rs` plays one. It recomputes the three MLEs from the trace at the returned point with `eq_table` and `K::from_u128` only, independent of the provers' code, and fails the run on any mismatch. `measure()` runs it after `timed_verify` returns, so neither the prover nor the verifier time includes it. Every sample of every `twist`, `spice-typed` and `spice-typed-2fp` case is checked, so a clean run is also an end-to-end check of the claims. `twist-legacy` and the untyped `spice` methods have no interface and are not checked.
+
+**Soundness.** A real CPU proof would compare its own columns at `r_c` with the three claims, so Schwartz–Zippel makes the CPU's columns equal the RAM's except with probability `3n / |K|`. The term is the same for both methods, so it is not in either method's terms.
+
+**The load constraint.** As in Jolt, where `RamReadEqRamWriteIfLoad` lives in the R1CS, the CPU stand-in owns the load constraint for both methods: `Load_j ⇒ rv_j = wv_j` for Twist and `is_write_j = Store_j` for Spice. Twist could prove it only with a committed load flag, which at `n = 20, a = 16, c = 4` would push its commitment from exactly `2^27` to `2^28` bits.
 
 ## Interleaved measurement and ratio intervals
 
@@ -37,7 +47,7 @@ The machine is shared and its load swings widely, so absolute times drift by ten
 
 **Ablations.** `scripts/ablation.py` alternates any number of `ram-compare` binaries, reversing their order every round, and keeps each run's JSON. For each Twist v2 case it reports, per binary, the median over all samples of the prover time and of selected stages, with the ratio to the first binary, and the 1-minute load average before each binary's runs. It reports no intervals; use `interleave.py` for an interval on one pair of binaries.
 
-**Building binaries to compare.** Build each binary in its own checkout with its own target directory, or run `cargo clean --release` before each build. When two checkouts of this workspace share one `CARGO_TARGET_DIR`, a build in one checkout can leave artifacts that a later build in the other treats as up to date. I hit this once: a binary built at one commit linked the ram-argument code of an earlier commit while it recorded the later commit in `environment.git_commit`. Every binary behind `results/m4max/round2` was built after `cargo clean --release`.
+**Building binaries to compare.** Build each binary in its own checkout with its own target directory, or run `cargo clean --release` before each build. When two checkouts of this workspace share one `CARGO_TARGET_DIR`, a build in one checkout can leave artifacts that a later build in the other treats as up to date. I hit this once: a binary built at one commit linked the ram-argument code of an earlier commit while it recorded the later commit in `environment.git_commit`. Every binary behind `results/m4max/round2` and `results/m4max/final` was built after `cargo clean --release`.
 
 **Sweeps.** `scripts/sweep.py` runs one `ram-compare` invocation per point of a grid of `--address-bits`, `--log-cycles` and `--threads` values, with the remaining arguments passed through after `--`. It writes `a{A}-n{N}-t{T}.json` and `.log` per point, records `uptime` before and after each point in `index.json`, and summarises every point and case in `summary.json` and `summary.md`. Points run with N outermost so the cheap ones finish first; the script rewrites `index.json` after every point, a failed point does not stop the sweep, and `--skip-existing` resumes an interrupted one. Each point is its own process, so interleaving and ratio intervals apply within a point, not across points. The thread counts 1, 8 and 16 are the default.
 

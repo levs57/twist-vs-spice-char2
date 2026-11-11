@@ -13,20 +13,30 @@ Numerators over 2^128:
 | masked reduction batching / rounds | 1 / 60 | 1 / 60 | `masked_reduction::verify_sumcheck` |
 | Flock zerocheck / skip / rounds | 19 / 127 / 40 | 19 / 127 / 40 | `order_flock::verify_zerocheck_with` |
 | ρ chunk combination | 4 | 4 | `finish_claims`, `group_rho` |
-| Mosaic batching / rounds | 18 / 54 | 18 / 54 | `om_mosaic::batch_verify` |
-| everything but the fingerprint | 755, i.e. 2^-118.4 | 796, i.e. 2^-118.4 | |
+| Mosaic batching / rounds | 21 / 54 | 21 / 54 | `om_mosaic::batch_verify` |
+| everything but the fingerprint | 758, i.e. 2^-118.4 | 799, i.e. 2^-118.4 | |
 | total | 2^-107.91 | 2^-118.4 | |
 
 These totals exclude the PCS and the ring switch. `ram-compare` adds both and reports 2^-107.91 composed with one fingerprint and 2^-116.92 with two.
 
-With private final memory the Mosaic terms are 19 / 56 (one more claim, one more variable) and the total is unchanged at 2^-107.91. The issue's estimate of about 2^-107.9 for typed Spice is correct. The fingerprint term dominates it by a factor of about 1,400.
+With private final memory the Mosaic terms are 22 / 56 (one more claim, one more variable) and the total is unchanged at 2^-107.91. The issue's estimate of about 2^-107.9 for typed Spice is correct. The fingerprint term dominates it by a factor of about 1,400.
 
 The unit test `soundness_terms_match_the_issue_estimate` checks these numbers. The non-fingerprint terms come from the code as follows:
 
 - **GKR.** Each layer costs one batching challenge for the two trees, a degree-4 round per bound coordinate (the normalized quartic, so the equality factor adds nothing), and a child point of 1 or 2 coordinates.
 - **Masked reduction.** Three claims are batched with independent weights, followed by `l` cubic rounds.
 - **Flock.** The term is `6 + 20 − 7 = 19` random equality coordinates. The seven fixed inner coordinates add nothing, because their 128 equality weights are F_2-independent (tested by `fixed_inner_equality_weights_form_an_f2_basis`), so a Boolean gate error never cancels over them. The skip polynomial has degree below 128, and there are 20 quadratic rounds.
-- **Mosaic.** Batching the `c` claims with powers of one challenge costs `c − 1`. The sum-check adds two per committed variable.
+- **Mosaic.** Batching the `c` claims with powers of one challenge costs `c − 1`. The sum-check adds two per committed variable. At `a = 16` there are 22 claims, three of them for the CPU interface below.
+
+## CPU interface claims
+
+Twist v2 hands the CPU word-level claims at a random cycle point (`docs/soundness-twist.md`), so typed Spice does the same, and the comparison charges both for the interface. After the commitment, the verifier draws `r_c ∈ (K \ {0})^n` (`spice/typed/cpu_point`). The prover sends the `a` address planes at `r_c`, `W[value](r_c)` and `Σ_j eq(r_c, j) is_write_j`, and the transcript absorbs them (`spice/typed/cpu_claims`) before the fingerprints are drawn. The verifier returns `Interface { point, address, value, is_write }` with `address = combine_bits(planes)`, which is exact.
+
+Three Mosaic claims bind the values to the commitment: the address planes at `r_c` through the ρ-combined chunk claim (one chunk at `a = 16`, two at `a = 12` or `a = 20`), `word_claim("input/value", r_c, value)`, and `is_write` as plane 0 of `input/flags` at `r_c ‖ 0`. The values are fixed before every later challenge, so a wrong one makes a Mosaic claim false, which adds only to `mosaic.batch`. The ρ term is unchanged because the largest chunk is still 16 planes. The test `mosaic_rejects_wrong_cpu_evaluations_sent_before_absorption` sends a wrong value, flag or address plane through a prover hook, and the verifier rejects at Mosaic; `rejects_tampered_cpu_evaluations` edits each value of a finished proof.
+
+**Cost.** Mosaic claims go from 19 to 22, `mosaic.batch` from 18 to 21, and the non-fingerprint totals from 755 / 796 to 758 / 799. The composed figures are unchanged at two decimals. The proof grows by `(a + 2) · 16` bytes, 288 at `a = 16`.
+
+**The load constraint.** The CPU must check `is_write_j = Store_j`. Twist leaves the matching check (`Load_j ⇒ Inc_j = 0`) to the CPU as well, so neither RAM argument proves it. The CPU-side Schwartz–Zippel term `3n / |K|` is the same for both methods and stays out of both.
 
 ## Two fingerprints
 
