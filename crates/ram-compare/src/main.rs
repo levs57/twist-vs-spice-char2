@@ -14,6 +14,8 @@ use std::{
 
 mod platform;
 mod proof_size;
+mod soundness;
+use soundness::Soundness;
 use proof_size::ProofSize;
 use platform::{LoadWindow, load_average};
 
@@ -26,6 +28,7 @@ const SOURCES: &[(&str, &[u8])] = &[
     ("crates/ram-compare/src/main.rs", include_bytes!("main.rs")),
     ("crates/ram-compare/src/platform.rs", include_bytes!("platform.rs")),
     ("crates/ram-compare/src/proof_size.rs", include_bytes!("proof_size.rs")),
+    ("crates/ram-compare/src/soundness.rs", include_bytes!("soundness.rs")),
 ];
 fn sources_sha256() -> String {
     let mut bytes = Vec::new();
@@ -844,6 +847,8 @@ struct Case {
     load: LoadWindow,
     area: Area,
     proof_size: ProofSize,
+    /// Composed PCS + IOP soundness error for this case's parameters.
+    soundness: Soundness,
     grand_product_extra_bound: Option<serde_json::Value>,
     samples: Vec<Sample>,
     median: Medians,
@@ -938,10 +943,24 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             let median = Medians::new(&samples);
             let area = area.ok_or("missing proof")?;
             let proof_size = samples[0].proof_size;
+            let soundness = soundness::compose(
+                &method,
+                &soundness::Dims {
+                    n: area.cycles.trailing_zeros() as usize,
+                    a: area.memory_cells.trailing_zeros() as usize,
+                    chunk_bits: chunk_bits.unwrap_or(o.chunk_bits[0]),
+                    word_log_bits: config.word_log_bits,
+                    ell: area.committed_bits.trailing_zeros() as usize,
+                    mosaic_claims: area.mosaic_claims,
+                },
+                &o.profile,
+                o.log_rate,
+            );
             println!(
-                "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",
+                "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms [soundness {:.2} bits] commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",
                 median.times["prover_ms"],
                 median.times["verifier_ms"],
+                soundness.bits,
                 median.times["commit_ms"],
                 median.times["opening_ms"],
                 median.times["iop_and_prep_ms"],
@@ -956,6 +975,10 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 median.times["mask_ms"],
                 median.times["mosaic_ms"],
                 median.times["unattributed_ms"]
+            );
+            println!(
+                "  soundness: {:.2} bits composed (PCS {:.2}, IOP {:.2}; IOP terms {})",
+                soundness.bits, soundness.pcs_bits, soundness.iop_bits, soundness.iop_source
             );
             println!(
                 "  proof={}B (pcs={}B mosaic={}B iop={}B; field=16B hash=32B index=4B)",
@@ -1003,6 +1026,7 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 load,
                 area,
                 proof_size,
+                soundness,
                 grand_product_extra_bound: bound,
                 samples,
                 median,
@@ -1023,6 +1047,8 @@ struct Pair {
     spice_verifier_speedup: f64,
     twist_to_spice_populated_ratio: f64,
     twist_to_spice_committed_ratio: f64,
+    twist_soundness_bits: f64,
+    spice_soundness_bits: f64,
 }
 fn pairs(cases: &[Case]) -> Vec<Pair> {
     cases
@@ -1059,6 +1085,8 @@ fn pairs(cases: &[Case]) -> Vec<Pair> {
                         / spice.area.populated_bits as f64,
                     twist_to_spice_committed_ratio: twist.area.committed_bits as f64
                         / spice.area.committed_bits as f64,
+                    twist_soundness_bits: twist.soundness.bits,
+                    spice_soundness_bits: spice.soundness.bits,
                 })
         })
         .collect()
@@ -1119,6 +1147,7 @@ fn csv(report: &Report) -> String {
         "mosaic_bytes",
         "iop_bytes",
         "proof_bytes",
+        "soundness_bits",
     ]
     .into_iter()
     .map(str::to_owned)
@@ -1165,6 +1194,7 @@ fn csv(report: &Report) -> String {
             for bytes in [size.pcs_bytes, size.mosaic_bytes, size.iop_bytes, size.total_bytes] {
                 row.push(bytes.to_string());
             }
+            row.push(format!("{:.4}", c.soundness.bits));
             row.extend(s.times().into_iter().map(|v| format!("{v:.9}")));
             row.extend(
                 s.padding_adjusted_estimate
@@ -1229,7 +1259,7 @@ fn main() -> Result<()> {
     for pair in &report.comparisons {
         let twist = &report.cases[pair.twist_case];
         println!(
-            "{} Twist({:?})/{} ratios: prover={:.3}× commitment-padding-adjusted ESTIMATE={:.3}× verifier={:.3}× populated={:.3}× committed={:.3}×",
+            "{} Twist({:?})/{} ratios: prover={:.3}× commitment-padding-adjusted ESTIMATE={:.3}× verifier={:.3}× populated={:.3}× committed={:.3}× [soundness {:.2} vs {:.2} bits]",
             twist.pattern,
             twist.chunk_bits,
             pair.spice_method,
@@ -1237,7 +1267,9 @@ fn main() -> Result<()> {
             pair.spice_prover_speedup_padding_adjusted_estimate,
             pair.spice_verifier_speedup,
             pair.twist_to_spice_populated_ratio,
-            pair.twist_to_spice_committed_ratio
+            pair.twist_to_spice_committed_ratio,
+            pair.twist_soundness_bits,
+            pair.spice_soundness_bits
         );
     }
     println!(
@@ -1625,6 +1657,8 @@ mod tests {
             let size = case.proof_size;
             assert!(size.pcs_bytes > 0 && size.mosaic_bytes > 0 && size.iop_bytes > 0);
             assert_eq!(size.total_bytes, size.pcs_bytes + size.mosaic_bytes + size.iop_bytes);
+            assert!(case.soundness.bits > 100.0 && case.soundness.bits < 128.0);
+            assert!(!case.soundness.terms.is_empty());
         }
         assert_eq!(
             cases[0].area.populated_bits,
@@ -1661,6 +1695,9 @@ mod tests {
         assert!(rows[0].contains("operation_trace_sha256"));
         assert!(rows[0].contains("mask_ms"));
         assert!(rows[0].contains("pcs_bytes") && rows[0].contains("proof_bytes"));
+        assert!(rows[0].contains("soundness_bits"));
+        assert_eq!(report.cases[0].soundness.iop_source, "local-fallback");
+        assert_eq!(report.cases[2].soundness.iop_source, "partial");
         assert!(rows[0].contains("populated_fraction"));
         assert!(!rows[0].contains("ordering_gate_fraction"));
         assert!(!rows[0].contains("padding_adjusted_estimate:ordering_ms"));
