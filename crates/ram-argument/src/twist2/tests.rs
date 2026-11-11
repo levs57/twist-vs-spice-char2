@@ -120,6 +120,31 @@ fn narrow_words_and_replayed_read_values() {
 }
 
 #[test]
+fn every_narrow_word_width_verifies_and_rejects_a_wrong_final_memory() {
+    for word_log_bits in 0..=2 {
+        for order in ORDERS {
+            for public_final in [true, false] {
+                let tr = trace(7, 6, 4, word_log_bits, 13 + word_log_bits as u64);
+                let cfg = Config {
+                    word_log_bits,
+                    ..config(6, 3, order, true, public_final)
+                };
+                let result = prove(&cfg, &tr).unwrap();
+                verify(&result.statement, &result.proof).unwrap_or_else(|e| {
+                    panic!("width 2^{word_log_bits} {order:?} public={public_final}: {e}")
+                });
+                if public_final {
+                    let mut s = result.statement.clone();
+                    let memory = s.final_memory.as_mut().unwrap();
+                    memory[0] ^= 1;
+                    assert!(verify(&s, &result.proof).is_err());
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn guest_traces_verify() {
     use ram_payload::{GuestOptions, GuestProgram, GuestRows};
     for program in [

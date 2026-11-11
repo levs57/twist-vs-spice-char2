@@ -263,27 +263,33 @@ fn bind_eval(rows: &Rows, r: K, degree: usize, last: bool) -> (Rows, Acc) {
     let units = out_len / 2;
     let chunk = if units >= PAR / 2 { CHUNK } else { units };
     let accs = std::sync::Mutex::new(Vec::new());
-    let data = par_build(out_len * w, chunk * 2 * w, |start, dst| {
-        let p0 = start / (2 * w);
-        let mut acc = Acc::new(degree);
-        let mut scratch = vec![K::ZERO; 2 * w];
-        let mut pair = vec![K::ZERO; 2 * w];
-        for (k, out_pair) in dst.chunks_mut(2 * w).enumerate() {
-            let p = p0 + k;
-            let src = &rows.data[4 * p * w..(4 * p + 4) * w];
-            let (o0, o1) = pair.split_at_mut(w);
-            bind_row(&src[..w], &src[w..2 * w], r, o0);
-            bind_row(&src[2 * w..3 * w], &src[3 * w..], r, o1);
-            for (o, &x) in out_pair.iter_mut().zip(pair.iter()) {
-                o.write(x);
+    // SAFETY: `out_len` is even here, so every chunk of `chunk * 2 * w`
+    // elements is a whole number of output pairs, and each pair writes all
+    // `2 * w` of its elements through the zip with `pair` below.
+    let data = unsafe {
+        par_build(out_len * w, chunk * 2 * w, |start, dst| {
+            debug_assert_eq!(dst.len() % (2 * w), 0);
+            let p0 = start / (2 * w);
+            let mut acc = Acc::new(degree);
+            let mut scratch = vec![K::ZERO; 2 * w];
+            let mut pair = vec![K::ZERO; 2 * w];
+            for (k, out_pair) in dst.chunks_mut(2 * w).enumerate() {
+                let p = p0 + k;
+                let src = &rows.data[4 * p * w..(4 * p + 4) * w];
+                let (o0, o1) = pair.split_at_mut(w);
+                bind_row(&src[..w], &src[w..2 * w], r, o0);
+                bind_row(&src[2 * w..3 * w], &src[3 * w..], r, o1);
+                for (o, &x) in out_pair.iter_mut().zip(pair.iter()) {
+                    o.write(x);
+                }
+                if !last {
+                    let (o0, o1) = pair.split_at(w);
+                    pair_kernel(o0, o1, d, degree, &mut acc, &mut scratch);
+                }
             }
-            if !last {
-                let (o0, o1) = pair.split_at(w);
-                pair_kernel(o0, o1, d, degree, &mut acc, &mut scratch);
-            }
-        }
-        accs.lock().unwrap().push(acc);
-    });
+            accs.lock().unwrap().push(acc);
+        })
+    };
     let acc = accs
         .into_inner()
         .unwrap()
@@ -339,30 +345,36 @@ fn bind_eval_virtual<G: Fn(usize, &mut [K]) + Sync>(
         units.max(1)
     };
     let accs = std::sync::Mutex::new(Vec::new());
-    let data = par_build(out_len * w, chunk * 2 * w, |start, dst| {
-        let p0 = start / (2 * w);
-        let mut acc = Acc::new(degree);
-        let mut scratch = vec![K::ZERO; 2 * w];
-        let mut src = vec![K::ZERO; 4 * w];
-        let mut pair = vec![K::ZERO; 2 * w];
-        for (k, out_pair) in dst.chunks_mut(2 * w).enumerate() {
-            let p = p0 + k;
-            for (q, row) in src.chunks_mut(w).enumerate() {
-                make_row(4 * p + q, row);
+    // SAFETY: `out_len` is even here, so every chunk of `chunk * 2 * w`
+    // elements is a whole number of output pairs, and each pair writes all
+    // `2 * w` of its elements through the zip with `pair` below.
+    let data = unsafe {
+        par_build(out_len * w, chunk * 2 * w, |start, dst| {
+            debug_assert_eq!(dst.len() % (2 * w), 0);
+            let p0 = start / (2 * w);
+            let mut acc = Acc::new(degree);
+            let mut scratch = vec![K::ZERO; 2 * w];
+            let mut src = vec![K::ZERO; 4 * w];
+            let mut pair = vec![K::ZERO; 2 * w];
+            for (k, out_pair) in dst.chunks_mut(2 * w).enumerate() {
+                let p = p0 + k;
+                for (q, row) in src.chunks_mut(w).enumerate() {
+                    make_row(4 * p + q, row);
+                }
+                let (o0, o1) = pair.split_at_mut(w);
+                bind_row(&src[..w], &src[w..2 * w], r, o0);
+                bind_row(&src[2 * w..3 * w], &src[3 * w..], r, o1);
+                for (o, &x) in out_pair.iter_mut().zip(pair.iter()) {
+                    o.write(x);
+                }
+                if !last {
+                    let (o0, o1) = pair.split_at(w);
+                    pair_kernel(o0, o1, d, degree, &mut acc, &mut scratch);
+                }
             }
-            let (o0, o1) = pair.split_at_mut(w);
-            bind_row(&src[..w], &src[w..2 * w], r, o0);
-            bind_row(&src[2 * w..3 * w], &src[3 * w..], r, o1);
-            for (o, &x) in out_pair.iter_mut().zip(pair.iter()) {
-                o.write(x);
-            }
-            if !last {
-                let (o0, o1) = pair.split_at(w);
-                pair_kernel(o0, o1, d, degree, &mut acc, &mut scratch);
-            }
-        }
-        accs.lock().unwrap().push(acc);
-    });
+            accs.lock().unwrap().push(acc);
+        })
+    };
     let acc = accs
         .into_inner()
         .unwrap()

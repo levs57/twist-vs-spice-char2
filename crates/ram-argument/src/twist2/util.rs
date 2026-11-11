@@ -201,9 +201,15 @@ pub(crate) fn zeros(len: usize) -> Vec<K> {
 }
 
 /// Build a vector of `len` elements in parallel chunks of `chunk` elements.
-/// `fill(start, out)` must write every element of `out`, which starts at
-/// index `start`. This avoids zero-filling memory that is overwritten.
-pub(crate) fn par_build<T: Copy + Send + Sync>(
+/// `fill(start, out)` writes the elements of `out`, which starts at index
+/// `start`. This avoids zero-filling memory that is overwritten.
+///
+/// # Safety
+///
+/// `fill` must write every element of every `out` it is given. The result
+/// is marked initialised without checking, so a skipped element is read as
+/// uninitialised memory.
+pub(crate) unsafe fn par_build<T: Copy + Send + Sync>(
     len: usize,
     chunk: usize,
     fill: impl Fn(usize, &mut [std::mem::MaybeUninit<T>]) + Sync,
