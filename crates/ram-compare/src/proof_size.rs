@@ -96,6 +96,18 @@ pub fn twist2(p: &ram_argument::twist2::Proof) -> ProofSize {
     size
 }
 
+/// Direct LogUp* Twist authenticates both a main and a pushforward commitment.
+pub fn twist_logup(p: &ram_argument::twist2::logup::Proof) -> ProofSize {
+    let size = ram_argument::twist2::logup::proof_size(p);
+    let mut counted = ProofSize::new(
+        size.pcs_bytes + 2 * INDEX,
+        size.mosaic_bytes,
+        size.iop_bytes,
+    );
+    counted.source = "crate";
+    counted
+}
+
 /// Upstream BinaryTwist (`twist-legacy`, `ram_argument::RamProof`).
 pub fn twist(p: &ram_argument::RamProof) -> ProofSize {
     let c = &p.input_claims;

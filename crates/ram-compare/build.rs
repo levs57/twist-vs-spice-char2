@@ -13,6 +13,9 @@ const ARGUMENT_SOURCES: &[&str] = &[
     "crates/ram-argument/src",
     "crates/spice-argument/Cargo.toml",
     "crates/spice-argument/src",
+    "vendor/bitz-logup/Cargo.toml",
+    "vendor/bitz-logup/UPSTREAM.json",
+    "vendor/bitz-logup/src",
 ];
 
 fn collect(root: &Path, rel: &Path, out: &mut Vec<PathBuf>) {

@@ -1,0 +1,77 @@
+random/operations: T=2^14 N=2^8 threads=8 configurations=2 warmup=0 rounds=2
+random/operations twist chunk=Some(4): prove=11.413ms verify=4.821ms [soundness 117.89 bits] commit=1.100ms open=3.374ms IOP+prep=6.939ms bits=1589248/2097152 populated/padded
+  preparation=0.329ms argument=6.489ms ordering(total)=-0.000ms mask(total)=-0.000ms mosaic(total)=0.956ms unattributed=0.122ms (independent medians)
+  soundness: 117.89 bits composed (PCS 118.23, IOP 120.16; IOP terms crate)
+  proof=121764B (pcs=119300B mosaic=688B iop=1776B; field=16B hash=32B index=4B)
+  prover per operation=696.6ns
+  load(1/5/15m) start=5.58/3.76/1.97 end=5.58/3.76/1.97
+  commitment-padding-adjusted ESTIMATE (populated/padded=0.7578): prove=11.147ms commit=0.834ms; modeled commitment padding=0.266ms; all other costs unchanged
+    mosaic.batch                                0.749ms
+    mosaic.bind_g                               0.121ms
+    mosaic.dense                                0.085ms
+    pcs.commit                                  1.100ms
+    pcs.ligerito_open                           2.744ms
+    pcs.open                                    0.003ms
+    pcs.ringswitch                              0.627ms
+    ram.claims                                  0.110ms
+    ram.pack                                    0.093ms
+    ram.statement                               0.024ms
+    ram.witness                                 0.101ms
+    twist.cycle                                 0.015ms
+    twist.cycle.rounds                          1.320ms
+    twist.cycle.tables                          0.002ms
+    twist.interface                             0.043ms
+    twist.memory                                0.004ms
+    twist.read                                  4.149ms
+  verifier stages (exclusive medians):
+    verify.cycle                                0.105ms
+    verify.memory                               0.001ms
+    verify.mosaic                               0.141ms
+    verify.pcs                                  4.315ms
+    verify.read                                 0.165ms
+    verify.statement                            0.020ms
+random/operations twist-logup-star chunk=None: prove=13.387ms verify=8.118ms [soundness 116.87 bits] commit=0.884ms open=3.965ms IOP+prep=8.538ms bits=1228800/2129920 populated/padded
+  preparation=0.294ms argument=8.170ms ordering(total)=-0.000ms mask(total)=-0.000ms mosaic(total)=1.743ms unattributed=0.075ms (independent medians)
+  soundness: 116.87 bits composed (PCS 117.65, IOP 118.14; IOP terms crate)
+  proof=139624B (pcs=131176B mosaic=1184B iop=7264B; field=16B hash=32B index=4B)
+  main commitment: 1196032 / 2097152 populated/padded bits; ell=21 claims=11
+  pushforward commitment: 32768 / 32768 populated/padded bits; ell=15 claims=2
+  prover per operation=817.1ns
+  load(1/5/15m) start=5.58/3.76/1.97 end=5.58/3.76/1.97
+  commitment-padding-adjusted ESTIMATE (populated/padded=0.5769): prove=13.032ms commit=0.529ms; modeled commitment padding=0.355ms; all other costs unchanged
+    logup.address.claims                        0.135ms
+    logup.aux.commit                            0.058ms
+    logup.aux.open                              0.000ms
+    logup.aux.pack                              0.009ms
+    logup.fraction.witness                      0.702ms
+    logup.pushforward                           0.052ms
+    logup.pushforward.histogram                 0.008ms
+    logup.pushforward.weights                   0.049ms
+    logup.rational                              1.537ms
+    mosaic.aux.batch                            0.223ms
+    mosaic.batch                                0.983ms
+    mosaic.bind_g                               0.456ms
+    mosaic.dense                                0.082ms
+    pcs.commit                                  0.825ms
+    pcs.ligerito_open                           3.176ms
+    pcs.open                                    0.001ms
+    pcs.ringswitch                              0.788ms
+    ram.claims                                  0.082ms
+    ram.pack                                    0.098ms
+    ram.statement                               0.025ms
+    ram.witness                                 0.090ms
+    twist.cycle                                 0.439ms
+    twist.interface                             0.036ms
+    twist.memory                                0.003ms
+    twist.read                                  3.456ms
+  verifier stages (exclusive medians):
+    verify.cycle                                0.103ms
+    verify.logup                                2.743ms
+    verify.memory                               0.001ms
+    verify.mosaic                               0.150ms
+    verify.pcs                                  4.867ms
+    verify.read                                 0.156ms
+    verify.statement                            0.024ms
+JSON: results/twist-logup-smoke.json
+random/operations twist(chunk=4)/twist-logup-star median ratios, 95% paired bootstrap over 2 rounds: prover=0.853× [0.769, 0.928] verifier=0.594× [0.541, 0.660] [soundness 117.89 bits vs 116.87 bits]
+Verified 4 proofs across 2 cases, including warmups.

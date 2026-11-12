@@ -1,0 +1,1427 @@
+{
+  "source_sha256": "696db9798fc245d52a6d59fc9b9c3eecbe05c0fd9243dd2164b890b7a2cee94c",
+  "executable_sha256": "d9324c4f500d414f2978011bf28842d820bfc6635207043d53e06a61b14df94f",
+  "verified_proofs": 180,
+  "measured_proofs": 164,
+  "tests": {
+    "default": {
+      "passed": 208,
+      "log": "audit/logs/twist-logup-workspace-default.log"
+    },
+    "native": {
+      "passed": 208,
+      "log": "audit/logs/twist-logup-workspace-native.log"
+    }
+  },
+  "checks": [
+    "matched operation and RMW traces, metadata and public/private boundaries",
+    "dense address and auxiliary commitment areas match independent formulas",
+    "each PCS and RingSwitch uses its actual domain",
+    "rational error equals (N-1)/2^128",
+    "per-proof exclusive accounting closes and both commitments/openings charged",
+    "padding adjustment independently weights the two commitment times",
+    "all reports name frozen source and executable"
+  ],
+  "cases": [
+    {
+      "report": "results/twist-logup-smoke.json",
+      "pattern": "random/operations",
+      "address_bits": 8,
+      "log_cycles": 14,
+      "read_order": "cycle",
+      "final_memory": "private",
+      "rounds": 2,
+      "prover_ms": {
+        "twist": 11.4133145,
+        "logup": 13.387101,
+        "logup_over_twist": {
+          "ratio": 1.1729371866516076,
+          "ci95_low": 1.0771756323693034,
+          "ci95_high": 1.3010330002990342,
+          "rounds": 2,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "verifier_ms": {
+        "twist": 4.820773,
+        "logup": 8.117838,
+        "logup_over_twist": {
+          "ratio": 1.6839286977420427,
+          "ci95_low": 1.5156831974599196,
+          "ci95_high": 1.8483825852752203,
+          "rounds": 2,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "commit_ms": {
+        "twist": 1.100208,
+        "logup": 0.883529,
+        "logup_over_twist": {
+          "ratio": 0.8030563311664702,
+          "ci95_low": 0.5489056764754312,
+          "ci95_high": 1.2836564296271966,
+          "rounds": 2,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "opening_ms": {
+        "twist": 3.374134,
+        "logup": 3.9652730000000003,
+        "logup_over_twist": {
+          "ratio": 1.1751972506130461,
+          "ci95_low": 1.0819012500060148,
+          "ci95_high": 1.2777141399800016,
+          "rounds": 2,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "twist": {
+        "cycle_and_address_iop_ms": 1.336365,
+        "read_ms": 4.14947,
+        "mosaic_ms": 0.9557815,
+        "area": {
+          "cycles": 16384,
+          "memory_cells": 256,
+          "populated_bits": 1589248,
+          "committed_bits": 2097152,
+          "padding_bits": 507904,
+          "populated_fraction": 0.7578125,
+          "packed_field_elements": 16384,
+          "mosaic_claims": 7,
+          "components": [
+            {
+              "name": "ram/ra0/1",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/ra0/2",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/final",
+              "log_size": 14,
+              "bits": 16384
+            }
+          ]
+        },
+        "soundness_bits": 117.89095706790589,
+        "proof_size": {
+          "pcs_bytes": 119300,
+          "mosaic_bytes": 688,
+          "iop_bytes": 1776,
+          "total_bytes": 121764,
+          "source": "crate"
+        }
+      },
+      "logup": {
+        "cycle_and_address_iop_ms": 2.9310715,
+        "read_ms": 3.455723,
+        "mosaic_ms": 1.7434595,
+        "area": {
+          "cycles": 16384,
+          "memory_cells": 256,
+          "populated_bits": 1228800,
+          "committed_bits": 2129920,
+          "padding_bits": 901120,
+          "populated_fraction": 0.5769230769230769,
+          "packed_field_elements": 16640,
+          "mosaic_claims": 13,
+          "components": [
+            {
+              "name": "ram/address/0",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/address/1",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/address/2",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/address/3",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/address/4",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/address/5",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/address/6",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/address/7",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/final",
+              "log_size": 14,
+              "bits": 16384
+            },
+            {
+              "name": "ram/logup/pushforward",
+              "log_size": 15,
+              "bits": 32768
+            }
+          ],
+          "commitments": [
+            {
+              "name": "main",
+              "ell": 21,
+              "populated_bits": 1196032,
+              "committed_bits": 2097152,
+              "populated_fraction": 0.5703125,
+              "mosaic_claims": 11
+            },
+            {
+              "name": "pushforward",
+              "ell": 15,
+              "populated_bits": 32768,
+              "committed_bits": 32768,
+              "populated_fraction": 1.0,
+              "mosaic_claims": 2
+            }
+          ]
+        },
+        "soundness_bits": 116.87194428537815,
+        "proof_size": {
+          "pcs_bytes": 131176,
+          "mosaic_bytes": 1184,
+          "iop_bytes": 7264,
+          "total_bytes": 139624,
+          "source": "crate"
+        }
+      }
+    },
+    {
+      "report": "results/twist-logup-a16-n20.json",
+      "pattern": "random/operations",
+      "address_bits": 16,
+      "log_cycles": 20,
+      "read_order": "address",
+      "final_memory": "public",
+      "rounds": 20,
+      "prover_ms": {
+        "twist": 209.70662049999999,
+        "logup": 231.883309,
+        "logup_over_twist": {
+          "ratio": 1.1057510175268883,
+          "ci95_low": 1.0472443051177394,
+          "ci95_high": 1.1317690918533156,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "verifier_ms": {
+        "twist": 12.1893545,
+        "logup": 20.259175,
+        "logup_over_twist": {
+          "ratio": 1.6620383794728424,
+          "ci95_low": 1.6141830839582354,
+          "ci95_high": 1.6820125466443492,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "commit_ms": {
+        "twist": 12.1670675,
+        "logup": 13.270506999999998,
+        "logup_over_twist": {
+          "ratio": 1.0906906697114978,
+          "ci95_low": 1.063774893226683,
+          "ci95_high": 1.1449077381295085,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "opening_ms": {
+        "twist": 28.139297,
+        "logup": 34.197061000000005,
+        "logup_over_twist": {
+          "ratio": 1.2152777306412454,
+          "ci95_low": 1.1665829045491678,
+          "ci95_high": 1.296210379516016,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "twist": {
+        "cycle_and_address_iop_ms": 51.282941,
+        "read_ms": 101.07544949999999,
+        "mosaic_ms": 7.712669999999999,
+        "area": {
+          "cycles": 1048576,
+          "memory_cells": 65536,
+          "populated_bits": 134217728,
+          "committed_bits": 134217728,
+          "padding_bits": 0,
+          "populated_fraction": 1.0,
+          "packed_field_elements": 1048576,
+          "mosaic_claims": 10,
+          "components": [
+            {
+              "name": "ram/ra0/1",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/2",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/3",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/4",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 26,
+              "bits": 67108864
+            }
+          ]
+        },
+        "soundness_bits": 117.28138558207968,
+        "proof_size": {
+          "pcs_bytes": 318884,
+          "mosaic_bytes": 880,
+          "iop_bytes": 3296,
+          "total_bytes": 323060,
+          "source": "crate"
+        }
+      },
+      "logup": {
+        "cycle_and_address_iop_ms": 61.721419499999996,
+        "read_ms": 103.4961405,
+        "mosaic_ms": 8.431988,
+        "area": {
+          "cycles": 1048576,
+          "memory_cells": 65536,
+          "populated_bits": 92274688,
+          "committed_bits": 142606336,
+          "padding_bits": 50331648,
+          "populated_fraction": 0.6470588235294118,
+          "packed_field_elements": 1114112,
+          "mosaic_claims": 20,
+          "components": [
+            {
+              "name": "ram/address/0",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/1",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/2",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/3",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/4",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/5",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/6",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/7",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/8",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/9",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/10",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/11",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/12",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/13",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/14",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/15",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 26,
+              "bits": 67108864
+            },
+            {
+              "name": "ram/logup/pushforward",
+              "log_size": 23,
+              "bits": 8388608
+            }
+          ],
+          "commitments": [
+            {
+              "name": "main",
+              "ell": 27,
+              "populated_bits": 83886080,
+              "committed_bits": 134217728,
+              "populated_fraction": 0.625,
+              "mosaic_claims": 18
+            },
+            {
+              "name": "pushforward",
+              "ell": 23,
+              "populated_bits": 8388608,
+              "committed_bits": 8388608,
+              "populated_fraction": 1.0,
+              "mosaic_claims": 2
+            }
+          ]
+        },
+        "soundness_bits": 111.92269415223618,
+        "proof_size": {
+          "pcs_bytes": 524872,
+          "mosaic_bytes": 1632,
+          "iop_bytes": 15344,
+          "total_bytes": 541848,
+          "source": "crate"
+        }
+      }
+    },
+    {
+      "report": "results/twist-logup-a16-n20.json",
+      "pattern": "guest/erc20-mixed-block/memory/operations",
+      "address_bits": 16,
+      "log_cycles": 20,
+      "read_order": "address",
+      "final_memory": "public",
+      "rounds": 20,
+      "prover_ms": {
+        "twist": 123.66076749999999,
+        "logup": 134.76495,
+        "logup_over_twist": {
+          "ratio": 1.0897955165934095,
+          "ci95_low": 1.0122016432293168,
+          "ci95_high": 1.1373481263873413,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "verifier_ms": {
+        "twist": 12.6652915,
+        "logup": 20.450572,
+        "logup_over_twist": {
+          "ratio": 1.6146941426496184,
+          "ci95_low": 1.5609082437999076,
+          "ci95_high": 1.6488877496423986,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "commit_ms": {
+        "twist": 13.0093165,
+        "logup": 13.8258735,
+        "logup_over_twist": {
+          "ratio": 1.0627670946432888,
+          "ci95_low": 1.0003771053356048,
+          "ci95_high": 1.1135205994754833,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "opening_ms": {
+        "twist": 26.1876595,
+        "logup": 31.1235695,
+        "logup_over_twist": {
+          "ratio": 1.188482288766585,
+          "ci95_low": 1.1518669140588322,
+          "ci95_high": 1.2461806809853746,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "twist": {
+        "cycle_and_address_iop_ms": 46.12091099999999,
+        "read_ms": 26.1989965,
+        "mosaic_ms": 4.506156,
+        "area": {
+          "cycles": 1048576,
+          "memory_cells": 65536,
+          "populated_bits": 134217728,
+          "committed_bits": 134217728,
+          "padding_bits": 0,
+          "populated_fraction": 1.0,
+          "packed_field_elements": 1048576,
+          "mosaic_claims": 10,
+          "components": [
+            {
+              "name": "ram/ra0/1",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/2",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/3",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/4",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 26,
+              "bits": 67108864
+            }
+          ]
+        },
+        "soundness_bits": 117.28138558207968,
+        "proof_size": {
+          "pcs_bytes": 318116,
+          "mosaic_bytes": 880,
+          "iop_bytes": 3296,
+          "total_bytes": 322292,
+          "source": "crate"
+        }
+      },
+      "logup": {
+        "cycle_and_address_iop_ms": 51.995817,
+        "read_ms": 24.2753005,
+        "mosaic_ms": 4.199308,
+        "area": {
+          "cycles": 1048576,
+          "memory_cells": 65536,
+          "populated_bits": 92274688,
+          "committed_bits": 142606336,
+          "padding_bits": 50331648,
+          "populated_fraction": 0.6470588235294118,
+          "packed_field_elements": 1114112,
+          "mosaic_claims": 20,
+          "components": [
+            {
+              "name": "ram/address/0",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/1",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/2",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/3",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/4",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/5",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/6",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/7",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/8",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/9",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/10",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/11",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/12",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/13",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/14",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/15",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 26,
+              "bits": 67108864
+            },
+            {
+              "name": "ram/logup/pushforward",
+              "log_size": 23,
+              "bits": 8388608
+            }
+          ],
+          "commitments": [
+            {
+              "name": "main",
+              "ell": 27,
+              "populated_bits": 83886080,
+              "committed_bits": 134217728,
+              "populated_fraction": 0.625,
+              "mosaic_claims": 18
+            },
+            {
+              "name": "pushforward",
+              "ell": 23,
+              "populated_bits": 8388608,
+              "committed_bits": 8388608,
+              "populated_fraction": 1.0,
+              "mosaic_claims": 2
+            }
+          ]
+        },
+        "soundness_bits": 111.92269415223618,
+        "proof_size": {
+          "pcs_bytes": 522216,
+          "mosaic_bytes": 1632,
+          "iop_bytes": 15344,
+          "total_bytes": 539192,
+          "source": "crate"
+        }
+      }
+    },
+    {
+      "report": "results/twist-logup-a16-n20.json",
+      "pattern": "guest/pointer-chase/memory/operations",
+      "address_bits": 16,
+      "log_cycles": 20,
+      "read_order": "address",
+      "final_memory": "public",
+      "rounds": 20,
+      "prover_ms": {
+        "twist": 116.20463649999999,
+        "logup": 136.645507,
+        "logup_over_twist": {
+          "ratio": 1.1759040870972477,
+          "ci95_low": 1.1462052456223324,
+          "ci95_high": 1.2291711650862558,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "verifier_ms": {
+        "twist": 13.190043,
+        "logup": 21.261258,
+        "logup_over_twist": {
+          "ratio": 1.6119172621347786,
+          "ci95_low": 1.5919368964269234,
+          "ci95_high": 1.6417434695838586,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "commit_ms": {
+        "twist": 12.705122,
+        "logup": 14.993831,
+        "logup_over_twist": {
+          "ratio": 1.1801406550838316,
+          "ci95_low": 1.1023787166454706,
+          "ci95_high": 1.2359356944708604,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "opening_ms": {
+        "twist": 25.7932445,
+        "logup": 32.402641,
+        "logup_over_twist": {
+          "ratio": 1.2562452544502496,
+          "ci95_low": 1.203767731184067,
+          "ci95_high": 1.316498782876252,
+          "rounds": 20,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "twist": {
+        "cycle_and_address_iop_ms": 41.541807,
+        "read_ms": 23.6609775,
+        "mosaic_ms": 4.183157,
+        "area": {
+          "cycles": 1048576,
+          "memory_cells": 65536,
+          "populated_bits": 134217728,
+          "committed_bits": 134217728,
+          "padding_bits": 0,
+          "populated_fraction": 1.0,
+          "packed_field_elements": 1048576,
+          "mosaic_claims": 10,
+          "components": [
+            {
+              "name": "ram/ra0/1",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/2",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/3",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/4",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 26,
+              "bits": 67108864
+            }
+          ]
+        },
+        "soundness_bits": 117.28138558207968,
+        "proof_size": {
+          "pcs_bytes": 320388,
+          "mosaic_bytes": 880,
+          "iop_bytes": 3296,
+          "total_bytes": 324564,
+          "source": "crate"
+        }
+      },
+      "logup": {
+        "cycle_and_address_iop_ms": 56.595757,
+        "read_ms": 22.7074205,
+        "mosaic_ms": 3.8564085,
+        "area": {
+          "cycles": 1048576,
+          "memory_cells": 65536,
+          "populated_bits": 92274688,
+          "committed_bits": 142606336,
+          "padding_bits": 50331648,
+          "populated_fraction": 0.6470588235294118,
+          "packed_field_elements": 1114112,
+          "mosaic_claims": 20,
+          "components": [
+            {
+              "name": "ram/address/0",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/1",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/2",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/3",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/4",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/5",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/6",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/7",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/8",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/9",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/10",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/11",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/12",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/13",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/14",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/15",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 26,
+              "bits": 67108864
+            },
+            {
+              "name": "ram/logup/pushforward",
+              "log_size": 23,
+              "bits": 8388608
+            }
+          ],
+          "commitments": [
+            {
+              "name": "main",
+              "ell": 27,
+              "populated_bits": 83886080,
+              "committed_bits": 134217728,
+              "populated_fraction": 0.625,
+              "mosaic_claims": 18
+            },
+            {
+              "name": "pushforward",
+              "ell": 23,
+              "populated_bits": 8388608,
+              "committed_bits": 8388608,
+              "populated_fraction": 1.0,
+              "mosaic_claims": 2
+            }
+          ]
+        },
+        "soundness_bits": 111.92269415223618,
+        "proof_size": {
+          "pcs_bytes": 527976,
+          "mosaic_bytes": 1632,
+          "iop_bytes": 15344,
+          "total_bytes": 544952,
+          "source": "crate"
+        }
+      }
+    },
+    {
+      "report": "results/twist-logup-a12-n20.json",
+      "pattern": "random/operations",
+      "address_bits": 12,
+      "log_cycles": 20,
+      "read_order": "address",
+      "final_memory": "public",
+      "rounds": 10,
+      "prover_ms": {
+        "twist": 173.1224525,
+        "logup": 205.3405025,
+        "logup_over_twist": {
+          "ratio": 1.1860997781324754,
+          "ci95_low": 1.1258244082180926,
+          "ci95_high": 1.2582326997907654,
+          "rounds": 10,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "verifier_ms": {
+        "twist": 11.861618499999999,
+        "logup": 19.961918500000003,
+        "logup_over_twist": {
+          "ratio": 1.68290006123532,
+          "ci95_low": 1.537296205895009,
+          "ci95_high": 1.7963008845177593,
+          "rounds": 10,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "commit_ms": {
+        "twist": 12.976537,
+        "logup": 13.7089495,
+        "logup_over_twist": {
+          "ratio": 1.0564412909237648,
+          "ci95_low": 0.8586583748975655,
+          "ci95_high": 1.1799238617243946,
+          "rounds": 10,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "opening_ms": {
+        "twist": 30.5520055,
+        "logup": 34.487595,
+        "logup_over_twist": {
+          "ratio": 1.1288160772293654,
+          "ci95_low": 1.0738747903302743,
+          "ci95_high": 1.1854425100585833,
+          "rounds": 10,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "twist": {
+        "cycle_and_address_iop_ms": 36.365881,
+        "read_ms": 75.4522455,
+        "mosaic_ms": 7.9573315,
+        "area": {
+          "cycles": 1048576,
+          "memory_cells": 4096,
+          "populated_bits": 117440512,
+          "committed_bits": 134217728,
+          "padding_bits": 16777216,
+          "populated_fraction": 0.875,
+          "packed_field_elements": 1048576,
+          "mosaic_claims": 8,
+          "components": [
+            {
+              "name": "ram/ra0/1",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/2",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/ra0/3",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 26,
+              "bits": 67108864
+            }
+          ]
+        },
+        "soundness_bits": 117.31079237404548,
+        "proof_size": {
+          "pcs_bytes": 320132,
+          "mosaic_bytes": 880,
+          "iop_bytes": 2816,
+          "total_bytes": 323828,
+          "source": "crate"
+        }
+      },
+      "logup": {
+        "cycle_and_address_iop_ms": 59.772011500000005,
+        "read_ms": 79.276812,
+        "mosaic_ms": 8.558965,
+        "area": {
+          "cycles": 1048576,
+          "memory_cells": 4096,
+          "populated_bits": 80216064,
+          "committed_bits": 134742016,
+          "padding_bits": 54525952,
+          "populated_fraction": 0.5953307392996109,
+          "packed_field_elements": 1052672,
+          "mosaic_claims": 16,
+          "components": [
+            {
+              "name": "ram/address/0",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/1",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/2",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/3",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/4",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/5",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/6",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/7",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/8",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/9",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/10",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/address/11",
+              "log_size": 20,
+              "bits": 1048576
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 26,
+              "bits": 67108864
+            },
+            {
+              "name": "ram/logup/pushforward",
+              "log_size": 19,
+              "bits": 524288
+            }
+          ],
+          "commitments": [
+            {
+              "name": "main",
+              "ell": 27,
+              "populated_bits": 79691776,
+              "committed_bits": 134217728,
+              "populated_fraction": 0.59375,
+              "mosaic_claims": 14
+            },
+            {
+              "name": "pushforward",
+              "ell": 19,
+              "populated_bits": 524288,
+              "committed_bits": 524288,
+              "populated_fraction": 1.0,
+              "mosaic_claims": 2
+            }
+          ]
+        },
+        "soundness_bits": 115.12934783622292,
+        "proof_size": {
+          "pcs_bytes": 386504,
+          "mosaic_bytes": 1504,
+          "iop_bytes": 13104,
+          "total_bytes": 401112,
+          "source": "crate"
+        }
+      }
+    },
+    {
+      "report": "results/twist-logup-a20-n18.json",
+      "pattern": "random/operations",
+      "address_bits": 20,
+      "log_cycles": 18,
+      "read_order": "address",
+      "final_memory": "public",
+      "rounds": 10,
+      "prover_ms": {
+        "twist": 211.133775,
+        "logup": 313.102624,
+        "logup_over_twist": {
+          "ratio": 1.482958489232715,
+          "ci95_low": 1.384596934189652,
+          "ci95_high": 1.5483424737880955,
+          "rounds": 10,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "verifier_ms": {
+        "twist": 22.060813500000002,
+        "logup": 32.4686195,
+        "logup_over_twist": {
+          "ratio": 1.4717779786316583,
+          "ci95_low": 1.3409168203619186,
+          "ci95_high": 1.5873275985137876,
+          "rounds": 10,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "commit_ms": {
+        "twist": 6.393395,
+        "logup": 21.562006,
+        "logup_over_twist": {
+          "ratio": 3.3725440083085747,
+          "ci95_low": 3.098492836271347,
+          "ci95_high": 3.6888818270602775,
+          "rounds": 10,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "opening_ms": {
+        "twist": 17.496461,
+        "logup": 44.275276000000005,
+        "logup_over_twist": {
+          "ratio": 2.5305275163931724,
+          "ci95_low": 2.3461071639638607,
+          "ci95_high": 2.6310995692214556,
+          "rounds": 10,
+          "resamples": 10000,
+          "seed": 6840254343172384229
+        }
+      },
+      "twist": {
+        "cycle_and_address_iop_ms": 19.151228500000002,
+        "read_ms": 151.9266095,
+        "mosaic_ms": 3.777696,
+        "area": {
+          "cycles": 262144,
+          "memory_cells": 1048576,
+          "populated_bits": 37748736,
+          "committed_bits": 67108864,
+          "padding_bits": 29360128,
+          "populated_fraction": 0.5625,
+          "packed_field_elements": 524288,
+          "mosaic_claims": 12,
+          "components": [
+            {
+              "name": "ram/ra0/1",
+              "log_size": 22,
+              "bits": 4194304
+            },
+            {
+              "name": "ram/ra0/2",
+              "log_size": 22,
+              "bits": 4194304
+            },
+            {
+              "name": "ram/ra0/3",
+              "log_size": 22,
+              "bits": 4194304
+            },
+            {
+              "name": "ram/ra0/4",
+              "log_size": 22,
+              "bits": 4194304
+            },
+            {
+              "name": "ram/ra0/5",
+              "log_size": 22,
+              "bits": 4194304
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 24,
+              "bits": 16777216
+            }
+          ]
+        },
+        "soundness_bits": 117.27625780305726,
+        "proof_size": {
+          "pcs_bytes": 270148,
+          "mosaic_bytes": 848,
+          "iop_bytes": 3488,
+          "total_bytes": 274484,
+          "source": "crate"
+        }
+      },
+      "logup": {
+        "cycle_and_address_iop_ms": 74.1509825,
+        "read_ms": 145.758807,
+        "mosaic_ms": 13.587751,
+        "area": {
+          "cycles": 262144,
+          "memory_cells": 1048576,
+          "populated_bits": 156237824,
+          "committed_bits": 167772160,
+          "padding_bits": 11534336,
+          "populated_fraction": 0.93125,
+          "packed_field_elements": 1310720,
+          "mosaic_claims": 24,
+          "components": [
+            {
+              "name": "ram/address/0",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/1",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/2",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/3",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/4",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/5",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/6",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/7",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/8",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/9",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/10",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/11",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/12",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/13",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/14",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/15",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/16",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/17",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/18",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/address/19",
+              "log_size": 18,
+              "bits": 262144
+            },
+            {
+              "name": "ram/inc",
+              "log_size": 24,
+              "bits": 16777216
+            },
+            {
+              "name": "ram/logup/pushforward",
+              "log_size": 27,
+              "bits": 134217728
+            }
+          ],
+          "commitments": [
+            {
+              "name": "main",
+              "ell": 25,
+              "populated_bits": 22020096,
+              "committed_bits": 33554432,
+              "populated_fraction": 0.65625,
+              "mosaic_claims": 22
+            },
+            {
+              "name": "pushforward",
+              "ell": 27,
+              "populated_bits": 134217728,
+              "committed_bits": 134217728,
+              "populated_fraction": 1.0,
+              "mosaic_claims": 2
+            }
+          ]
+        },
+        "soundness_bits": 107.99429022079514,
+        "proof_size": {
+          "pcs_bytes": 548008,
+          "mosaic_bytes": 1696,
+          "iop_bytes": 16592,
+          "total_bytes": 566296,
+          "source": "crate"
+        }
+      }
+    }
+  ]
+}

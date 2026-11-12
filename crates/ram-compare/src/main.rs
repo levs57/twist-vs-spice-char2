@@ -87,9 +87,11 @@ fn argument_sources_sha256() -> String {
     hex(&Hasher::sha256().digest(&bytes))
 }
 const HELP: &str = "Chronological shared-address RAM: Twist versus ordered Spice
-  --methods twist,twist-legacy,spice,spice-ripple,spice-typed,spice-typed-2fp|both
+  --methods twist,twist-logup-star,twist-legacy,spice,spice-ripple,spice-typed,spice-typed-2fp|both
                                   Ordered methods; both=twist,spice (default).
                                   twist is Twist v2 (ram_argument::twist2);
+                                  twist-logup-star replaces its onehot encoding
+                                  with dense address bits and LogUp* pushforward;
                                   twist-legacy is BinaryTwist Flat at 632855e;
                                   spice-typed-2fp uses two fingerprints
   --read-order address|cycle       Twist v2 read-check order (default address)
@@ -221,6 +223,7 @@ fn options() -> Result<Option<Options>> {
                     &value,
                     &[
                         "twist",
+                        "twist-logup-star",
                         "twist-legacy",
                         "spice",
                         "spice-ripple",
@@ -297,7 +300,9 @@ fn validate_options(o: &Options) -> Result<()> {
         return Err("invalid log rate".into());
     }
     if o.chunk_bits.is_empty()
-        || o.methods.iter().any(|m| m.starts_with("twist"))
+        || o.methods
+            .iter()
+            .any(|m| matches!(m.as_str(), "twist" | "twist-legacy"))
             && o.chunk_bits.iter().enumerate().any(|(i, &c)| {
                 c == 0
                     || c > o.address_bits
@@ -424,7 +429,7 @@ fn configurations(o: &Options) -> Vec<(String, Option<usize>)> {
     o.methods
         .iter()
         .flat_map(|method| {
-            if method.starts_with("spice") {
+            if method.starts_with("spice") || method == "twist-logup-star" {
                 vec![(method.clone(), None)]
             } else {
                 o.chunk_bits
@@ -437,7 +442,7 @@ fn configurations(o: &Options) -> Vec<(String, Option<usize>)> {
 }
 fn ordering_name(method: &str) -> Option<&'static str> {
     match method {
-        "twist" | "twist-legacy" => None,
+        "twist" | "twist-logup-star" | "twist-legacy" => None,
         "spice" => Some("flock-boolean"),
         "spice-ripple" => Some("ripple-eq-factor"),
         "spice-typed" => Some("single-value-flock"),
@@ -452,6 +457,10 @@ fn ordering_name(method: &str) -> Option<&'static str> {
 fn implementation_name(method: &str, o: &Options) -> String {
     match method {
         "twist" => format!("ram_argument::twist2 ({}-first read check)", o.read_order),
+        "twist-logup-star" => format!(
+            "ram_argument::twist2::logup ({}-first read check; direct pushforward)",
+            o.read_order
+        ),
         "twist-legacy" => "ram_argument BinaryTwist flat (as at 632855e)".into(),
         "spice" => "untyped Spice with Flock ordering (as at 632855e)".into(),
         "spice-ripple" => "untyped Spice with ripple eq-factor ordering (as at 632855e)".into(),
@@ -470,7 +479,10 @@ fn final_memory_mode(method: &str, o: &Options) -> String {
     }
 }
 fn supports_private_final_memory(method: &str) -> bool {
-    matches!(method, "twist" | "spice-typed" | "spice-typed-2fp")
+    matches!(
+        method,
+        "twist" | "twist-logup-star" | "spice-typed" | "spice-typed-2fp"
+    )
 }
 /// Composed soundness bits for the console, marked when only the fingerprint
 /// term is derived, so a partial figure is not read as a full one.
@@ -549,6 +561,18 @@ struct Area {
     packed_field_elements: usize,
     mosaic_claims: usize,
     components: Vec<Component>,
+    /// Separate commitment domains; present for protocols with an auxiliary PCS.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    commitments: Vec<CommitmentArea>,
+}
+#[derive(Clone, Debug, PartialEq, Serialize)]
+struct CommitmentArea {
+    name: &'static str,
+    ell: usize,
+    populated_bits: usize,
+    committed_bits: usize,
+    populated_fraction: f64,
+    mosaic_claims: usize,
 }
 impl Area {
     fn new(summary: &Summary, method: &str, o: &Options) -> Result<Self> {
@@ -594,7 +618,38 @@ impl Area {
             packed_field_elements: summary.packed_field_elements,
             mosaic_claims: summary.mosaic_claims,
             components,
+            commitments: Vec::new(),
         })
+    }
+
+    fn with_auxiliary(main: &Summary, auxiliary: &Summary, o: &Options) -> Result<Self> {
+        let mut area = Self::new(main, "twist-logup-star", o)?;
+        let extra = Self::new(auxiliary, "twist-logup-star", o)?;
+        let commitments = [("main", &area), ("pushforward", &extra)]
+            .into_iter()
+            .map(|(name, domain)| {
+                if !domain.committed_bits.is_power_of_two() {
+                    return Err("individual commitment domain must be a power of two".into());
+                }
+                Ok(CommitmentArea {
+                    name,
+                    ell: domain.committed_bits.trailing_zeros() as usize,
+                    populated_bits: domain.populated_bits,
+                    committed_bits: domain.committed_bits,
+                    populated_fraction: domain.populated_fraction,
+                    mosaic_claims: domain.mosaic_claims,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        area.commitments = commitments;
+        area.populated_bits += extra.populated_bits;
+        area.committed_bits += extra.committed_bits;
+        area.padding_bits += extra.padding_bits;
+        area.populated_fraction = area.populated_bits as f64 / area.committed_bits as f64;
+        area.packed_field_elements += extra.packed_field_elements;
+        area.mosaic_claims += extra.mosaic_claims;
+        area.components.extend(extra.components);
+        Ok(area)
     }
 }
 /// Commitment-only linear normalization, not a measured proof over an
@@ -692,8 +747,11 @@ impl Sample {
         }
         let stages_ms = stage_map(metrics);
         let get = |name| stages_ms.get(name).copied().unwrap_or(0.0);
-        let commit_ms = get("pcs.commit");
-        let opening_ms = get("pcs.open") + get("pcs.ringswitch") + get("pcs.ligerito_open");
+        let commit_ms = get("pcs.commit") + get("logup.aux.commit");
+        let opening_ms = get("pcs.open")
+            + get("pcs.ringswitch")
+            + get("pcs.ligerito_open")
+            + get("logup.aux.open");
         if !stages_ms.contains_key("pcs.commit") || !stages_ms.contains_key("pcs.open") {
             return Err("missing commit/open profiling spans".into());
         }
@@ -866,6 +924,7 @@ fn observed(
     statement: Public<'_>,
     metrics: Vec<(&'static str, Duration)>,
     summary: &Summary,
+    auxiliary_summary: Option<&Summary>,
     trace: &AccessTrace,
     method: &str,
     o: &Options,
@@ -874,7 +933,10 @@ fn observed(
     {
         return Err("prover returned a different public input".into());
     }
-    let area = Area::new(summary, method, o)?;
+    let area = match auxiliary_summary {
+        Some(auxiliary) => Area::with_auxiliary(summary, auxiliary, o)?,
+        None => Area::new(summary, method, o)?,
+    };
     let mut sample = Sample::new(
         iteration,
         prover_ms,
@@ -882,6 +944,17 @@ fn observed(
         metrics,
         area.populated_fraction,
     )?;
+    if !area.commitments.is_empty() {
+        let get = |name: &str| sample.stages_ms.get(name).copied().unwrap_or(0.0);
+        let adjusted_commit = get("pcs.commit") * area.commitments[0].populated_fraction
+            + get("logup.aux.commit") * area.commitments[1].populated_fraction;
+        let removed_padding_ms = sample.commit_ms - adjusted_commit;
+        sample.padding_adjusted_estimate = PaddingAdjustedEstimate {
+            prover_ms: sample.prover_ms - removed_padding_ms,
+            commit_ms: adjusted_commit,
+            removed_padding_ms,
+        };
+    }
     sample.verifier_stages_ms = stage_map(verifier_metrics);
     sample.proof_size = proof_size;
     Ok((sample, area, statement.final_memory))
@@ -962,6 +1035,41 @@ fn measure(
             },
             result.metrics,
             &result.summary,
+            None,
+            trace,
+            method,
+            o,
+        )
+    } else if method == "twist-logup-star" {
+        let mut config = twist2_config(config, o)?;
+        // Chunking is an implementation choice of the onehot baseline only.
+        config.chunk_bits = 1;
+        let start = Instant::now();
+        let result = ram_argument::twist2::logup::prove(black_box(&config), black_box(trace))?;
+        let prover_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let mut cpu = None;
+        let (verifier_ms, verifier_metrics) = timed_verify(|| {
+            cpu = Some(ram_argument::twist2::logup::verify(
+                black_box(&result.statement),
+                black_box(&result.proof),
+            )?);
+            Ok(())
+        })?;
+        interface::check_twist(trace, &cpu.expect("verified"))?;
+        observed(
+            iteration,
+            prover_ms,
+            verifier_ms,
+            verifier_metrics,
+            proof_size::twist_logup(&result.proof),
+            Public {
+                initial_memory: &result.statement.initial_memory,
+                log_cycles: result.statement.log_cycles,
+                final_memory: result.final_memory,
+            },
+            result.metrics,
+            &result.summary,
+            Some(&result.auxiliary_summary),
             trace,
             method,
             o,
@@ -986,6 +1094,7 @@ fn measure(
             },
             result.metrics,
             &result.summary,
+            None,
             trace,
             method,
             o,
@@ -1024,6 +1133,7 @@ fn measure(
             },
             result.metrics,
             &result.summary,
+            None,
             trace,
             method,
             o,
@@ -1056,6 +1166,7 @@ fn measure(
             },
             result.metrics,
             &result.summary,
+            None,
             trace,
             method,
             o,
@@ -1281,20 +1392,45 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
             let median = Medians::new(&samples);
             let area = area.ok_or("missing proof")?;
             let proof_size = samples[0].proof_size;
-            let soundness = soundness::compose(
-                &method,
-                &soundness::Dims {
-                    n: area.cycles.trailing_zeros() as usize,
-                    a: area.memory_cells.trailing_zeros() as usize,
-                    chunk_bits: chunk_bits.unwrap_or(o.chunk_bits[0]),
-                    word_log_bits: config.word_log_bits,
-                    ell: area.committed_bits.trailing_zeros() as usize,
-                    mosaic_claims: area.mosaic_claims,
-                },
-                &o.profile,
-                o.log_rate,
-                o.final_memory == "public",
-            );
+            let dims = soundness::Dims {
+                n: area.cycles.trailing_zeros() as usize,
+                a: area.memory_cells.trailing_zeros() as usize,
+                chunk_bits: chunk_bits.unwrap_or(1),
+                word_log_bits: config.word_log_bits,
+                ell: area.commitments.first().map_or_else(
+                    || area.committed_bits.trailing_zeros() as usize,
+                    |domain| domain.ell,
+                ),
+                mosaic_claims: area
+                    .commitments
+                    .first()
+                    .map_or(area.mosaic_claims, |domain| domain.mosaic_claims),
+            };
+            let soundness = if method == "twist-logup-star" {
+                let auxiliary = area
+                    .commitments
+                    .get(1)
+                    .ok_or("missing pushforward domain")?;
+                soundness::compose_twist_logup(
+                    &dims,
+                    &soundness::Dims {
+                        ell: auxiliary.ell,
+                        mosaic_claims: auxiliary.mosaic_claims,
+                        ..dims
+                    },
+                    &o.profile,
+                    o.log_rate,
+                    o.final_memory == "public",
+                )
+            } else {
+                soundness::compose(
+                    &method,
+                    &dims,
+                    &o.profile,
+                    o.log_rate,
+                    o.final_memory == "public",
+                )
+            };
             println!(
                 "{pattern} {method} chunk={chunk_bits:?}: prove={:.3}ms verify={:.3}ms [soundness {}] commit={:.3}ms open={:.3}ms IOP+prep={:.3}ms bits={}/{} populated/padded",
                 median.times["prover_ms"],
@@ -1326,6 +1462,16 @@ fn benchmark(o: &Options) -> Result<Vec<Case>> {
                 proof_size.mosaic_bytes,
                 proof_size.iop_bytes
             );
+            for domain in &area.commitments {
+                println!(
+                    "  {} commitment: {} / {} populated/padded bits; ell={} claims={}",
+                    domain.name,
+                    domain.populated_bits,
+                    domain.committed_bits,
+                    domain.ell,
+                    domain.mosaic_claims,
+                );
+            }
             let throughput = Throughput::new(
                 area.cycles,
                 source_memory_instructions(&o.trace_format, &metadata),
@@ -1705,11 +1851,12 @@ fn main() -> Result<()> {
         "open_magnetar":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/open-magnetar/UPSTREAM.json"))?,
         "lean_grandproduct":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/lean-grandproduct/UPSTREAM.json"))?,
         "flock_boolean":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/flock-boolean/UPSTREAM.json"))?,
+        "bitz_logup":serde_json::from_str::<serde_json::Value>(include_str!("../../../vendor/bitz-logup/UPSTREAM.json"))?,
         // Regenerated from the tree by scripts/write_manifest.py; earlier
         // stage manifests are not embedded because they describe older trees.
         "implementation_manifest":serde_json::from_str::<serde_json::Value>(include_str!("../../../audit/stage16-implementation.json"))?,
     });
-    let report = Report { schema_version:SCHEMA_VERSION,implementation:IMPLEMENTATION.into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods. With public final memory each verifier checks the statement's final memory; with private final memory the cross-method check compares the final memories the provers computed, which the verifiers bind only through the commitment.".into(),"Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).".into(),"Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; soundness.iop_source says whether the IOP terms come from the argument crate, a local fallback derived from the verifier, or only the fingerprint term), load averages per case and sample, host metadata, cases[].throughput (median prover ns per trace row and, for guests, per source load/store before narrow-store expansion) and metadata.reuse_distance (log2 buckets of operations since the previous access to the same word).".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: r=populated_bits/committed_bits multiplies measured pcs.commit; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial memory is public and transcript-bound. Final memory is public and transcript-bound unless cases[].final_memory is private, in which case it is committed and bound by a Mosaic claim.".into(),"cases[].implementation names the prover a method name ran. In this binary twist is Twist v2 (ram_argument::twist2); binaries before schema 5 used twist for the prover now called twist-legacy.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
+    let report = Report { schema_version:SCHEMA_VERSION,implementation:IMPLEMENTATION.into(),options:o,environment,provenance,notes:vec!["Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods. With public final memory each verifier checks the statement's final memory; with private final memory the cross-method check compares the final memories the provers computed, which the verifiers bind only through the commitment.".into(),"Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).".into(),"Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; soundness.iop_source says whether the IOP terms come from the argument crate, a local fallback derived from the verifier, or only the fingerprint term), load averages per case and sample, host metadata, cases[].throughput (median prover ns per trace row and, for guests, per source load/store before narrow-store expansion) and metadata.reuse_distance (log2 buckets of operations since the previous access to the same word).".into(),"Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.".into(),"Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.".into(),"Padding-adjusted values model commitment padding only: each commitment domain multiplies its measured commit time by its own populated/padded fraction; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.".into(),"Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial memory is public and transcript-bound. Final memory is public and transcript-bound unless cases[].final_memory is private, in which case it is committed and bound by a Mosaic claim.".into(),"cases[].implementation names the prover a method name ran. In this binary twist is Twist v2 (ram_argument::twist2); binaries before schema 5 used twist for the prover now called twist-legacy.".into(),"twist-logup-star retains the Twist v2 read check, commits dense Boolean address planes and Inc, uses a cubic cycle check, and authenticates its sparse-address evaluation directly as a LogUp* pushforward MLE. The auxiliary field table is committed before the rational challenge; both main and auxiliary Mosaic/PCS openings are charged. No public-table inner-product or dualization is run. area.commitments lists each actual domain; aggregate committed_bits need not be a power of two. The rational error is (2^address_bits-1)/2^128 with rangechecked addresses, independent of access count; full composition adds the other IOP terms and both PCS domains. Equal overall security is not claimed.".into(),"Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter.".into()],cases,comparisons,paired_ratios,verified_proofs };
     if let Some(path) = &report.options.output {
         write(path, &serde_json::to_vec_pretty(&report)?)?;
         println!("JSON: {}", path.display());
@@ -1842,6 +1989,107 @@ mod tests {
             )
             .is_ok()
         );
+    }
+    #[test]
+    fn logup_variant_is_not_repeated_by_onehot_chunk_sweep() {
+        let o = Options {
+            methods: vec!["twist".into(), "twist-logup-star".into()],
+            chunk_bits: vec![4, 2],
+            ..Default::default()
+        };
+        assert_eq!(
+            configurations(&o),
+            vec![
+                ("twist".into(), Some(4)),
+                ("twist".into(), Some(2)),
+                ("twist-logup-star".into(), None),
+            ]
+        );
+        assert_eq!(ordering_name("twist-logup-star"), None);
+        assert!(supports_private_final_memory("twist-logup-star"));
+    }
+
+    #[test]
+    fn auxiliary_commitment_is_charged_with_its_own_padding_fraction() {
+        let o = Options {
+            address_bits: 4,
+            log_cycles: 8,
+            ..Default::default()
+        };
+        let main = Summary {
+            cycles: 256,
+            memory_cells: 16,
+            address_components: 4,
+            chunk_bits: 0,
+            committed_bits: 32768,
+            packed_field_elements: 256,
+            mosaic_claims: 6,
+            commitment_components: (0..4)
+                .map(|i| ram_argument::ComponentSummary {
+                    name: format!("address/{i}"),
+                    log_size: 8,
+                })
+                .chain([ram_argument::ComponentSummary {
+                    name: "inc".into(),
+                    log_size: 14,
+                }])
+                .collect(),
+        };
+        let auxiliary = Summary {
+            cycles: 16,
+            memory_cells: 16,
+            address_components: 0,
+            chunk_bits: 0,
+            committed_bits: 16384,
+            packed_field_elements: 128,
+            mosaic_claims: 2,
+            commitment_components: vec![ram_argument::ComponentSummary {
+                name: "pushforward".into(),
+                log_size: 11,
+            }],
+        };
+        let trace = AccessTrace {
+            initial: vec![0; 16],
+            reads: vec![vec![0; 256]],
+            writes: vec![0; 256],
+            new_values: vec![0; 256],
+            read_values: None,
+        };
+        let (sample, area, _) = observed(
+            0,
+            30.0,
+            1.0,
+            Vec::new(),
+            ProofSize::default(),
+            Public {
+                initial_memory: &trace.initial,
+                log_cycles: 8,
+                final_memory: vec![0; 16],
+            },
+            vec![
+                ("pcs.commit", Duration::from_millis(10)),
+                ("logup.aux.commit", Duration::from_millis(2)),
+                ("pcs.open", Duration::from_millis(1)),
+                ("logup.aux.open", Duration::from_millis(1)),
+                ("pcs.ringswitch", Duration::from_millis(3)),
+                ("pcs.ligerito_open", Duration::from_millis(4)),
+            ],
+            &main,
+            Some(&auxiliary),
+            &trace,
+            "twist-logup-star",
+            &o,
+        )
+        .unwrap();
+        assert_eq!(area.committed_bits, 49152);
+        assert_eq!(area.populated_bits, 19456);
+        assert_eq!((area.commitments[0].ell, area.commitments[1].ell), (15, 14));
+        assert_eq!(sample.commit_ms, 12.0);
+        assert_eq!(sample.opening_ms, 9.0);
+        // Main: 10 * 17408/32768; auxiliary: 2 * 2048/16384.
+        assert_eq!(sample.padding_adjusted_estimate.commit_ms, 5.5625);
+        assert_eq!(sample.padding_adjusted_estimate.prover_ms, 23.5625);
+        assert_ne!(sample.commit_ms * area.populated_fraction, 5.5625);
     }
     #[test]
     fn nested_pcs_spans_form_disjoint_inclusive_accounting() {

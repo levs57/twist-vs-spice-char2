@@ -12,6 +12,7 @@ om-sumcheck = { path = "../../vendor/open-magnetar/crates/om-sumcheck" }
 om-memcheck = { path = "../../vendor/open-magnetar/crates/om-memcheck" }
 om-mosaic = { path = "../../vendor/open-magnetar/crates/om-mosaic" }
 om-pcs = { path = "../../vendor/open-magnetar/crates/om-pcs" }
+bitz-logup = { path = "../../vendor/bitz-logup" }
 rayon = { workspace = true }
 
 [dev-dependencies]

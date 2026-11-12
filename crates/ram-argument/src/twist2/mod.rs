@@ -24,6 +24,7 @@
 
 pub mod cycle;
 pub(crate) mod cycle_prover;
+pub mod logup;
 pub mod read;
 pub(crate) mod util;
 

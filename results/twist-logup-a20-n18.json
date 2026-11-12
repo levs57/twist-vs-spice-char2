@@ -1,0 +1,3265 @@
+{
+  "schema_version": 5,
+  "implementation": "typed-spice-vs-twist-gf128-v5",
+  "options": {
+    "methods": [
+      "twist",
+      "twist-logup-star"
+    ],
+    "trace_format": "operations",
+    "patterns": [
+      "random"
+    ],
+    "address_bits": 20,
+    "log_cycles": 18,
+    "chunk_bits": [
+      4
+    ],
+    "threads": 8,
+    "warmup": 1,
+    "repeat": 10,
+    "seed": 1,
+    "profile": "provable-120",
+    "log_rate": 2,
+    "guest_program": [
+      "binary-search"
+    ],
+    "guest_rows": [
+      "all"
+    ],
+    "guest_fill": "repeat",
+    "guest_size": 64,
+    "guest_operations": 256,
+    "guest_keys": 64,
+    "guest_queries": 16,
+    "read_order": "address",
+    "final_memory": "public",
+    "output": "results/twist-logup-a20-n18.json",
+    "csv": null
+  },
+  "environment": {
+    "architecture": "x86_64",
+    "argument_sources_sha256": "07fa78272c0dda62eb31ae76f54a76e884c8ba8eb78cf0b9d8202f237c9b826d",
+    "cores": {
+      "logical": 8
+    },
+    "cpu_brand": "13th Gen Intel(R) Core(TM) i9-13980HX",
+    "executable_sha256": "d9324c4f500d414f2978011bf28842d820bfc6635207043d53e06a61b14df94f",
+    "git_commit": "2e30bb91f1c5ac25fae2112fcf141ad05ebcd14a",
+    "git_dirty": "true",
+    "native_features": {
+      "compiled": {
+        "aes": true,
+        "avx2": true,
+        "avx512f": false,
+        "neon": false,
+        "pclmulqdq": true,
+        "sha": true,
+        "sha2": false,
+        "sha3": false,
+        "vpclmulqdq": true
+      },
+      "detected": {
+        "avx2": true,
+        "avx512f": false,
+        "pclmulqdq": true,
+        "sha": true,
+        "vpclmulqdq": true
+      }
+    },
+    "os": {
+      "family": "linux",
+      "kernel": "Linux 7.1.4-200.fc44.x86_64 x86_64",
+      "release": "Fedora Linux 44 (Workstation Edition)"
+    },
+    "ram_compare_sources_sha256": "b6989247e5d0dc8d03c4a47f3b1591c5319b5446390e88134544eec7fc6103f4",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25); binary: rustc; commit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96; commit-date: 2026-05-25; host: x86_64-unknown-linux-gnu; release: 1.96.0; LLVM version: 22.1.2",
+    "rustflags": "-C target-cpu=native"
+  },
+  "provenance": {
+    "bitz_logup": {
+      "commit_date": "2026-09-23T21:55:28+03:00",
+      "copyright": "Copyright (c) 2026 World Foundation",
+      "donor_sources": [
+        {
+          "function_ranges": [
+            {
+              "lines": [
+                24,
+                253
+              ],
+              "role": "Retained fraction witness levels, 3-multiply recurrence, reusable buffers, sqrt-Eq evaluation and folded layer prover",
+              "symbol": "FractionTreeWitness"
+            },
+            {
+              "lines": [
+                255,
+                272
+              ],
+              "role": "Rational root equality and sequential left/right fraction reductions",
+              "symbol": "prove_rational"
+            },
+            {
+              "lines": [
+                274,
+                327
+              ],
+              "role": "Rational root and layer verification",
+              "symbol": "verify_rational"
+            },
+            {
+              "lines": [
+                329,
+                439
+              ],
+              "role": "Square-root Eq evaluation with virtual constant padding and deferred reductions",
+              "symbol": "mle_eval"
+            }
+          ],
+          "path": "crates/gkr/src/logup_cut/fraction.rs",
+          "sha256": "9852712859e81ab3f9f314ab842f4b5da4d80cb6dad3eeb4f3d79a240fc59512"
+        },
+        {
+          "function_ranges": [
+            {
+              "lines": [
+                56,
+                159
+              ],
+              "role": "Equality-factored two-statistic product sumcheck with in-place folds",
+              "symbol": "prove_product_relation_inner"
+            },
+            {
+              "lines": [
+                173,
+                192
+              ],
+              "role": "Point reversal at low-first public boundary",
+              "symbol": "prove_product_relation_into"
+            },
+            {
+              "lines": [
+                194,
+                242
+              ],
+              "role": "Chunked Rayon wide-product reduction",
+              "symbol": "reduce_sumcheck_round"
+            },
+            {
+              "lines": [
+                244,
+                250
+              ],
+              "role": "Characteristic-two equality factor 1+r+z",
+              "symbol": "eq_factor"
+            },
+            {
+              "lines": [
+                252,
+                307
+              ],
+              "role": "Retained suffix equality-table layout; unused alloc helpers omitted",
+              "symbol": "SuffixTable"
+            },
+            {
+              "lines": [
+                354,
+                392
+              ],
+              "role": "Endpoint recovery and equality-product relation check",
+              "symbol": "verify_product_relation_inner"
+            },
+            {
+              "lines": [
+                394,
+                408
+              ],
+              "role": "Verifier low-first public point boundary",
+              "symbol": "verify_product_relation"
+            }
+          ],
+          "path": "crates/gkr/src/lib.rs",
+          "sha256": "9b280041bf08df797cfa5ed3bea1b609ce8a22cd43d40671ac17d1bc45151de9"
+        },
+        {
+          "function_ranges": [
+            {
+              "lines": [
+                14,
+                47
+              ],
+              "role": "Quadratic IP proving and terminal committed evaluation",
+              "symbol": "prove_inner_product"
+            },
+            {
+              "lines": [
+                49,
+                70
+              ],
+              "role": "Transparent public-polynomial terminal check",
+              "symbol": "verify_inner_product"
+            },
+            {
+              "lines": [
+                72,
+                95
+              ],
+              "role": "Two-coefficient Rayon U256 round accumulation",
+              "symbol": "round"
+            },
+            {
+              "lines": [
+                97,
+                103
+              ],
+              "role": "Low-first adjacent-pair in-place fold",
+              "symbol": "fold"
+            }
+          ],
+          "path": "crates/gkr/src/logup_cut/inner_product.rs",
+          "sha256": "eaedc5790762c4a0f6116c7ac3ba4c0c518ebafea25e5f70f64bcf23aba6ac0e"
+        },
+        {
+          "function_ranges": [
+            {
+              "lines": [
+                1,
+                9
+              ],
+              "role": "Same modulus and monomial basis",
+              "symbol": "GHASH field"
+            },
+            {
+              "lines": [
+                138,
+                153
+              ],
+              "role": "Canonical 16-byte LE encoding",
+              "symbol": "to_bytes"
+            },
+            {
+              "lines": [
+                205,
+                210
+              ],
+              "role": "Index encoding injects bits as polynomial coefficients",
+              "symbol": "impl From<u128>"
+            }
+          ],
+          "path": "crates/field/src/gf128.rs",
+          "sha256": "264f954fd2fdd26b0713d1582da3a7c97d6040bf7ac4a036a399c56d09fe6af7"
+        }
+      ],
+      "fingerprint_algorithm": "SHA256 over sorted UTF-8 relative path + NUL + raw 32-byte file SHA256 for each local_sha256 entry.",
+      "fingerprint_scope": "Cargo.toml, LICENSE, and every src file (including tests); excludes Cargo.lock, provenance/docs and target outputs.",
+      "implementation": "gf128-weighted-logup-bitz-v1",
+      "license": "MIT",
+      "license_note": "The donor retained LICENSE grants MIT permission; copied verbatim. Its workspace declares MIT OR Apache-2.0.",
+      "license_notice": "LICENSE",
+      "local_adaptations": [
+        "K/U256 static field shim replaces F128/Wide256 without changing field basis or arithmetic formulas.",
+        "Typed proof structs and checked dimensions/round/layer counts replace donor stream deserialization.",
+        "Result errors replace invalid-input root/shape/denominator and zero-gamma assertions; terminal IP validation adds no full-table scan.",
+        "OM hash-chain transcript uses explicit label/domain/dimension and canonical field-message framing; this is a new wire format, not original-proof-byte compatibility.",
+        "Donor product loop retains high-variable-first scheduling and boundary reversals; every public point is OM low-variable-first.",
+        "Unused upstream grand-product orchestration, tracing attributes and standalone allocation helpers omitted.",
+        "Independent dense algebra/proof/transcript oracles added for native/default regression coverage."
+      ],
+      "local_sha256": {
+        "Cargo.toml": "4a7109c364f2dd9f6d55c8dcbbe1e329f795f3bee1dbfcc358e54534b3fec3ea",
+        "LICENSE": "408b9b4599bf389f97538c1f066bbc74912522d02350ae44528e09f8ccf3c3fc",
+        "src/fraction.rs": "f4adce0573b2bcc87c526528814f652682d69000354d140ebd79e5ab7c41995c",
+        "src/inner_product.rs": "de14e8307efd93b655887cfbf71befa5c6308d5219828e8c8116749382106e89",
+        "src/lib.rs": "a07e7a705e1b1d28cc8046057aa13d55621178c083705bc4d7f79b5fe8825c85",
+        "src/product.rs": "5c0f4a54e925fa631a3af8666a16e8e087f3dee6a9ceabc70cdd0b0a83f0ae51",
+        "src/tests.rs": "7ea433284521ca863481bfdafdf1b69fcc694d784bc5339b97c29c720e264867"
+      },
+      "local_source_sha256": "822e0395bb2e1e26e0a2b382f1df7c96e0583aef3c2724aeb181f6adbde6ee88",
+      "ported_on": "2026-11-10",
+      "protocol_scope": "Weighted rational pushforward and public-table inner-product reductions only. Caller must commit weighted pushforward before tau and authenticate every returned nonpublic evaluation.",
+      "reference_directory": "sources/bitz-reference",
+      "reference_manifest": "audit/bitz-reference.json",
+      "reference_manifest_sha256": "530c5693daac36215818dca2d0460066de7f522a4359e672306781c3b70e9be2",
+      "repository": "https://github.com/worldfnd/BitZ",
+      "revision": "cdfb9b73b5857f4dc83761866e475186c6a75ab3",
+      "shared_dependencies": "om-field and om-transcript provenance is recorded separately in vendor/open-magnetar/UPSTREAM.json; rayon is resolved by the caller Cargo lockfile."
+    },
+    "flock_boolean": {
+      "adaptations": [
+        "Workspace members restricted to the seven dependency-closed packages. Package manifests, Rust/assembly sources and included PCS configuration files remain byte-identical.",
+        "Standalone integration tests, examples, benches, flock-prover and flock-cuda-ffi omitted; internal source unit tests retained.",
+        "No prover kernel, field arithmetic, verifier or transcript changes. Existing OM commitments are integrated externally via the original public zerocheck API."
+      ],
+      "build": "cargo check --manifest-path vendor/flock-boolean/Cargo.toml --locked --offline -p flock-core --lib; no sources checkout required.",
+      "license": "MIT OR Apache-2.0",
+      "local_sha256": {
+        "Cargo.lock": "c57f50798ba1ae70863798d98da6b58a7b66e4e0214aca4f918b7b0d90795973",
+        "Cargo.toml": "0c3c6bf69e829bd43d9ee061fc7d35f6394dfca0d26544b1996e1393dfbdc55f"
+      },
+      "packages": [
+        "flock-core",
+        "flock-field",
+        "flock-multilinear",
+        "flock-parallel",
+        "flock-hash",
+        "flock-transcript",
+        "flock-merkle"
+      ],
+      "repository": "https://github.com/succinctlabs/flock",
+      "revision": "daa0cf426563b01f9e744f6265ebae37c97afcb7",
+      "source_sha256": {
+        "LICENSE-APACHE": "1451f14d812ac78a159791bdeaafc7d400d888f60a8502790042930c1c9be7ff",
+        "LICENSE-MIT": "ed21a0d573a473913534aa8462b410c4c03d899900096bf3bdeb8fea650a01b5",
+        "crates/flock-core/Cargo.toml": "1dfeb37f45d26b698025f3cc86395c707a9cd7917b6284eed8aff21d432994e0",
+        "crates/flock-core/configs/ligerito/m22_fast.toml": "5597cf3b757c76d1df25f8dacc79b9e474839c0310831c1d45ed6bf7d3cc37bd",
+        "crates/flock-core/configs/ligerito/m22_fast100.toml": "ec3cdc74121a8c1ed4a598a29130720cd81af0fd01b0d09a1f37c455e88d0a23",
+        "crates/flock-core/configs/ligerito/m22_secure.toml": "8608ee4b44c7d4dcfc8b8580c549305c72bcb613cb4654d51c5ef4e27cc32622",
+        "crates/flock-core/configs/ligerito/m22_slim.toml": "7bbdd5532567b0810088ff5e2026822b5b4f8dd7e244e1e1c8247bcd39b068bc",
+        "crates/flock-core/configs/ligerito/m22_slim100.toml": "cc4ebd5e07a022788f77d54b432bbf49aed050731bc39d669ef42a1a03f7dc78",
+        "crates/flock-core/configs/ligerito/m23_fast.toml": "5dd54c210602f5ea157a2e976fac6b9923b1db3f67b5167eaf327335ab2d244d",
+        "crates/flock-core/configs/ligerito/m23_fast100.toml": "70c44d882d698aae3356e5fd00c6e89430ae83b604849558d4e0a0925e4b7c05",
+        "crates/flock-core/configs/ligerito/m23_secure.toml": "c3f52f3200d279776f19422c34ac8f602896946513536c20f64d2fed69765207",
+        "crates/flock-core/configs/ligerito/m23_slim.toml": "d48db7143501d1708219efe534030e64d914a595cb9ef81e22d691a1d128d7ec",
+        "crates/flock-core/configs/ligerito/m23_slim100.toml": "bbad3179f685e0e8f83d90d9922014a6e0c576aebd2a57c404fd75416b4e6686",
+        "crates/flock-core/configs/ligerito/m24_fast.toml": "c59ca825420155caa2e92e4740a7092e6c618bac99ac5e7d80577e3f241a9775",
+        "crates/flock-core/configs/ligerito/m24_fast100.toml": "24aeca10f64eaf1cfe7cf6a792c83d3afd41b1389ed3cfbd83ea2f79e7bf9cbe",
+        "crates/flock-core/configs/ligerito/m24_secure.toml": "fb9af4e1618ed86ecc2f050e3f2e2d7105a20c5af978bd83eb3dc5722453b75b",
+        "crates/flock-core/configs/ligerito/m24_slim.toml": "f11d7b78b7eff05d56c6921d013779fb5cc1feabb54b6055d7ed0693ea55902a",
+        "crates/flock-core/configs/ligerito/m24_slim100.toml": "2a53a4a3519f6dc8a5607bc1777268b9eac4f2f0a2be112e28e6b6dc9206a59a",
+        "crates/flock-core/configs/ligerito/m25_fast.toml": "4824d21e626a374a22073f340aebba9a9c9171f06f306660e660c61ebc254d05",
+        "crates/flock-core/configs/ligerito/m25_fast100.toml": "976141c851c0340637d131fe5c1178f556d1620a7569a74dbefbeb5535862b90",
+        "crates/flock-core/configs/ligerito/m25_secure.toml": "02d3eec665104471b622cf0bce74ec3ae430516adaa0f10a8f681ed07015f856",
+        "crates/flock-core/configs/ligerito/m25_slim.toml": "ac90ed7626fd4d8c7b1771e84e06e904c220b905e493948ece835e10f35c2aeb",
+        "crates/flock-core/configs/ligerito/m25_slim100.toml": "aa9faa2f6ea9e4310b19101c52223c887c1377c1dc5a3b436a1fe37f5e981892",
+        "crates/flock-core/configs/ligerito/m26_fast.toml": "df924f3c006f165b10056bdc78622e0fa02fb5ddd3e3bb55b53aeba60a753243",
+        "crates/flock-core/configs/ligerito/m26_fast100.toml": "76fae3d5880836af405b8b1af440c49844c411422419c0e4310bed8939240c67",
+        "crates/flock-core/configs/ligerito/m26_secure.toml": "12ab7d894fd512bc5e1ec63311987eb42809bf8f9b25afd563627d17cf377dc6",
+        "crates/flock-core/configs/ligerito/m26_slim.toml": "f0de98170eaca991e2c8b317d8c2b22539ec183cbb88de239bddfe460b300c1b",
+        "crates/flock-core/configs/ligerito/m26_slim100.toml": "553cad7e3658f812f147bd6768c80f909c3ab7dd089aa837e9907c0b9af3bdbc",
+        "crates/flock-core/configs/ligerito/m27_fast.toml": "a240f9edc51b9f4efcaa59a3aa030f67b679a38bdf23b8669129c1b522351b14",
+        "crates/flock-core/configs/ligerito/m27_fast100.toml": "182df11f6749aeb2388c7b7be0446a1aca02af43d5aea4127b0d0e458dd57168",
+        "crates/flock-core/configs/ligerito/m27_secure.toml": "f5512cef4f5fb3589c8135fd69a5b4dff58c12f2da818a59f675fe23b38b42d1",
+        "crates/flock-core/configs/ligerito/m27_slim.toml": "f801326615519eaa588cfd951434161c9c7eb12f2b93124968151bb8eb51d10c",
+        "crates/flock-core/configs/ligerito/m27_slim100.toml": "f399c516fa39c537eb683960cce50d3a2ea155373ad0adcecb739d85def77e20",
+        "crates/flock-core/configs/ligerito/m28_fast.toml": "f98c21762c12a701adfdd7e41c2dd7f448dfa3699dfcb311626def67ca6ee0ea",
+        "crates/flock-core/configs/ligerito/m28_fast100.toml": "5702bcf411677c148d28e0be76bb699c56043d16a2c50b43b19e040637a1687b",
+        "crates/flock-core/configs/ligerito/m28_secure.toml": "1ac5f2a6236cc5c14a70f1b0bdcc825b4deb59f0d0e0e2a3235296c4438300c2",
+        "crates/flock-core/configs/ligerito/m28_slim.toml": "cae8988e827dec1cd6a03482fd5aac6a85727ba67d20481b24490001ab6c98a7",
+        "crates/flock-core/configs/ligerito/m28_slim100.toml": "573ce1e4d4460bc3d62564c396ae1de0f4d60197fe14ca1424f06c27f455955a",
+        "crates/flock-core/configs/ligerito/m29_fast.toml": "a902893bc800c89e0500e9bce07b16ada43a63fc74780d5fb3542d83a6c8311f",
+        "crates/flock-core/configs/ligerito/m29_fast100.toml": "70e5b7d00919cabe5dff9a32aa3f56343e4bf71c37faba845eaeb8aab861a9a8",
+        "crates/flock-core/configs/ligerito/m29_secure.toml": "364fe81bb5c612474fadff225c01c479e23d51c0b650d12bbd4e2f195a6504e6",
+        "crates/flock-core/configs/ligerito/m29_slim.toml": "bd5802fe7d573fb10e5e94b6fdaa9c4f12e2c5e1861ead0732a0593ff4bce177",
+        "crates/flock-core/configs/ligerito/m29_slim100.toml": "172b307e7e8448c8d80c0526be02c2b98b6a5638a80f059e0e458a5934ce995f",
+        "crates/flock-core/configs/ligerito/m30_fast.toml": "e85a345667f9a78e07d206faaf6bcb36964203a547046fa339029c9b7cd42ecb",
+        "crates/flock-core/configs/ligerito/m30_fast100.toml": "bc9e770f7990920c7b2c9851be71be68a41be0b8c1ad43a84d40ec13efda39c7",
+        "crates/flock-core/configs/ligerito/m30_secure.toml": "ad6981a78e6b26c61767ef959cc02b54357f10cdddb15f8b06d9754557f4afcb",
+        "crates/flock-core/configs/ligerito/m30_slim.toml": "06a832339543c03db677b4260ebd3ac67ed32a10050864d76c440d1610873390",
+        "crates/flock-core/configs/ligerito/m30_slim100.toml": "3bd087b7470b33b36bb429c3c88cad9851d24d721bb278321634179b999c7064",
+        "crates/flock-core/configs/ligerito/m31_fast.toml": "0cc154dcda1d1ba07cac708d89aab8cfe9a51033f7a2c9f48a833a068a9fc016",
+        "crates/flock-core/configs/ligerito/m31_fast100.toml": "e11a0c7d1ebc6daf8798704f4806f1b74871b64007fd674e7cd59849381f44eb",
+        "crates/flock-core/configs/ligerito/m31_secure.toml": "862308ba48a0d78317686e69443078b4d004f775b97ba16dbf18ac88b71839e8",
+        "crates/flock-core/configs/ligerito/m31_slim.toml": "86f5b535b564d5c883e972a458d5403f04c5e30646f1bc6daeace8f1f0967d61",
+        "crates/flock-core/configs/ligerito/m31_slim100.toml": "4dfd0283d2cd66c1384325cb6b7c812dd98ca0fa94464f4571635bd8f5338c14",
+        "crates/flock-core/configs/ligerito/m32_fast.toml": "1d962b9437875238c6120904b5fed64214b630f7b26017a44a1a071f398bd501",
+        "crates/flock-core/configs/ligerito/m32_fast100.toml": "aca70654be19fe0923057dd5d2e163b4ce5742199e22c5c2a9bd002950317a15",
+        "crates/flock-core/configs/ligerito/m32_secure.toml": "b5e8105f5a5b91e2b8035ad7adb715eb03c0ed601682dba283cfed060a72fa7f",
+        "crates/flock-core/configs/ligerito/m32_slim.toml": "a32858371936c78175f457878a89947a3df3917a3dd8f6576384221ceb620a53",
+        "crates/flock-core/configs/ligerito/m32_slim100.toml": "c5b08ab773c42e4c130b5f194170c6a24ab0e70ae0a35e8d7d2b6819f7178e1c",
+        "crates/flock-core/configs/ligerito/m33_fast.toml": "18d6fb75f679b2fd0ca3b5b154d8357980ab809409fce98944c9abd3c65a94e5",
+        "crates/flock-core/configs/ligerito/m33_fast100.toml": "ac8b8f334823b40f43c820333ad269af4c081c47851c4507d83a3aa4024dbedf",
+        "crates/flock-core/configs/ligerito/m33_secure.toml": "98866426d06b7f517533204e202d462b69c5094a9a39e6c31e78c40870ea3050",
+        "crates/flock-core/configs/ligerito/m33_slim.toml": "b5b643365d45749099488f61792b1d86561dffcfc0d86a8ebdb8ada412161ca5",
+        "crates/flock-core/configs/ligerito/m33_slim100.toml": "1d018cad20db103bced6c0bc51b2fea10cc9af1f5af41cf4789084118d109e3a",
+        "crates/flock-core/configs/ligerito/m34_fast.toml": "93c285b5f2563263fff110250230b06d0663b4e9d01b315c4433ab5146082e32",
+        "crates/flock-core/configs/ligerito/m34_fast100.toml": "ad4e44dcc1c395495d5e347a6978cdcfab33d4d6c4d37740bf08903e9aafb774",
+        "crates/flock-core/configs/ligerito/m34_secure.toml": "5f276b76de1a5da4acd55dbec9505a10ac5d9de588038b4ecffaba290070d4b2",
+        "crates/flock-core/configs/ligerito/m34_slim.toml": "819d868d15907181985fa0fd9fb6eebbc38f44fd2cd3db680ce407cd90800d9a",
+        "crates/flock-core/configs/ligerito/m34_slim100.toml": "ce0443945a9c20027c004b1843d613daa61c2babb1dc0db998c5ba6cf38646c2",
+        "crates/flock-core/configs/ligerito/m35_fast.toml": "fc877fb8ca1d1c456c475374959d1f2bb63f6b256e2aebe163d3cb3203bb4654",
+        "crates/flock-core/configs/ligerito/m35_fast100.toml": "dbedb79002d09593ca551562448644bbe76f8f15963d6a2b475a964f04de6421",
+        "crates/flock-core/configs/ligerito/m35_secure.toml": "caa05a77bada156a75dd7ae8afdd14e0ca2c6894b621008a679703b941b3c5ee",
+        "crates/flock-core/configs/ligerito/m35_slim.toml": "d984135c169f81324c9d0496bbcf79933a3240ffa96bab55c9caad2775c8db1d",
+        "crates/flock-core/configs/ligerito/m35_slim100.toml": "63835d6aa42f78df3630c49a96479bf0a70c66c03b691b7b6b0e6ed4b7132edc",
+        "crates/flock-core/src/aggregate.rs": "7209c1d11b7fc5380a2e462ef98c40fe4337d7c7087858e2d16ef20e133dc3af",
+        "crates/flock-core/src/bits.rs": "ad55c45561d5c4baff3783c40f86bc4cfaba9561550e0ae8e55236bf8b1be5b1",
+        "crates/flock-core/src/challenger.rs": "774a2ebbf9db0e7cccc9a902b6eb7b42ecc86b0f864ec9eade8e5764a6ca1657",
+        "crates/flock-core/src/circuit.rs": "6bd315d62ca1f634f82c424d5cb86ffa0febbec93c6d5d122c5142d912f92007",
+        "crates/flock-core/src/circuit/boolean.rs": "e79fafc2a161ef28dbbdcda9b81799d25574404422aac18fa92d1acefc06b329",
+        "crates/flock-core/src/circuit/boolean/builder.rs": "40ffab78c5411079991a78e48ee133fdea9e705da8573aa876c0c95d7bf5b6c2",
+        "crates/flock-core/src/circuit/boolean/builder/interface.rs": "308aa662cd0acbd919b422a118b8680d9a7beb66a66ef1c9395b5c54450eedee",
+        "crates/flock-core/src/circuit/boolean/builder/operations.rs": "d48b85d09d9f031705c1f656d587064415b34686e7f274d82ff6b3f47871b441",
+        "crates/flock-core/src/circuit/boolean/builder/operations/tests.rs": "7e58a51fa3fa64db1f7767964eff673ab5e00a1402e076e636835940c370d276",
+        "crates/flock-core/src/circuit/boolean/builder/schema.rs": "dd51ca4215ab538ce8bc88ad5cf1205fa35f0e1582d851538b9485e1601026b6",
+        "crates/flock-core/src/circuit/boolean/builder/validation.rs": "a50a3f6248d426ab38f7884760b9d1233403921abe41f5cf2287781f15da3697",
+        "crates/flock-core/src/circuit/boolean/interface.rs": "35098242416073baddeea39d285248699cd34068dbd4eb9903bf97613a797fa7",
+        "crates/flock-core/src/circuit/boolean/layout.rs": "17bf3999710eb0ccb9125e2a99e57440d246e9c4c11c5016f0e12da287d25053",
+        "crates/flock-core/src/circuit/boolean/lowering.rs": "ec321615493c5c2642c63f2a76903f56844029b03c691cc3d7808f977b6112cc",
+        "crates/flock-core/src/circuit/boolean/lowering/relation.rs": "307aa7cc78f3e6c43e62a1764c627ea354544d464cc04bab06f62d1a3cb059e1",
+        "crates/flock-core/src/circuit/boolean/lowering/relation/evaluate.rs": "6a623f72ad4d5fcec5ebe3f5e93b51aab057888b44a2ba369fb95cb63b9b9359",
+        "crates/flock-core/src/circuit/boolean/lowering/two_variable.rs": "958e9ca488678da5fbbf1072b09e394d0497bdf46dfd27df2cac3f4e2e95bbd6",
+        "crates/flock-core/src/circuit/boolean/lowering/two_variable/build.rs": "6f5a72a78bcdb650eaf49352573518ea157d4f8af6d590a0f21e40bc7d8a8c02",
+        "crates/flock-core/src/circuit/boolean/lowering/two_variable/tests.rs": "1587b907ae65de00cb52a4b037c93bf9cf2f5cf42764f948a36121f82ea77b3d",
+        "crates/flock-core/src/circuit/boolean/lowering/two_variable/tests/equivalence.rs": "41f0f03618f8523bed82da08ac75175476a594dde25e393b2c34873cbdfef22c",
+        "crates/flock-core/src/circuit/boolean/lowering/two_variable/tests/layout.rs": "d12f4bb5138f51c516ae4bcf1a5979b62c73c3a335e1df6a05d3dee29ef7c7f4",
+        "crates/flock-core/src/circuit/boolean/lowering/two_variable/tests/validation.rs": "3faab69edd5a0dddb2242e2dfc9da3c420acbe80532304c6fa9cd99a391ef277",
+        "crates/flock-core/src/circuit/boolean/lowering/two_variable/validation.rs": "72710d0f1119b9fa1fe60e92c185eb0f518b98a8daf8608ea66e4b9e0de25b6f",
+        "crates/flock-core/src/circuit/boolean/lowering/two_variable/witness.rs": "5c330c47b48cd2f47b9e2fc03f25b1f0937022510e0156aa8eaefd24e0b0cef6",
+        "crates/flock-core/src/circuit/boolean/schema.rs": "c8e0f6ff9734eb572f72d9e3395a1b2d19fb3e190d05fbf4040efd7c4a880db8",
+        "crates/flock-core/src/circuit/boolean/schema/tests.rs": "ff8cb9b0ecc7c078a69a64511385d9443a1efbe8c78278b2518168f8b6f95107",
+        "crates/flock-core/src/circuit/boolean/tests.rs": "f79629be818aa8b476ba37efd610ac62d9b2c0c45c2639a285f3c1ae517855a1",
+        "crates/flock-core/src/circuit/boolean/tests/placement.rs": "a53c3b79e106439a5b6fba2ad93396ae02bf792f29b2bac6298f873631b0734e",
+        "crates/flock-core/src/circuit/boolean/tests/relation.rs": "9384e768df60ccde11d047352d03dd8a69f61d4e0268db68f2d2c9109797d6bb",
+        "crates/flock-core/src/circuit/boolean/tests/support.rs": "b036e27caa68b8deb3b8e85e9a2bb1f1e58f89ee7a3004d936a76a81de23f56c",
+        "crates/flock-core/src/circuit/boolean/walk.rs": "393d8b3bc5d7c26de59ad4b29d4603cdf7ad7974263f71404d82a28df22cfc9a",
+        "crates/flock-core/src/circuit/boolean/walk/forward.rs": "d8b9d05aba8812a49293154336fb02fd6cfcba6f80d750f6fac1f1258933585e",
+        "crates/flock-core/src/circuit/boolean/walk/packed.rs": "0e6fe0eef2eb6b05e06d4d8d54dcd9604bdc89e983685e9b76572dfd837bb47c",
+        "crates/flock-core/src/circuit/boolean/walk/tests.rs": "19ab681ef93902cd3bc92c98a4018bd69ac2f473f5e8ba02e9d7cca82baeee6f",
+        "crates/flock-core/src/circuit/boolean/walk/tests/batches.rs": "8f8b956d9484abf50215c7c4b052806e557b508791f295d194655cbaaa9a33d1",
+        "crates/flock-core/src/circuit/boolean/walk/tests/packed.rs": "ba96869d7ce74f76948417a9e7e647fccea588d395113ea35d99c94a8ff27aa0",
+        "crates/flock-core/src/circuit/builder.rs": "f58c745d5ac2fa66f57aa05dee6f26ea6406c9564a281e85e6268e471262da5e",
+        "crates/flock-core/src/element_r1cs.rs": "57a3439c9bfd100ef202338177322408ad5da9b6bb69d8e178a9be3626179496",
+        "crates/flock-core/src/element_r1cs/lincheck.rs": "fd26cbbc0af25562b11ab8895c7e6bc78b8b56bff113a1bfff9abf81dff425b2",
+        "crates/flock-core/src/element_r1cs/union.rs": "aa69c00c7d008f1bd2138a855792efd7cf08e7d579ca5bf680ea488cb97d84d0",
+        "crates/flock-core/src/element_r1cs/zerocheck.rs": "20f51e9598a188ee554a7a6692d57cc03c1507688cc4a917cbf654011e9eb8d2",
+        "crates/flock-core/src/field.rs": "d53706cd458ab0c28af7920cf7d5b71333507e0cd2e819429e3db92e08958ff5",
+        "crates/flock-core/src/genus95_curve_code/artin_schreier.rs": "f9bdfed312a83ff6e4224ab7b314b57bc282e7bd7ba9a4c240d0f1b248b07c90",
+        "crates/flock-core/src/genus95_curve_code/base_evaluator.rs": "f2a21f12d685c6b370689d22ad2ea1ca548e126ca92ab9da32689f0962d02cb3",
+        "crates/flock-core/src/genus95_curve_code/constants.rs": "b092a4ef4e264fec4853d593c77c7f08527cb792bcd9a71d006533b914e2ff1d",
+        "crates/flock-core/src/genus95_curve_code/evaluator.rs": "e75f7fb272b2218827bdb598cebc7157d59cea4f5b523fbb31980e8953e9224c",
+        "crates/flock-core/src/genus95_curve_code/field.rs": "9a0a7621645f23e9f8d3d9c4d6b66c9cef2c80cdacadece348340b68a8c90cd4",
+        "crates/flock-core/src/genus95_curve_code/messages.rs": "8f9fec464756a6894adbeb4cfa90fb0aa07e0e726ee6f2c301f8913671d23a8d",
+        "crates/flock-core/src/genus95_curve_code/mod.rs": "e4f93da9e78beec608f1e9b0a0244fc43f537c01efea965e64df656d48e49d7e",
+        "crates/flock-core/src/genus95_curve_code/product.rs": "7d97eb9b7544bce1493cd17bdc4a0ec7fceacca14a083eb98427f94e85f81c2f",
+        "crates/flock-core/src/genus95_curve_code/rng.rs": "805c82fb733ac05175161b4ca549e226e9cb29db68c1faa25ec72fb834472381",
+        "crates/flock-core/src/genus95_curve_code/round1.rs": "2c0396ce7ff6f01065a0dfcaf0aef2ebda54aad467d5b074c758538860cf15e8",
+        "crates/flock-core/src/genus95_curve_code/sage_data.rs": "fe732eb075badf2992ef93c0bae80747ce5b0f28cb70d9d93c4684122f45476e",
+        "crates/flock-core/src/genus95_curve_code/sampling.rs": "8c5bec6915a19e8df7cb83b670d72d6d1016d11e1876ef818192fcf922c87eec",
+        "crates/flock-core/src/genus95_curve_code/slp_derived.rs": "54fd664f58d8bbf1e7d0829a23b2d2a64faad644c248d8902e3507c9206c6af2",
+        "crates/flock-core/src/genus95_curve_code/tables.rs": "6ac5ee3fab67e15ab42b5231f33da56fcdfa3dbc8d6c5174d2e0ac076f5119d6",
+        "crates/flock-core/src/genus95_curve_code/tests.rs": "d7dc17979ad2b4651bd355bb9b67577b30bce3f94d84da322656ac4582cfe2c8",
+        "crates/flock-core/src/lib.rs": "ad3c723af98cdcf431f796bc99cc2c9f3322386c393286719e479d712164fa52",
+        "crates/flock-core/src/lincheck.rs": "b3a2a374ca50444a93d47dbcc0eee8a876a995156924ae282c6b9c0ce6a69595",
+        "crates/flock-core/src/lincheck/kernels.rs": "4061391d8eb94f824b8716838f83ed805be6448d719ce4dde2fb8bdd0db160b8",
+        "crates/flock-core/src/lincheck/kernels/aarch64.rs": "be1835e07dff84a3ff8c907b8c8468d5b9b3fb210bbe8d4c54e4155c1223281d",
+        "crates/flock-core/src/lincheck/kernels/x86_64.rs": "b2ff55383898a9c1dc7a4cb5d9c49fe479a71d20659b5b485f78b24d439d7653",
+        "crates/flock-core/src/lincheck/union.rs": "a904d73f64e5c55c277fd3c524591609e6b11e9b925b75d975784fe79fa50416",
+        "crates/flock-core/src/matrix_fold.rs": "dbe88aa17633574fce08cfa560d010eece96216b46e5492b88f500f15149bcb5",
+        "crates/flock-core/src/merkle.rs": "07dfd8585e09c471ded6e1927b249f0f867bed6a7757849cdd4d203a02b5800f",
+        "crates/flock-core/src/ntt.rs": "7f1e63b26d7540db150725cce37f32f05638e48b60221a02023a240d208ddad1",
+        "crates/flock-core/src/ntt/additive_ntt_f128.rs": "73a59f9dfc5505293fd8533c0dc275791610dfc3bcdc9726f90686d3cf7d3526",
+        "crates/flock-core/src/ntt/additive_ntt_f128/kernels.rs": "d13af97c55ab7873fde75e87e2245d5888e183f9eacf1a2907d27bdd00884f13",
+        "crates/flock-core/src/ntt/additive_ntt_f128/kernels/aarch64.rs": "d51557bcd016084a797f4d8413d33a281ddcc52aa3ef81e1e304dc65e834b596",
+        "crates/flock-core/src/ntt/additive_ntt_f128/kernels/portable.rs": "6341d554584b72dc38d2d4633745ffe276aec3e01e943440226a8032f04b3c2d",
+        "crates/flock-core/src/ntt/additive_ntt_f128/kernels/x86_64.rs": "e94b37c64947566246e3786d6793c1c86ead61b772f53426ac67014295e85b6d",
+        "crates/flock-core/src/ntt/inv_table.rs": "8d0161a80f4c0f752055e1e4b66db5724adaf84207217873154017fd6457616d",
+        "crates/flock-core/src/pcs.rs": "0b9f85c9ff3cec566f53d6712cb4a0461a8fbeb41762868ee725224ed093a1a7",
+        "crates/flock-core/src/pcs/commit.rs": "2622433cf3e8a25864d6d166a1aaee143aa8456a9160e460c9b7e03def5545c1",
+        "crates/flock-core/src/pcs/jagged.rs": "2bb38d7a48054b0142b10778e1265d7984d1fa85abf250a9a1ed3de3ad4bb600",
+        "crates/flock-core/src/pcs/ligerito.rs": "165b55459217b9c8527471b7f51cf3b1ac7eea88bdcb39e5baab9afede48e01d",
+        "crates/flock-core/src/pcs/ligerito/extension.rs": "f732a9f6d7c5a5baa0dace6f5928426c303de78b820186c7651edbb617272461",
+        "crates/flock-core/src/pcs/pack.rs": "10f2ee968c5660d7c83fb03e98a49ef8a9f9d2706a3365bf716a5cfa10fb4637",
+        "crates/flock-core/src/pcs/ring_switch.rs": "43a90f9a0eaf99473461d02ff7405e8fc04be85e0d3aa45b1acac1561de08de8",
+        "crates/flock-core/src/pcs/stratified.rs": "e7fac3d948ddf99c444e020e42573c6ef4df6fc92ec53682e4872ba7266467a0",
+        "crates/flock-core/src/pcs/tensor_algebra.rs": "7b9ab9442392f1cb42b3a6d9c8f4f8905a66a8296901a02a45a0e8a5269fc6cc",
+        "crates/flock-core/src/product_gkr.rs": "febd9db0bfb5c8e335f876d0dac0d9c6c502a5bf100255c75caa0fac61ea65ca",
+        "crates/flock-core/src/proof.rs": "582ae613a4429bbd493d1ed3331c9103e276aca3d04af60a39be628f7cbce490",
+        "crates/flock-core/src/r1cs.rs": "6f52e0b0779f145567e33807a01be64dc455ad25bfc3b7b5e5267fab0a45b4b1",
+        "crates/flock-core/src/schedule.rs": "16ef23afba13023638985001b4bc1d428e1dfce402d885acbf7fb0f66d98ee44",
+        "crates/flock-core/src/scratch.rs": "12045e9893b2248b13a28959f7078df3a0dc0d5b9efff6e436201a385574482c",
+        "crates/flock-core/src/suboptimal.rs": "a0b0a90b53a9a2970cdf6f78628bcc7d0c0410c1b362245833e7473c344f693f",
+        "crates/flock-core/src/test_rng.rs": "c2d5429b16aafc6b1070fd1a803fb46bec752f9852f3fb7720e5974dd51416eb",
+        "crates/flock-core/src/transcript_record.rs": "d2e490fbb9e8bc346639cb935b4f09af6bc512da24c5287164a98fa716e4ffd2",
+        "crates/flock-core/src/union.rs": "120ba4e2449589366c01e5455732b29f55810016bce1fea023c8f49db8ba7c47",
+        "crates/flock-core/src/verifier.rs": "57cb7081f8e80b193a07e7111da45ff6a27be36ffe2981d889528e5d3d9edfb6",
+        "crates/flock-core/src/zerocheck.rs": "916480548e09f7bbaefcce771f17deed5651dd88ae9a00587974689eb1e9c82e",
+        "crates/flock-core/src/zerocheck/ag_skip.rs": "121c34f1323d0dd82aea7b0c5b8cf4c96fb7e762eced67b4062af14ffda2ba30",
+        "crates/flock-core/src/zerocheck/multilinear.rs": "7af981725e2b3cb736529e10c8efff77a672e8968c7c35e3e063270d564245be",
+        "crates/flock-core/src/zerocheck/multilinear/kernels.rs": "e8f28ab068e4b2ea22042e6af6144e1dd3b594c1a34c534edce5dd964d402280",
+        "crates/flock-core/src/zerocheck/multilinear/kernels/aarch64.rs": "9bf1bd9db3f05967d31c5400d0ce916d5a7c4488f330abf5c0efcf45bab7e992",
+        "crates/flock-core/src/zerocheck/multilinear/kernels/x86_64.rs": "a1dda42a38e3e7cd887a433d7a9cc72817fc3b94f0e9229233379195491d0409",
+        "crates/flock-core/src/zerocheck/univariate_skip.rs": "d173e72a2549233f84319877bcc34d490485af0030d80126b31a6fc1365a05c8",
+        "crates/flock-core/src/zerocheck/univariate_skip_optimized.rs": "74188dfe00800e3b80aa4fca1befff1d0f867382d5de000bcb99a9cf85f0650c",
+        "crates/flock-core/src/zerocheck/univariate_skip_optimized/kernels.rs": "93cfa2db634d39a5a4c74bb26d10870542b2f1df6d93af091ab0bb37edc8f84a",
+        "crates/flock-core/src/zerocheck/univariate_skip_optimized/kernels/aarch64.rs": "4f176469af88095574353b2e061e702dae7d4a83f13b0d239362ea869cf3dbf4",
+        "crates/flock-core/src/zerocheck/univariate_skip_optimized/kernels/portable.rs": "35598a9cf3c709dbc05917bb87d670d1207090f3442d7d90ac62d5c58631b03b",
+        "crates/flock-core/src/zerocheck/univariate_skip_optimized/kernels/x86_64.rs": "a4eba053c1823fb96feec3278ac347d0c6256655a747a196452b98d576e95c86",
+        "crates/flock-field/Cargo.toml": "2c1eaa9405b5cea71ec77f6143521062d92d9064cbfb5738a380b69f8f5dd1d4",
+        "crates/flock-field/src/f128_slice.rs": "937b06dde3830c59235b98f42af246350377dd384d2ebed3756eaf059fe7dee5",
+        "crates/flock-field/src/f128_slice/aarch64.rs": "48f549ec7f268dc91119c967ff70df2267f6b4bfec2bb2570759264c3b6ac52f",
+        "crates/flock-field/src/f128_slice/portable.rs": "dd5f9a89f8d6f358c00b4842300ed6789711e87f568f36963278cdcfe0e3eff3",
+        "crates/flock-field/src/f128_slice/x86_64.rs": "d9a7ae333c5bd3602541d35131675e13f90669df643a539415e769008428a0ec",
+        "crates/flock-field/src/gf2_128.rs": "78f6b98e447969f2c1f80bb9aac7b49dd382595202fca477d80f68545b231246",
+        "crates/flock-field/src/gf2_128/aarch64.rs": "e004bb403258b11ddf5417f325d7b107df035952f394419cdbd9ddfe9d9aabda",
+        "crates/flock-field/src/gf2_128/portable.rs": "0319e133a5ae47bb465ef2d1b835e2477453ab1c74fca3c198547234c00327c4",
+        "crates/flock-field/src/gf2_128/x86_64.rs": "4a14ab58fb4709f3c066b0942949dd0d09301b91ca67b50b8fcfccb938d9ba97",
+        "crates/flock-field/src/gf2_256.rs": "2afa62a5f6056c651ec31567d166fe894883bdfa17fd566bf06f47f56e4da864",
+        "crates/flock-field/src/gf2_8.rs": "031d32f883e0021c201bb8219f5b987c3a703ecd56a70dced5d73d46c9314714",
+        "crates/flock-field/src/lib.rs": "e8d632a54df3a700a415da7105918ac4b037cd81710889f0b363254dbd5e87ef",
+        "crates/flock-field/src/phi8.rs": "442fff740ad2371e980a684e93a070b5b858929531b0ae5a0f7f016c2f2ecb9d",
+        "crates/flock-field/src/test_rng.rs": "d9615a97bb4ce2b53ce8f1a5d59ee653868f986c70c4d26fbd7917e28461cab7",
+        "crates/flock-hash/Cargo.toml": "890b2ff48a949038f62a99d0df71edf80d1722fdfb413f025723f813526ac192",
+        "crates/flock-hash/src/lib.rs": "562fb52b44628ddb36bb3088da3de6ab8e9441cadc7f1f6aa6b5369d16cab67e",
+        "crates/flock-merkle/Cargo.toml": "4e484a0115cab125f3048ec27065bc82fc8a4e70b52d79d56d358bebc41e4497",
+        "crates/flock-merkle/src/hashing.rs": "8b61a574cda9b92dbf0d499f097f88f51f7a866d6260645aff791f06a275b511",
+        "crates/flock-merkle/src/lib.rs": "bbf99da1a6707c6e4015f1764b844872944d29834fa527494e5a42a6854abe5f",
+        "crates/flock-merkle/src/merkle/aarch64.rs": "ef8947e99e7f40223a73b357235f9d2abb0243f1c0d81025f94325afe2e2eefb",
+        "crates/flock-merkle/src/merkle/blake3_neon.rs": "7c532c489c6a2e83cda67766dc07d8e5b629d84af9bf7be152bfaeefdea88546",
+        "crates/flock-merkle/src/merkle/blake3_sme2.S": "75007ae5f8f5e1d11dcabd7eef00b66efb33334fe5ccf52a0975a16ad54d715b",
+        "crates/flock-merkle/src/merkle/blake3_sme2.rs": "2fff6e819f78a238571f3ed5f0815be9c5cdc4d74bef5c047339cbf4a616ff88",
+        "crates/flock-merkle/src/merkle/x86_64.rs": "b8161726c0e5a6a8acb2c3ab820a23865631102829429eeaec8e6235f80b691b",
+        "crates/flock-multilinear/Cargo.toml": "13011ab4fe524da784b7014abc7a618d69153fc766ad670d0c93d5f3a4c5e2cf",
+        "crates/flock-multilinear/src/lib.rs": "05392fe2930b2ceb62cfdd96d2ad88ccc421b32e8564752ac4a76c1210d1f304",
+        "crates/flock-parallel/Cargo.toml": "18e091bf25ede2887a396f04b79273492a8c7149f3400a95b1d57f32e1f38c36",
+        "crates/flock-parallel/src/lib.rs": "7c570cd4464862173c5078b65d990bdbb617dbd16050d0ce57bb1cae0bab9bc2",
+        "crates/flock-transcript/Cargo.toml": "c0dbb4b78bf06fe78ada6e304267b615d3b853e9058f0eac8ecf83f717626a84",
+        "crates/flock-transcript/src/challenger.rs": "32f97b0babd31abe524ebfb3eba002cef5770b1b46bdf4200cadf9e59dc3e54b",
+        "crates/flock-transcript/src/lib.rs": "f515b95d892be7161de5f2d06e6d4c9a27e4b33a3eead74b2adfbfc7627759cd",
+        "crates/flock-transcript/src/transcript_record.rs": "84d81eac65a17e57aa7ebde17d48631a591077bc8c3de5ca62894d65fbde3374"
+      },
+      "upstream_workspace_manifest_sha256": "7c9d71dfd541ae0c1324bfc6c312314d27997a17b3b575f12de2e6b177b42cd9"
+    },
+    "implementation_manifest": {
+      "captured_on": "2026-11-12",
+      "files_sha256": {
+        "Cargo.lock": "f98ac2a7467a7b08cc1a386278603cdbc2bb81727489118fb6b05bda6d6cc659",
+        "Cargo.toml": "1ff2f968f94fa3f34d193b9811b55fd6e35cb2d7b932ab2fed6c7c52ffaeab03",
+        "audit/spice-masked-permutation-probe.py": "f8c3f3eeb7ef156666992fd7d8947c308e6d20a568cc4779ddd233768f989158",
+        "crates/ram-argument/Cargo.toml": "642639e97449d5d6dd3e77eb2155e310ad309f8d6f22463c20eb57f649d1d9db",
+        "crates/ram-argument/examples/pcs_sizes.rs": "6445949cbdfad72171892ac24af932ad963145e79300e6a480f774fea3a542a7",
+        "crates/ram-argument/examples/twist2_time.rs": "2637d8369232e2f7841a864a3bf1c2c92df34455ff0e16cdd274e7ef3ce2358d",
+        "crates/ram-argument/src/lib.rs": "be088f260ac62f75144ebb3785d7ec562858dd1d5594394c98e94a687715ceff",
+        "crates/ram-argument/src/twist2/cycle.rs": "8b7e117fda1ea47953f1b529d143e57ff9c67276bcca4bada7841ba66f1ad7c3",
+        "crates/ram-argument/src/twist2/cycle_prover.rs": "1641204e518a1e01c9198171aef9698298bf2f02921bf0a10b0fe497f0feed2c",
+        "crates/ram-argument/src/twist2/logup.rs": "354973f22f194f442c0a48a32de11e3e5449c6566a70ed9925942e646b44ec79",
+        "crates/ram-argument/src/twist2/logup_tests.rs": "75a09299fb202d08de6b64900922bbf67709c4996e081531aba64c604be0466d",
+        "crates/ram-argument/src/twist2/mod.rs": "3eccc5c34341594b8f7e4fd3d2fa5084f10842298230fb073eddfe36e49fda0c",
+        "crates/ram-argument/src/twist2/read.rs": "c12eb6e2f67dddcc2f7ae9c72ebeafb421a69f619d2902a25753ab889056143c",
+        "crates/ram-argument/src/twist2/read_kernel_tests.rs": "dbbc50e7eb132d8557360b14a50cfca4056a089a538300a6a594a96c91b31e28",
+        "crates/ram-argument/src/twist2/tests.rs": "ec069ce083fe4d204c379ca82cd169397fcd08797b06c86385abb6bb5efd57ca",
+        "crates/ram-argument/src/twist2/util.rs": "23e9a5a8f72e720d754bb1d7c4f6a85ea5c54e3d6c755720a010f09806e2e974",
+        "crates/ram-argument/src/word.rs": "4427c220c56a84840b47cf08028ed5d32b974ed4bdec0ea1e89d57aaeaeec4f2",
+        "crates/ram-argument/tests/committed_ram.rs": "0954ba24760f7a8cd73e6ad5b39088f3e2dd0776f52b4683b2a1db375f113e46",
+        "crates/ram-argument/tests/virtualization_flat.rs": "3c750e45958bf853727fa76b64b9942b7fca5621dea038fcb9932d287543623d",
+        "crates/ram-argument/tests/virtualization_tree.rs": "262807a0c481024c7207a5fcaaffa5544c1ab5ced930d2cc018c6528a9d86cca",
+        "crates/ram-compare/Cargo.toml": "98133488012e70113c6f7dddfa5bb32bc3db57a28567615f7f600cdfad509065",
+        "crates/ram-compare/build.rs": "eaf9faf89b2c055bea3cf46006ea73aca424c319f9e3fc6de522943ff6ee1e67",
+        "crates/ram-compare/src/interface.rs": "a0a85f7ad3659c1a7fc04753636d4c7c89bc19ef9f6ee154b3f8f92a49955de2",
+        "crates/ram-compare/src/main.rs": "f6273f74761d3570105501d105b3b49646e659116f5275ba96003435144909a6",
+        "crates/ram-compare/src/platform.rs": "01165727db17e647c7ebdda18bc7f12ca458e37a8238686ace60ffbfed15deb0",
+        "crates/ram-compare/src/proof_size.rs": "b9cb230c6cc279ad69e4039afef4bb0927582e93108fd6eb983005d63cb5359a",
+        "crates/ram-compare/src/soundness.rs": "952d73ddbdcdeb366704e9b46eee510d35b97dc0f99c62ab3e85d01d01118ccb",
+        "crates/ram-compare/src/stats.rs": "3a8a37a18024f7a759ea195d229908c8db933a737d0171dfc7636c3ebfe1faed",
+        "crates/ram-payload/Cargo.toml": "c3308ab9ecd7702cfc15949f39a4e93d43c93f29ed2fab5c7d011c93c8a909ff",
+        "crates/ram-payload/src/lib.rs": "25fa79ae62d15372f93c4634f55dfa52bd8312c3c28001769774f0c7c804dbdc",
+        "crates/ram-payload/src/locality.rs": "d9f6de7b87da35942ed9c99c140c87b2db81c9dc28de8b95d628d2bd17a91be4",
+        "crates/ram-payload/src/operations.rs": "539c3521a24ced988b17c281faa186b8696eba59cac488c292d0e13d0c4a8712",
+        "crates/ram-payload/src/operations/tests.rs": "86e81bf004db5027a2b7b85b8bff257f7eef3fb7435ecd3f727379da1b236352",
+        "crates/ram-payload/tests/operations.rs": "72c8e46145abf5584928466c5b57803a203eeaab0f6ee3cdfc5931a381203ec7",
+        "crates/ram-payload/tests/payloads.rs": "718c1d9e24a12c8611f241d20d4d17f2db97eaa86b1903ad32763151871fdc66",
+        "crates/spice-argument/Cargo.toml": "c99638eb39ff0df9eac4ce6edba5d31bee5c9c95256542a46638f20acede35c0",
+        "crates/spice-argument/examples/typed_options.rs": "c8256aa9cd6d13ab5201dc004ecb2037f2e16142cbb794de36d1b4f6141bfd7d",
+        "crates/spice-argument/src/lib.rs": "2fd52380ae0dba03f8dc4ddad99b5d9a0513cf9beeed9dee5bf57ceddb5ff7c3",
+        "crates/spice-argument/src/masked_reduction.rs": "ec22dfb849da4f61f73c8fa67731adbc9a7d6de545a1c18480db435956fa66b6",
+        "crates/spice-argument/src/masked_reduction_native_tests.rs": "71b71cd44ee56d2806517c99073d1fa6712946955c32546e11aa925fb9be6382",
+        "crates/spice-argument/src/masked_reduction_tests.rs": "daca8d31d09a95a8275b555df956c9acad45686bd6d6e354e6dc41bcd2ebad7b",
+        "crates/spice-argument/src/operations.rs": "126a122438577d8a5cb4549b9d9a012dace07288c302c448393a1a0dd4b6898c",
+        "crates/spice-argument/src/order.rs": "1cb1ef65067bda7c47e43b7f6c29711b232a518c2777ab764cbb888068d53cd5",
+        "crates/spice-argument/src/order_flock.rs": "4ea804d76005a140c44c990e90a8ba12951ea04d4237f0a10f7eebfd47a0f4ef",
+        "crates/spice-argument/src/order_flock_compact_tests.rs": "1a681d7f8f9d193ae3c1494ecba2fb6523ff4d5a4135a1a4c2be99efbce2ccf4",
+        "crates/spice-argument/src/order_flock_tests.rs": "5b599a83c24bd60f604d43ed04e6e2765771e55a505a39ec79140f41863ca72f",
+        "crates/spice-argument/src/order_tests.rs": "a4113ef94ae959cf464391ea981cbbd53509c9ca4224015da7c67f02449731ee",
+        "crates/spice-argument/src/planes.rs": "af2d5ce258613952cf7f3cf09892b80a7c354426d5c65a653eb6148aa773cb9d",
+        "crates/spice-argument/tests/committed_ram.rs": "8e00e56edaabc1481338e8657cb90cf975f1b339767edcecc89ad5b5050f48e3",
+        "crates/spice-argument/tests/operation_ram.rs": "10cb998be51cd7d0d1fd17b15619085622d2fc4fbca94ed18c42382c895ba03b",
+        "docs/methodology.md": "ecd4204b1cbea87b2689d8d7b2851574385875b7b2410037855fe38a9375608c",
+        "payloads/open-magnetar/LICENSE-APACHE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "payloads/open-magnetar/LICENSE-MIT": "c7726423122f844a48acca817af8fa6538a3d51bd82c6a71a1ab6802d2b7bc20",
+        "payloads/open-magnetar/binary-search.elf": "113774573f78a6a37af6bde3c78210400dc38116671a5d855d6db79df4f86a29",
+        "payloads/open-magnetar/erc20-mixed-block.elf": "1d764ab403a6a41e327d078a2115ca6757f159d49efa4a2b69e4f75a682be3fe",
+        "payloads/open-magnetar/erc20-mixed-block.fixture.json": "499020fa40aedc66565c9265fb73f23c9d3d6394b5d874fe4b090e03f0a190e1",
+        "payloads/open-magnetar/examples/binary-search.c": "7c5c1e0f2f44000278dfb800e76a2039bbdede1d7938b684bf09838a3319e05f",
+        "payloads/open-magnetar/examples/erc20-mixed-block.c": "870b961472d04c20931d193154973227f28714c08c77b928ed731401a28cf3d8",
+        "payloads/open-magnetar/examples/pointer-chase.c": "9c172a0568cd4bb9de5990f874c08bdea3ae7bbe0b8ad068f0d43c968bccf4ed",
+        "payloads/open-magnetar/fixture.json": "404ca49e757bc5f9518cc02f8b839fbe4fbb1a2717d8cade484ea03008cd47dc",
+        "payloads/open-magnetar/link.ld": "e4d968d6b5997e3f8cc1977262fbca1eb9453c815c1e596f64981fee2cd4ccbc",
+        "payloads/open-magnetar/pointer-chase.elf": "0641051ed507ef5e860fc2483112be591a0b0948d8e70ed9bfb2c418e4e2708f",
+        "payloads/open-magnetar/pointer-chase.fixture.json": "af4b248a703dbee6c57a5c2ae24ff62b7d10e4350c4919901aa3782a323675b9",
+        "payloads/open-magnetar/rt/om.h": "6b546f32a38f543c17b2b44317662dcbe63d020f56529f0026d6d8fb48e91da0",
+        "payloads/open-magnetar/rt/start.S": "d6da36b8e2aa7ec1199fc58162d9aab6e292a343f2daa7872456d8bbc2f037b2",
+        "scripts/ablation.py": "c057ce18dced9b5701d1f9e2070fa9ebdf8c3beebaea79145d39f9a5db2656a4",
+        "scripts/bench_stats.py": "2832899560592755c67b142264effcba7bc1d439b3e9cf21c2c857a9a6159683",
+        "scripts/benchmark_commitment.py": "a11a32bee2d47b0485fdbb130cd9b1e0c06e1586e65606a4ea4f39abf7029736",
+        "scripts/build_guest.py": "bfcc2ccd0049d55ae8884b785e5961f12d81d6f2bafae9b32e19ba44bd5812f5",
+        "scripts/check_bitz_compatibility.py": "18b887ace02b82fcfe7cfdccd4e6ff7a0fb98a2583ad869cc18cc21958966302",
+        "scripts/check_bitz_port.py": "2ebddb6330948ada61c963a22b09d1858c2cfecb2c19f5e706081a8208973a9d",
+        "scripts/check_jolt_virtualization.py": "d655269622b3e4f54fd11c24c9184244e8be70b5a0a1cb5bbce067a436fa97a6",
+        "scripts/check_lookup_reports.py": "07c04113c56ddfbb185d0e2623a42f43eb44870a5f8e79e1e8197969a8e486df",
+        "scripts/check_shout_structure.py": "e545dcdfbe8ec758fb473ae3d48bb1b27a8de60d097489b247c52dc08d48c006",
+        "scripts/check_spice_port.py": "dc1a6660d9f6fbad4951918ead6580d367bc65318f229fa607eabe1a535b34c3",
+        "scripts/check_spice_protocol.py": "578dce319bedab8448d40a09a00b551939c25ee87a76b9965313da4740df256f",
+        "scripts/check_stage15.py": "e796dbd8026f367165ae944a6340a2061406a534345a089ef3de225f3800a8ec",
+        "scripts/check_stage16.py": "84bcb62517069407d9a5a8b0a314367e140fb9b4da91dda56fb4f748b3b0c770",
+        "scripts/check_sumcheck_optimizations.py": "48dc0355f7f3bf0a7d980c488baaac1ee96f9e0120c4362455ac83c0d1146af8",
+        "scripts/check_vendor.py": "3e82fe37e7570675411ab11c15e9016105250fc0ad40f6b2bbc7276c20575552",
+        "scripts/compare_iop_optimizations.py": "2d1cbe8415d445ff1d841d032bf84707ad41e775400fb14f2eda26e78601ce69",
+        "scripts/extract_bitz_reference.py": "906ab764ad549b07df40b2641afa81b4933d15c520336ffb9f148a2e6e624c80",
+        "scripts/fetch_jolt_reference.py": "d09358c72f9e8a4c1576fd945ff2278ecf3d57be3f3cb687a4092938cdb6b0cd",
+        "scripts/fetch_sources.py": "890a5edfdc26977da3f13339f9902adebe4ec405a3a912f169ac3cae4b61ec33",
+        "scripts/interleave.py": "a3211d2c6147500f14f1c69e185a68b7051bc98bfa506f765c985c1ebaf6055c",
+        "scripts/sweep.py": "cf5ffc12ef8600d441baf687879038a76da34ad0d1edcf163e5152c61a169162",
+        "scripts/test_scripts.py": "f819c4ff564dfac7736618c987cb86a1c460fab565b8f0201f89a780c72d0bbc",
+        "scripts/write_manifest.py": "497b8882c0138b91a575e944be2425621f8daaaf7dbe435523c9f86fe799348e",
+        "vendor/bitz-logup/Cargo.toml": "4a7109c364f2dd9f6d55c8dcbbe1e329f795f3bee1dbfcc358e54534b3fec3ea",
+        "vendor/bitz-logup/LICENSE": "408b9b4599bf389f97538c1f066bbc74912522d02350ae44528e09f8ccf3c3fc",
+        "vendor/bitz-logup/UPSTREAM.json": "980bbeab7f172688ad5f40de68156203aa1a6fd22cb6df507d87f080ecd8547d",
+        "vendor/bitz-logup/src/fraction.rs": "f4adce0573b2bcc87c526528814f652682d69000354d140ebd79e5ab7c41995c",
+        "vendor/bitz-logup/src/inner_product.rs": "de14e8307efd93b655887cfbf71befa5c6308d5219828e8c8116749382106e89",
+        "vendor/bitz-logup/src/lib.rs": "a07e7a705e1b1d28cc8046057aa13d55621178c083705bc4d7f79b5fe8825c85",
+        "vendor/bitz-logup/src/product.rs": "5c0f4a54e925fa631a3af8666a16e8e087f3dee6a9ceabc70cdd0b0a83f0ae51",
+        "vendor/bitz-logup/src/tests.rs": "7ea433284521ca863481bfdafdf1b69fcc694d784bc5339b97c29c720e264867",
+        "vendor/flock-boolean/UPSTREAM.json": "7e5359f9e393c4143ca3a77b7487a5325ebb76595051e2050bf0979637bf917f",
+        "vendor/flock-boolean/check_provenance.py": "f5d5e08b3235c9fe39fac3c19f63f4eac4c6a3f256f2a3ac95c4c44e074eb77c",
+        "vendor/lean-grandproduct/Cargo.toml": "87b1fe9a131d57131013f1c189e382b4fc6e9457ae971ce8356d070e39c81507",
+        "vendor/lean-grandproduct/LICENSE-APACHE": "ef978bc43daeb1015261f2a57aaad1b76e564836209beca219f2f8d485950f37",
+        "vendor/lean-grandproduct/LICENSE-MIT": "a6c93f24f002f1f83604f5b728f6f7ef58dcfd9ab4d7201971b0dc8ceb36e09f",
+        "vendor/lean-grandproduct/UPSTREAM.json": "67ebb851a23c3a034009c4c8accd38ba9758664e13c51441f7517f6a1f606341",
+        "vendor/lean-grandproduct/src/lib.rs": "5d821297af063e04d618cd61abe6b5f4d9305ea4584c96d936219311350f18be",
+        "vendor/lean-grandproduct/src/tests.rs": "04342406e4f7ed0775e00333106a2b04e0da5e4267c6b2f0797d4dd017ee4eb9",
+        "vendor/open-magnetar/UPSTREAM.json": "214f15dd80830fb0de7a2ef8c37e3aa322d087958ac5182792289b8a403a9037"
+      },
+      "flock_boolean_source_sha256": "d7c38b0df125b2cf80352a983593972dd099480f62fe6451055fbd8d0e8271a5",
+      "implementation": "typed-spice-vs-twist-gf128-v5",
+      "note": "Regenerated by scripts/write_manifest.py from the working tree. Result schema 5: interleaved rounds with paired bootstrap ratio intervals, verifier spans, structural proof sizes, composed soundness terms, load averages and host metadata. scripts/check_stage16.py requires every hash to match the tree.",
+      "open_magnetar_patch_sha256": "daffa0f5d4e36c4595e2f0fc6242162e4e595b7da3fb2816fad942f8bb250cfc",
+      "source_sha256": "696db9798fc245d52a6d59fc9b9c3eecbe05c0fd9243dd2164b890b7a2cee94c"
+    },
+    "lean_grandproduct": {
+      "adaptations": [
+        "F192 -> existing OM polynomial-basis GF128 with two packed carryless lanes; field modulus and representation unchanged",
+        "Three-tree fixed batch -> two-tree fixed batch; both roots are transcript-bound, outer permutation verifier checks equality",
+        "leanVM proof transport -> labelled OM Transcript with bound dimensions and roots; same normalized quartic equality recurrence without divisions",
+        "Scalar native schedule -> Rayon disjoint output windows; donor parallel threshold 2^11, fused 64-pair tiles and recycled uninitialized output allocations",
+        "Known identity ranges and implicit suffix retained; structural suffix trimmed while original logical extent is checked; no content-based merging",
+        "Joint fours/sixteens preparation plus a production from_fn_pair API generating both trees and both prepared levels in one tiled pass",
+        "AVX512 F192 vertical kernels and non-temporal Stream stores not ported; OM native AVX2/VPCLMUL helpers used",
+        "Independent full binary-tree/schoolbook coefficient oracle verifies exact GF128 proof messages, terminal MLEs and Fiat-Shamir continuation",
+        "Benchmark-only thin harness compiles byte-identical original three-tree source with actual pinned GF192 primitives, custom pool and transcript; cross-field/batch timings explicitly labelled"
+      ],
+      "license": "MIT OR Apache-2.0",
+      "reference_files": "Byte-identical pinned upstream sources retained under reference/; they are not compiled.",
+      "repository": "https://github.com/leanEthereum/leanVM",
+      "revision": "e5d75f858e91161921c0afe3d9f56300e9a3a03c",
+      "source_sha256": {
+        "crates/leanvm_core/src/gkr.rs": "e0baa6b9799963c1b184366a66ed30776166f984d7a3e3ad6d7520dd889ba925",
+        "crates/verifier/src/bus.rs": "9009e097a226498004df9b17fbf464e3135e111f0f1db19e118134e2d68d231b",
+        "crates/verifier/src/transcript.rs": "41c7ef163dfe37acaa6b9dba88ab81ff85a611f843286e5d12d721c8836bfcbb"
+      }
+    },
+    "open_magnetar": {
+      "added_files": [
+        "LICENSE-FLOCK-MIT",
+        "LICENSE-JOLT-MIT",
+        "crates/om-memcheck/src/eq_factor.rs",
+        "crates/om-memcheck/src/gkr_kernels.rs",
+        "crates/om-memcheck/src/onehot_kernels.rs",
+        "crates/om-memcheck/src/onehot_structural_tests.rs",
+        "crates/om-memcheck/src/sumcheck_kernels.rs",
+        "crates/om-memcheck/src/virt_claim_reduction.rs",
+        "crates/om-memcheck/src/virt_flat.rs",
+        "crates/om-memcheck/src/virt_product.rs",
+        "crates/om-memcheck/src/virt_selectors.rs",
+        "crates/om-memcheck/src/virt_single.rs",
+        "crates/om-memcheck/src/virt_tree.rs",
+        "crates/om-pcs/tests/commit_encoding.rs",
+        "crates/om-sumcheck/src/products.rs",
+        "crates/om-sumcheck/tests/fused.rs",
+        "crates/om-sumcheck/tests/products.rs",
+        "crates/om-transcript/src/profiling.rs",
+        "crates/om-field/src/subset.rs",
+        "crates/om-mosaic/tests/prefix.rs"
+      ],
+      "baseline_sha256": {
+        "LICENSE-APACHE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "LICENSE-MIT": "c7726423122f844a48acca817af8fa6538a3d51bd82c6a71a1ab6802d2b7bc20",
+        "crates/om-elf/Cargo.toml": "32820e4a1e9aaa27d3ee6c72679407e49c47cf71868d94bb822957f9bddbd326",
+        "crates/om-elf/src/abi.rs": "b399e2105b7267563d972f5623ab713c9db8e7e507c8e693b10d5fb5710fd2d0",
+        "crates/om-elf/src/elf.rs": "5e54ce57b9d4c3ca36530754e47e3235b92c6fb5d16e01c7465bdc1a1b7fc50c",
+        "crates/om-elf/src/lib.rs": "4375ab508dad76e562642308f9111dfbc05c12f08a53e6ed44ed5eefc4c3b523",
+        "crates/om-elf/tests/abi.rs": "034daf3f6e18c2b742e2a94f4db1ab15f276e08375cf89620d05c0b52699e551",
+        "crates/om-elf/tests/elf.rs": "39ec5ca9ba148a22ab74fb5124e1d7ba60dfca83e80fef2a1395c25170919df2",
+        "crates/om-field/Cargo.toml": "a6ac79410e37f6405884a2e167ce123f5b6e66ddfba533d98f65e6c6dec4cd20",
+        "crates/om-field/src/lib.rs": "688ef6fb3d747fc3039ae4513938968e130ac1b50b799ec15f165bcf90d0e7a2",
+        "crates/om-field/tests/field.rs": "7b7cc8e1cc0e3c6aa1647d26e2e4d977eeddc1e72223c8a097d4205c4629c7b9",
+        "crates/om-isa/Cargo.toml": "c752350573a620069808ea5aadc62a645dc648ef32ddc05967b2bbfd75c29814",
+        "crates/om-isa/src/bytecode.rs": "955e90c6a188af7a28514b0deedee355407d3056f80c161ad3b62b6e5c4c1634",
+        "crates/om-isa/src/lib.rs": "b7ad215197df048efb8cdc84768eae6d48eb577bef2b042946046aaf05362b3d",
+        "crates/om-isa/src/riscv.rs": "747a27df13ce366ccdf01c8528db147ff52c42ae7d7ef3dd714f3bfadfb8fcd5",
+        "crates/om-isa/tests/common/mod.rs": "896ed28d2ef5013f1be0783e08e27f9a17b38d9db060ce319e89b370f2e5d8f7",
+        "crates/om-isa/tests/isa.rs": "6ec7fc0b2c2d00348496923322de8a39403255adeee43006a1b8aac7a2d7ef5f",
+        "crates/om-memcheck/Cargo.toml": "4890bccf1b0ff45c95a097374f11aeff42e25ad12bfad55b1fc2c10e08ca8d7a",
+        "crates/om-memcheck/src/lazy.rs": "91f7c5da2d9aa766b8f51cbe208d0aab6e85796d1992efa22680a372dd3059fb",
+        "crates/om-memcheck/src/lib.rs": "040e7c94945cdc86dcd965e848584f6d4d6830ffd9ce09705f9545cb72096017",
+        "crates/om-memcheck/src/onehot.rs": "e55a63461010151eb5a5dc9853a7c91495b8a14a45ac507a3f34966b3d12c47b",
+        "crates/om-memcheck/src/shout.rs": "3a582c98f9afdd46e50914f618cf89555d0fdc0a3cd554e50af3b2fed2226438",
+        "crates/om-memcheck/src/twist.rs": "ce903713a40023e38f40611100461f87beee9f205efb3cb36f4a14e6928197cd",
+        "crates/om-memcheck/tests/common/mod.rs": "d8ff5cd00cb217f43bbf1e49ed515fa11f65c5328398a027f13406e142fd8b75",
+        "crates/om-memcheck/tests/onehot.rs": "0f1db98ee4f3a77b38888da4f5eab51d510fbf614f0e7f4a3a914aabe77da625",
+        "crates/om-memcheck/tests/shout.rs": "9dbd1a4d91bac47b5f347747b5e8991b4685cbdb78d7c59aa52e21f9ffd76f6f",
+        "crates/om-memcheck/tests/twist.rs": "3e99d9046d018db8ffd7910e6203e78ad695fbe5662292837a9a4f10350962dc",
+        "crates/om-memcheck/tests/vectors.rs": "4478197a8f27f6d8c63f3654f8b3e71670c65eb4e1dbd4dc9a2f32f084577a52",
+        "crates/om-mosaic/Cargo.toml": "6ec4450dc4eddfa480d002f2bd98332065710b76d747632877e9722d59a72168",
+        "crates/om-mosaic/src/lib.rs": "4a07c0cfc7c43f3c1f8ca226a28477bc4239ad09f8a2e3f4fdd55ba888225676",
+        "crates/om-mosaic/src/mosaic.rs": "a303f1981fdb9a2b4598576a55bc7ad5c46497339e4f9964d43e139b9b9b0a63",
+        "crates/om-mosaic/tests/mosaic.rs": "fe0ad48481921056f6140d5a9be02c53c5aa7a32d3bf39ca434da395a3cb7d51",
+        "crates/om-mosaic/tests/vectors.rs": "61932986e208c68b58c1b00d9a32552f59b17af20a445cbbb576a4936d4a5869",
+        "crates/om-pcs/Cargo.toml": "5ef41d8eec46298058bd247a349d573d4c04f5ad02c405af7484ecdf5e69bc0e",
+        "crates/om-pcs/src/lib.rs": "36c1c28fe8dedb292771b6414a70a96fe67e06fec9d690d655cf2953cb7829ad",
+        "crates/om-pcs/src/ligerito.rs": "e223ef910f4a8dc17003796e47ac9f19da3aac4b3b2318cccd47e34ca2bd126e",
+        "crates/om-pcs/src/merkle.rs": "ab85eb09686649102389f5b5c7bd8b82b35f9caac6f7cc1f7675b0438bcdc59e",
+        "crates/om-pcs/src/ntt.rs": "2c3d610ba96a6517c205d5c362affb5fe9641bb66f16915d64e05b55253dc558",
+        "crates/om-pcs/src/pcs.rs": "d85a0852f46bb495da826e4eae3c8dbb62ee2c0a2b2fec39f293ba26e1644f08",
+        "crates/om-pcs/src/ring_switch.rs": "5e9330280c66070b50f507a4cfbcdb0a0adb3bbeac1bcd5f4450548bf4b6727a",
+        "crates/om-pcs/tests/common/mod.rs": "50aea1be8d17baed7b6f95530a307f586f3ca1a6a26af4fc696911a79579360f",
+        "crates/om-pcs/tests/ligerito.rs": "d249b6b23c53d2c9780a3b588ed6c7ec531857bac73ccc8fb898111dcaed9e0f",
+        "crates/om-pcs/tests/merkle.rs": "de81392e8600f422410f895d2a9af4dd508e8bb4addb4cd06ae02babb8acd7f8",
+        "crates/om-pcs/tests/ntt.rs": "b32181682060dcc868a15268902fe9089258b6be4b40fd4719c7aed469ebf4bc",
+        "crates/om-pcs/tests/ring_switch.rs": "10fc027e93f9ef9d1c29e04203bfa5e4ef5a71ee1bc693381804df02c807a4a6",
+        "crates/om-pcs/tests/vectors.rs": "d2fb13154e8a546b3316cdde9fe09f57444d1d6a802b457e4167a3df0eaa89bb",
+        "crates/om-sumcheck/Cargo.toml": "adff3f7112eb4dfbe3530683540044af1df85a873819aca92450c5f05ee9ee20",
+        "crates/om-sumcheck/src/lib.rs": "b8aa9dc265728a796f11423c7f89c469112bc605a667c7d752fb6d74026fa37b",
+        "crates/om-sumcheck/src/mle.rs": "01ad6781197e7ff75b523b262bc38d431b9e656bb8344b92b15cf533409682c3",
+        "crates/om-sumcheck/src/sumcheck.rs": "c2bcacfefaebf0d97a773986f2ccb1b01c4563f524e8a54b55aa9ca0fe4c6407",
+        "crates/om-sumcheck/tests/mle.rs": "211ef4257a32ced8c4e2c97ffbb81d594d1f6a155175aa4c6246c6b3dbeaff9a",
+        "crates/om-sumcheck/tests/sumcheck.rs": "8ba5e28557d6b1ddfd61e4ad7113a81bf8e8eb73cce39fcdd8ea479986e888db",
+        "crates/om-sumcheck/tests/vectors.rs": "61374dfb6e743a0ed6d32c20ba61f912c4561363b80f5e1abfc4d8d4a7a3bece",
+        "crates/om-transcript/Cargo.toml": "9f6046d99133415bdd977fda0cd3e95697fc0acf96bedbfb435021f1a063dae3",
+        "crates/om-transcript/src/hashing.rs": "454f14a7e6ac686aa4114616f61a22e01446f0d29db4b677cd038cb5c82f866e",
+        "crates/om-transcript/src/keccak.rs": "e8d76367282dcc9db4c7cc1f27ca06d019b893b81cfececd39dfcea01edca40c",
+        "crates/om-transcript/src/lib.rs": "41e26e75c344e91d706e32cdfcabc2140ac070ad11aaeb8d24706f59103ff926",
+        "crates/om-transcript/src/sha256.rs": "463e02e41f058a277f1e3e0861595ba6311848b7ac09b1cd7d4560ec09995c26",
+        "crates/om-transcript/src/sha512.rs": "34ecee5a4d566fb265728cd723d2c862a69b19f86b079b3038cc61fcac6b1c10",
+        "crates/om-transcript/src/transcript.rs": "5b4906c7c3f07499b9b86acb054803fcb7e920bf799cefaf03ebf0ffeb344d01",
+        "crates/om-transcript/tests/hashing.rs": "b938b8cecb363b17dc1d14d3a8654bd0a56e406e246a0ec89983afa4663f36a8",
+        "crates/om-transcript/tests/transcript.rs": "793f1c14d1cbc77347dcb52e524ae50c50f318ff4afba5c3c94a814f4b663d6d",
+        "reference/vectors/02-transcript/transcript.json": "c75413492ef4845a4cd11d531ded865ab825842abc4d3075e16768b6665b765e",
+        "reference/vectors/03-sumcheck/mle.json": "49de249eaf33167aff496f2bc167f26a9b1ea93ba43dfc6405b13660fbc42ce7",
+        "reference/vectors/03-sumcheck/sumcheck.json": "f8092d4282e2bfb4b399eff3a0c6e7cc7634589026ab7f390752fffaa4ef02cd",
+        "reference/vectors/04-pcs/ligerito.json": "da89404a85219b941f66a235269213aef6ffa00dad5f429d11b6fb3a23c9a0a6",
+        "reference/vectors/04-pcs/merkle.json": "7cc66610147ce287f618e6b0a938e33ef5658487d1e43bf1a3393f4693282735",
+        "reference/vectors/04-pcs/ntt.json": "f2a87c61cd2e66800e5bf46ccaa4ad927fda4b14dba4cdd1c36de2cf70b93441",
+        "reference/vectors/04-pcs/ring_switch.json": "97ff528aa47f01442322910cc51016f586a3c025c05ded803c7b7115aa415d0b",
+        "reference/vectors/05-mosaic/batch.json": "309c1f1576c4cf4f8279bdebae2ab34a595821d75019f0927dd5dfcfb1bc6a09",
+        "reference/vectors/05-mosaic/layout.json": "15df106e679dea9958f2d25003d1e811faca412675c6f8439b7d82d2a1b2d379",
+        "reference/vectors/06-spartan/next_mle.json": "420e396b142dc24f0e48bd5c94a3f2e881bc22f1309ff668a9f5077a3a7bc001",
+        "reference/vectors/06-spartan/simd_spartan_bin.json": "d864e17d2a69337bfd31fcfc04d3293018ec316aecc32563b04a9bf1973c4f3d",
+        "reference/vectors/06-spartan/virtual_spartan_toy.json": "4d22352c4e20b11669fbf52ffccfd0629811086ae6d8c6e770aa63dd81c9174f",
+        "reference/vectors/07-twist-shout/lt.json": "221bcf98b6c4ea239e8b976ad796c91d6aea1afa0676645fadc4401354fe79af",
+        "reference/vectors/07-twist-shout/onehot.json": "b5a19fc8a161cbfefcf17af144cd829322f0911c31d12d4e7999a2cc91ce8122",
+        "reference/vectors/07-twist-shout/shout_d1.json": "3136c4e0d1699d5b36a247c88be74b1d49d89bc4fddab40f8925b05de3224564",
+        "reference/vectors/07-twist-shout/shout_d2.json": "01aa35ad8ba2baf6ab4530e9d16caa42a6f9bdca65392264351a5c38c017a825",
+        "reference/vectors/07-twist-shout/twist_ram_p1_d1_final.json": "cdda423873eb73e6fb76bd1749885e6f3fa786a42dab091ca93dbb9b4a738074",
+        "reference/vectors/07-twist-shout/twist_ram_p1_d2_final.json": "f6e965f57c20055e79500e7ac2707687d6580ce08c8c15cc4674363449fb3b28",
+        "reference/vectors/07-twist-shout/twist_reg_p2_d1.json": "c0168fe6606d17313c05abeea9ccd5c0ea4e2b32d928ff2dd4d13c01bc73181f",
+        "reference/vectors/07-twist-shout/twist_reg_p2_d2.json": "02ae72f894c2923e1c00022e256c7394451fbf8786adfda6f49536596fe798e8",
+        "reference/vectors/08-router/R_eval_wb6.json": "e1955ee6baadedef128de6ae17660ea33ad926f740b5d6bd0a932b36041a91bb",
+        "reference/vectors/08-router/shift_wb3.json": "310056bf1491e22a3214f8e0fc00561b37f142e3862de972fb21672cbee2000e",
+        "reference/vectors/08-router/shift_wb6.json": "b7ef882420e33187c635dc73a70d1f4afd7c1018bc561369cb901a391957fae9",
+        "reference/vectors/08-router/store_wb4.json": "c22e15f30a51b25e90eaf650a4acdbb8a615ed59d16b2f35be57109727bd0cd0",
+        "reference/vectors/08-router/store_wb6.json": "fd95d7caae2a69170b2704b581c48e906f55f8fe4bca1b63ad66d10ff8fa3619",
+        "reference/vectors/10-cpu/cpu.json": "57bdbb2a3030adf526590fbfa372b95bb57571c8445a0f5b294cf7083ba8c7a3",
+        "reference/vectors/11-12/fib_ligerito_test.json": "a7374951b4d5ed0bc4a0201116c6281afadad1f889e43b2f22ec222abf9c67f3"
+      },
+      "dense_bit_scan_note": "Mosaic phase-1 region sums (om-mosaic region_sums) and the packed ring-switch partial evaluations (om-pcs partial_evals_packed) take eight rows at a time when they are dense: om-field subset::subset_sums8 builds the 256 subset sums of the eight eq values and subset::column_bytes transposes the rows so that one table lookup per column replaces up to eight additions. Sparse groups keep the per-bit path. Field addition is XOR, so the sums and the proofs are unchanged.",
+      "glue_copy_note": "Borrow addresses in the existing onehot packer and hash public words with identical little-endian framing without a serialized copy on little-endian targets. RingSwitch generates initial field elements from packed u64 pairs; Ligerito allocates its canonical packed table once after RingSwitch, borrows its first Eq fold and consumes it for query encoding. Existing owned/repacking APIs and paired/fused arithmetic remain. No witness table or codewords are retained across the IOP; proof/transcript values are unchanged.",
+      "implementation": "gf128-jolt-flat-structural-sharing-v1",
+      "license": "MIT OR Apache-2.0",
+      "local_patch_sha256": "daffa0f5d4e36c4595e2f0fc6242162e4e595b7da3fb2816fad942f8bb250cfc",
+      "local_sha256": {
+        "LICENSE-FLOCK-MIT": "ed21a0d573a473913534aa8462b410c4c03d899900096bf3bdeb8fea650a01b5",
+        "LICENSE-JOLT-MIT": "452532d531b7503f55729a3b1fe136de15814f14ae5ac18a0e33c6476b70997b",
+        "crates/om-field/src/lib.rs": "391c685fd44edbb4c4543d0f0716efcbe207ff1766ec76208843df583edfd726",
+        "crates/om-field/src/subset.rs": "838d8b7dacd488ec9f98c239c5b4b923d41c68f178ac4f59492f49550d580327",
+        "crates/om-memcheck/src/eq_factor.rs": "abd5d626e84e93d1c7f11619bb2d734e1be7363a13d7dfed500e512a22f418fa",
+        "crates/om-memcheck/src/gkr_kernels.rs": "13f02fe3924d82b2df1041f25d1fc92aabb7e77bf137e32f8929f57d75df2e3c",
+        "crates/om-memcheck/src/lazy.rs": "5c9831fea1c02f2fee9d8668d897254bda4f786d61987d4ff56e798151348497",
+        "crates/om-memcheck/src/lib.rs": "202de617c789ca78ccaabaf39bdf95c509c25a87a09eed51d97c2914cdf2e42d",
+        "crates/om-memcheck/src/onehot.rs": "dbd9ad8c5539eea847689ae2f64626250fafc4a7a0768a750ddfbf394dd2b415",
+        "crates/om-memcheck/src/onehot_kernels.rs": "c97b100a7b818deee8e7035a2af6276c7f05e50e65e5b9348cb53765e54996b9",
+        "crates/om-memcheck/src/onehot_structural_tests.rs": "386b6a87a85bfcb38777239647aada7cf0e208f39176630e6f42f69a6f51f897",
+        "crates/om-memcheck/src/shout.rs": "0df00508882bd182a8aa5bfaa9519c1a9376141cc085223e026b74f86c59f414",
+        "crates/om-memcheck/src/sumcheck_kernels.rs": "cece6c60798b3c34e511f906f82f779086a6499a7411fe58b9826d90b938fea5",
+        "crates/om-memcheck/src/twist.rs": "a5c0c3b6e77b229913359a913e22f2df14e10f6db91ea1080c9af21d28d49e04",
+        "crates/om-memcheck/src/virt_claim_reduction.rs": "0b8e8a629cdae377e21e92f3bb7a8ef68b0a8c6bddd6afa2c1204c66a09be871",
+        "crates/om-memcheck/src/virt_flat.rs": "7b864a06896dddd6413ad3b3f00bfcbc9c8c1b195f128235e8f35b7abaa44465",
+        "crates/om-memcheck/src/virt_product.rs": "6f200436886d3eb4ec99be488427767e19a9bcbc53ca4c100cc231eb019832df",
+        "crates/om-memcheck/src/virt_selectors.rs": "6fbf4e299615ed1a742826e545c9478d99df415220ad207b01d26beaa958976b",
+        "crates/om-memcheck/src/virt_single.rs": "f2ace8ac77d6d80c96f86da6f4645d61901ea4e052b18089a454b9913115128f",
+        "crates/om-memcheck/src/virt_tree.rs": "f63ea7e04d069df0b9429ad48db8322a375858a82da8687d678a385eded60ce7",
+        "crates/om-memcheck/tests/shout.rs": "6e2173e85c18f15482b8fe3bfd4770be6a78681be8ae8e1653a566048448ba14",
+        "crates/om-memcheck/tests/vectors.rs": "1b577d1072b73cc1fec31ed1c94a56d4d2eda1ff735686eaa4436a486880e80e",
+        "crates/om-mosaic/src/lib.rs": "fa98014213379ea123bde4bd6d2eeb262ca0be3cb202371fa5702a7e51cab722",
+        "crates/om-mosaic/src/mosaic.rs": "e3164c6b70fd38c0549c6b746cc8c59c2de91cd346e400ccf0dc4404500269c3",
+        "crates/om-mosaic/tests/mosaic.rs": "966d242824ab9cf367446100cf16f63935a8351e5b19ddd82813147bea391298",
+        "crates/om-mosaic/tests/prefix.rs": "2226662894ba7381444c008f3602edbaa50c86565c6f46933a61066c03033d65",
+        "crates/om-pcs/src/ligerito.rs": "ae9a073f2c16bc40f01b5a2fd687ef0d1ce3f1487c37dc55130d250a58d988c6",
+        "crates/om-pcs/src/merkle.rs": "9f21c5880a0c9520d035950b2e7ed07a0bdcaa67a7fef6fd4d268f19c72f6662",
+        "crates/om-pcs/src/ntt.rs": "1a04646a1a8ed8c9623c60fa13c6946411c8adef7b910646f7b0bb6418a77be9",
+        "crates/om-pcs/src/pcs.rs": "19cd72d82ad79480f75d3c2aea006eed5ae1516eac63c94a055afc8a8c0fc810",
+        "crates/om-pcs/src/ring_switch.rs": "eeb2e42ab4f1954e4d44ad624044693cd8973e89a79b8656f23fc956637e5c53",
+        "crates/om-pcs/tests/commit_encoding.rs": "4e8d708a22b97bdaf60fe2e164f50780a2658dbee033edb9b09fbfa52f267f77",
+        "crates/om-pcs/tests/ring_switch.rs": "fc352142b663bba2b44b534c87eb35e7005dca0d9d4165af07a80d72f9eb0909",
+        "crates/om-sumcheck/src/lib.rs": "ad80848e61fa44eca7e9b510ad86966e10faeb0ea93224e490d78296b0e6bff6",
+        "crates/om-sumcheck/src/mle.rs": "26e3dbd3b398d6cb737899d997d2eee68cdb1e2fc2a2873e44ac1577b67de05f",
+        "crates/om-sumcheck/src/products.rs": "9e639fcda0e7a23182fdd115d756e33978ccfa8ae122be721d56ce35b5003f44",
+        "crates/om-sumcheck/src/sumcheck.rs": "64cf5664510c02509c29c0de7a4c8962c479d76f354ea2502e5dc414f5cf21c7",
+        "crates/om-sumcheck/tests/fused.rs": "49d17063e8b254edbccf125bb3bedc8733722ee618c990571974e733cb0553ec",
+        "crates/om-sumcheck/tests/products.rs": "82fa16f2ac41acfdbe80af316f27ede1ab8542a4b80cf68b07e033d2a8275bc4",
+        "crates/om-transcript/Cargo.toml": "e4472a209420a12dd0becf7348557e2d6b06ddb7a30cecf5a9b88e9803ac695c",
+        "crates/om-transcript/src/hashing.rs": "40f32fdb4b01a56def19adce4eeb3c6cf5c1cba0384b5ab97de2b6c7992d8da4",
+        "crates/om-transcript/src/lib.rs": "1e09ca3943e2d92c02ed30a35e742f670f3b5040e99e91d19c9d17f5ad442444",
+        "crates/om-transcript/src/profiling.rs": "76a1f8915a2ce2b7e2959afe36c82108c308f6b13c4c1f4b0128afc8d7e11585",
+        "crates/om-transcript/src/sha256.rs": "45f95805d38ca47d16750285fb3e5d676fed9fd6cd607ac88b0406cb32570bf1",
+        "crates/om-transcript/src/transcript.rs": "8e4b508f5af6ec0dd88374b6a8d0b3ac5ba8db6afeecc1083ef8982d8a603e25",
+        "crates/om-transcript/tests/transcript.rs": "24c15386675fd959c7b31fe39dec256d0d9a147d1cf14592b11b351d89ed6403"
+      },
+      "masked_native_domain_api_note": "Expose existing Eq-factor coefficient reconstruction, batch inversion and wire-evaluation helpers for the proof-compatible native-domain masked-value driver. Existing helper arithmetic and other sumcheck kernels are unchanged.",
+      "mosaic_prefix_note": "Add explicit verifier-provided low-prefix linear functionals for compact Flock gate layouts. Their ordered descriptors are bound before batching; the packed phase folds small multilinear basis tables and retains the existing high-coordinate scans and ordinary final G opening. Empty functional lists delegate to the legacy APIs exactly. RingSwitch and Ligerito are unchanged.",
+      "mosaic_profiling_note": "mosaic.bind_g and mosaic.dense isolate full-layout work from per-component batching. Profiling is transcript-neutral.",
+      "mosaic_scratch_note": "Dense-row subset lookup scratch is retained per Rayon fold and allocated lazily; sparse groups allocate none. Arithmetic and transcript remain unchanged.",
+      "optimization_sources": {
+        "flock": {
+          "license_notice": "LICENSE-FLOCK-MIT",
+          "repository": "https://github.com/succinctlabs/flock",
+          "revision": "daa0cf426563b01f9e744f6265ebae37c97afcb7"
+        },
+        "jolt": {
+          "license_notice": "LICENSE-JOLT-MIT",
+          "repository": "https://github.com/a16z/jolt",
+          "revision": "e21affaeaf0d2c0a4630b958a883a4ac877acbfd",
+          "use": "Two-pass common-cycle claim reduction, shared-Eq flat virtualization, compact lazy selectors and per-row arithmetic product tree; adapted to GF128 coefficient arithmetic."
+        },
+        "leanVM": {
+          "repository": "https://github.com/leanEthereum/leanVM",
+          "revision": "e5d75f858e91161921c0afe3d9f56300e9a3a03c",
+          "use": "Algorithm/scheduling reference; GF192 representation and protocols are not substituted."
+        }
+      },
+      "permitted_modified_files": [
+        "crates/om-field/src/lib.rs",
+        "crates/om-memcheck/src/lazy.rs",
+        "crates/om-memcheck/src/lib.rs",
+        "crates/om-memcheck/src/onehot.rs",
+        "crates/om-memcheck/src/shout.rs",
+        "crates/om-memcheck/src/twist.rs",
+        "crates/om-memcheck/tests/shout.rs",
+        "crates/om-memcheck/tests/vectors.rs",
+        "crates/om-mosaic/src/mosaic.rs",
+        "crates/om-mosaic/tests/mosaic.rs",
+        "crates/om-pcs/src/ligerito.rs",
+        "crates/om-pcs/src/merkle.rs",
+        "crates/om-pcs/src/ntt.rs",
+        "crates/om-pcs/src/pcs.rs",
+        "crates/om-pcs/src/ring_switch.rs",
+        "crates/om-sumcheck/src/lib.rs",
+        "crates/om-sumcheck/src/mle.rs",
+        "crates/om-sumcheck/src/sumcheck.rs",
+        "crates/om-transcript/Cargo.toml",
+        "crates/om-transcript/src/hashing.rs",
+        "crates/om-transcript/src/lib.rs",
+        "crates/om-transcript/src/sha256.rs",
+        "crates/om-pcs/tests/ring_switch.rs",
+        "crates/om-mosaic/src/lib.rs",
+        "crates/om-transcript/src/transcript.rs",
+        "crates/om-transcript/tests/transcript.rs"
+      ],
+      "repository": "https://github.com/Lulzx/open-magnetar",
+      "revision": "febfc0e66f5809e034dd1afac78202bd4882de27",
+      "sharing_policy": {
+        "local_product_pruning": "Retained.",
+        "mosaic": "Public aligned region and remaining evaluation-point coordinates share initial cofactor tables and dense Eq construction. Every claim and prefix remains bound; no witness-content grouping.",
+        "onehot": "Explicit source identity and matching chunk index only; no witness-content comparisons.",
+        "shared_ram": "Adapter supplies a declared shared-address alias; read and write references are canonicalized.",
+        "virtualization": "Explicit source identity and matching address point only; no witness-content comparisons."
+      },
+      "stage14_api_note": "The existing Eq-factor Cofactor/Endpoint/prove kernel is exported for the ordered Spice comparison. Existing Twist/Shout kernels and proof formats are unchanged.",
+      "stage15_api_note": "Expose the existing Eq-factor known-initial-claim driver for the typed Spice masked-value reduction; arithmetic and existing proof kernels are unchanged.",
+      "workspace_note": "Cargo.toml selects eight upstream crates. Cargo.lock is resolved for this subset; neither workspace file is a prover kernel."
+    }
+  },
+  "notes": [
+    "Every warmup/measured proof independently verified; identical initial/access trace and exact final memory checked across methods. With public final memory each verifier checks the statement's final memory; with private final memory the cross-method check compares the final memories the provers computed, which the verifiers bind only through the commitment.",
+    "Schema 5: per workload, every configuration is warmed up, then measured in --repeat rounds; each round runs every configuration once and the order reverses every round. samples[].iteration is the round and samples[].position the order within it. paired_ratios gives ratios of medians with 95% paired bootstrap intervals over rounds (10,000 resamples, fixed seed).",
+    "Schema 5 also records verifier spans (profiler cleared before verify, taken after), structural proof sizes (field 16 B, hash 32 B, index 4 B; split PCS/Mosaic/IOP), composed soundness (union bound of Ligerito soundness_bits on the actual parameters and IOP terms; soundness.iop_source says whether the IOP terms come from the argument crate, a local fallback derived from the verifier, or only the fingerprint term), load averages per case and sample, host metadata, cases[].throughput (median prover ns per trace row and, for guests, per source load/store before narrow-store expansion) and metadata.reuse_distance (log2 buckets of operations since the previous access to the same word).",
+    "Operations mode preserves explicit load/store kinds and exactly T operation rows. All baselines use the same rows after replay conversion; reads write back their old word and writes acquire an internal old-value read. It does not infer kinds from equal values. Operation flags and values are included in operation_trace_sha256.",
+    "Inclusive commit/open and Mosaic totals are reconstructed from the exclusive span partition; IOP+prep includes preparation, argument and unattributed time. Derived actual/estimated sample totals are medianed independently.",
+    "Padding-adjusted values model commitment padding only: each commitment domain multiplies its measured commit time by its own populated/padded fraction; the estimated prover total subtracts only that modeled commitment saving. These are linear cost estimates, not measured unpadded proofs or achievable speedups. Fixed overhead and domain-size-dependent logarithmic commitment work are approximated. Opening, Mosaic, ordering, other RAM IOP, packing, public boundaries, verification and unattributed time remain fully charged. Actual padded timings and all exclusive stages are preserved.",
+    "Spice commits access/final predecessors and ripple carries. Typed Spice commits one value, is-write and next-is-write flags, with an additional initial next-is-write bitplane; mask reduction and actual component/Mosaic padding costs are included. Initial memory is public and transcript-bound. Final memory is public and transcript-bound unless cases[].final_memory is private, in which case it is committed and bound by a Mosaic claim.",
+    "cases[].implementation names the prover a method name ran. In this binary twist is Twist v2 (ram_argument::twist2); binaries before schema 5 used twist for the prover now called twist-legacy.",
+    "twist-logup-star retains the Twist v2 read check, commits dense Boolean address planes and Inc, uses a cubic cycle check, and authenticates its sparse-address evaluation directly as a LogUp* pushforward MLE. The auxiliary field table is committed before the rational challenge; both main and auxiliary Mosaic/PCS openings are charged. No public-table inner-product or dualization is run. area.commitments lists each actual domain; aggregate committed_bits need not be a power of two. The rational error is (2^address_bits-1)/2^128 with rangechecked addresses, independent of access count; full composition adds the other IOP terms and both PCS domains. Equal overall security is not claimed.",
+    "Current GP field is GF128. Its (T+N)/2^128 term and other errors prevent inferring equal/composed 120-bit security from the inherited PCS profile. Larger-field GP requires a separately authenticated extension opening adapter."
+  ],
+  "cases": [
+    {
+      "method": "twist",
+      "implementation": "ram_argument::twist2 (address-first read check)",
+      "final_memory": "public",
+      "ordering": null,
+      "pattern": "random/operations",
+      "trace_format": "operations",
+      "chunk_bits": 4,
+      "trace_sha256": "888bcc60c6b69a5bc29fb559e51feb84f191fff3e1ede5966b6db51c0b511955",
+      "operation_trace_sha256": "3f48e161de26f936d0d31dfadc2b74c514358fc9f036317dc89ed91ac1bb80fd",
+      "metadata": {
+        "address_bits": 20,
+        "completed_source_rows": 0,
+        "dummy_read_operations": 0,
+        "full_pattern_repetitions": 1,
+        "guest": null,
+        "kind": "uniform-random-operations",
+        "memory_operations": 262144,
+        "narrow_store_read_operations": 0,
+        "narrow_store_write_operations": 0,
+        "operations": 262144,
+        "padding_operations": 0,
+        "partial_source_operation": null,
+        "pattern_operations": 262144,
+        "read_operations": 130771,
+        "replayed_operations": 0,
+        "reuse_distance": {
+          "buckets": [
+            0,
+            4,
+            0,
+            1,
+            1,
+            12,
+            7,
+            31,
+            64,
+            114,
+            263,
+            481,
+            934,
+            1956,
+            3609,
+            6409,
+            9340,
+            6890
+          ],
+          "first_accesses": 232028,
+          "median_bucket": 16
+        },
+        "seed": 1,
+        "selected_source_rows": 0,
+        "source_full_store_rows": 0,
+        "source_load_rows": 0,
+        "source_narrow_store_rows": 0,
+        "source_vm_cycles": 0,
+        "tail_pattern_operations": 0,
+        "trace_mode": "random-operations",
+        "write_operations": 131373
+      },
+      "load": {
+        "start": {
+          "one": 5.14599609375,
+          "five": 3.853515625,
+          "fifteen": 2.06005859375
+        },
+        "end": {
+          "one": 5.0693359375,
+          "five": 3.87548828125,
+          "fifteen": 2.08642578125
+        }
+      },
+      "area": {
+        "cycles": 262144,
+        "memory_cells": 1048576,
+        "populated_bits": 37748736,
+        "committed_bits": 67108864,
+        "padding_bits": 29360128,
+        "populated_fraction": 0.5625,
+        "packed_field_elements": 524288,
+        "mosaic_claims": 12,
+        "components": [
+          {
+            "name": "ram/ra0/1",
+            "log_size": 22,
+            "bits": 4194304
+          },
+          {
+            "name": "ram/ra0/2",
+            "log_size": 22,
+            "bits": 4194304
+          },
+          {
+            "name": "ram/ra0/3",
+            "log_size": 22,
+            "bits": 4194304
+          },
+          {
+            "name": "ram/ra0/4",
+            "log_size": 22,
+            "bits": 4194304
+          },
+          {
+            "name": "ram/ra0/5",
+            "log_size": 22,
+            "bits": 4194304
+          },
+          {
+            "name": "ram/inc",
+            "log_size": 24,
+            "bits": 16777216
+          }
+        ]
+      },
+      "proof_size": {
+        "pcs_bytes": 270148,
+        "mosaic_bytes": 848,
+        "iop_bytes": 3488,
+        "total_bytes": 274484,
+        "source": "crate"
+      },
+      "soundness": {
+        "iop_source": "crate",
+        "pcs_probability": 3.8647175627721476e-36,
+        "iop_probability": 1.1049646897729503e-36,
+        "total_probability": 4.969682252545098e-36,
+        "bits": 117.27625780305726,
+        "pcs_bits": 117.6390484314655,
+        "iop_bits": 119.44541114832236,
+        "terms": [
+          {
+            "name": "twist2.read.batch",
+            "group": "iop",
+            "probability": 2.938735877055719e-39,
+            "bits": 128.0,
+            "location": "crates/ram-argument/src/twist2/mod.rs soundness_terms"
+          },
+          {
+            "name": "twist2.read.sumcheck",
+            "group": "iop",
+            "probability": 2.7624117244323756e-37,
+            "bits": 121.44541114832236,
+            "location": "crates/ram-argument/src/twist2/mod.rs soundness_terms"
+          },
+          {
+            "name": "twist2.final.point",
+            "group": "iop",
+            "probability": 5.877471754111438e-38,
+            "bits": 123.67807190511263,
+            "location": "crates/ram-argument/src/twist2/mod.rs soundness_terms"
+          },
+          {
+            "name": "twist2.cycle.batch",
+            "group": "iop",
+            "probability": 2.938735877055719e-39,
+            "bits": 128.0,
+            "location": "crates/ram-argument/src/twist2/mod.rs soundness_terms"
+          },
+          {
+            "name": "twist2.cycle.sumcheck",
+            "group": "iop",
+            "probability": 3.7028072050902057e-37,
+            "bits": 121.02272007650008,
+            "location": "crates/ram-argument/src/twist2/mod.rs soundness_terms"
+          },
+          {
+            "name": "twist2.mirror.point",
+            "group": "iop",
+            "probability": 7.640713280344869e-38,
+            "bits": 123.2995602818589,
+            "location": "crates/ram-argument/src/twist2/mod.rs soundness_terms"
+          },
+          {
+            "name": "twist2.mosaic.batch",
+            "group": "iop",
+            "probability": 3.2326094647612906e-38,
+            "bits": 124.5405683813627,
+            "location": "crates/ram-argument/src/twist2/mod.rs soundness_terms"
+          },
+          {
+            "name": "twist2.mosaic.sumcheck",
+            "group": "iop",
+            "probability": 1.5281426560689738e-37,
+            "bits": 122.2995602818589,
+            "location": "crates/ram-argument/src/twist2/mod.rs soundness_terms"
+          },
+          {
+            "name": "ringswitch.rho",
+            "group": "iop",
+            "probability": 2.0571151139390031e-38,
+            "bits": 125.1926450779424,
+            "location": "om-pcs/src/ring_switch.rs verify (rs/rho)"
+          },
+          {
+            "name": "ringswitch.sumcheck",
+            "group": "iop",
+            "probability": 1.1167196332811731e-37,
+            "bits": 122.75207248655641,
+            "location": "om-pcs/src/ring_switch.rs verify (sumcheck_verify)"
+          },
+          {
+            "name": "ligerito.level0.sumcheck",
+            "group": "pcs",
+            "probability": 2.938735877055732e-38,
+            "bits": 124.67807190511263,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level0.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level0.gap",
+            "group": "pcs",
+            "probability": 9.273015376718636e-67,
+            "bits": 219.35614381022526,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level0.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level1.sumcheck",
+            "group": "pcs",
+            "probability": 2.350988701644575e-38,
+            "bits": 125.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level1.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level1.gap",
+            "group": "pcs",
+            "probability": 9.273015376718553e-69,
+            "bits": 226.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level1.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level2.sumcheck",
+            "group": "pcs",
+            "probability": 2.350988701644575e-38,
+            "bits": 125.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level2.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level2.gap",
+            "group": "pcs",
+            "probability": 1.448908652612274e-70,
+            "bits": 232.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "ligerito.level2.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          }
+        ]
+      },
+      "grand_product_extra_bound": null,
+      "throughput": {
+        "operations": 262144,
+        "prover_ns_per_operation": 805.411434173584,
+        "source_memory_instructions": null,
+        "prover_ns_per_source_memory_instruction": null
+      },
+      "samples": [
+        {
+          "iteration": 0,
+          "position": 0,
+          "prover_ms": 208.464168,
+          "verifier_ms": 23.528558,
+          "commit_ms": 5.8979360000000005,
+          "opening_ms": 18.450456,
+          "iop_and_prep_ms": 184.115776,
+          "preparation_ms": 12.240939,
+          "argument_ms": 170.18438500000002,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.761931,
+          "unattributed_ms": 1.6904519999999934,
+          "stages_ms": {
+            "mosaic.batch": 2.627322,
+            "mosaic.bind_g": 0.666576,
+            "mosaic.dense": 0.46803300000000003,
+            "pcs.commit": 5.8979360000000005,
+            "pcs.ligerito_open": 14.461791,
+            "pcs.open": 0.001367,
+            "pcs.ringswitch": 3.987298,
+            "ram.claims": 0.680152,
+            "ram.pack": 1.201019,
+            "ram.statement": 8.480182,
+            "ram.witness": 1.879586,
+            "twist.cycle": 0.047524000000000004,
+            "twist.cycle.rounds": 19.623811,
+            "twist.cycle.tables": 0.005603,
+            "twist.interface": 0.13938899999999999,
+            "twist.memory": 0.691906,
+            "twist.read": 145.914221
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 205.883821,
+            "commit_ms": 3.3175890000000003,
+            "removed_padding_ms": 2.580347
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.191148,
+            "verify.memory": 0.878569,
+            "verify.mosaic": 0.22097299999999997,
+            "verify.pcs": 11.702629000000002,
+            "verify.read": 0.31372,
+            "verify.statement": 10.116184
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 1,
+          "position": 1,
+          "prover_ms": 210.36171000000002,
+          "verifier_ms": 21.596033000000002,
+          "commit_ms": 6.32157,
+          "opening_ms": 17.182142,
+          "iop_and_prep_ms": 186.857998,
+          "preparation_ms": 11.857296999999999,
+          "argument_ms": 173.60609699999998,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.736151,
+          "unattributed_ms": 1.3946040000000437,
+          "stages_ms": {
+            "mosaic.batch": 2.606303,
+            "mosaic.bind_g": 0.642351,
+            "mosaic.dense": 0.48749699999999996,
+            "pcs.commit": 6.32157,
+            "pcs.ligerito_open": 13.513031999999999,
+            "pcs.open": 0.001217,
+            "pcs.ringswitch": 3.6678930000000003,
+            "ram.claims": 0.6670069999999999,
+            "ram.pack": 1.222197,
+            "ram.statement": 8.267280999999999,
+            "ram.witness": 1.700812,
+            "twist.cycle": 0.031362999999999995,
+            "twist.cycle.rounds": 19.280167000000002,
+            "twist.cycle.tables": 0.004904,
+            "twist.interface": 0.15649500000000002,
+            "twist.memory": 0.688872,
+            "twist.read": 149.70814499999997
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 207.59602312500002,
+            "commit_ms": 3.5558831250000003,
+            "removed_padding_ms": 2.765686875
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.167579,
+            "verify.memory": 0.743266,
+            "verify.mosaic": 0.210089,
+            "verify.pcs": 11.161413999999999,
+            "verify.read": 0.290235,
+            "verify.statement": 8.925718
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 2,
+          "position": 0,
+          "prover_ms": 209.044223,
+          "verifier_ms": 21.312215,
+          "commit_ms": 6.267353,
+          "opening_ms": 17.367798999999998,
+          "iop_and_prep_ms": 185.40907099999998,
+          "preparation_ms": 12.41071,
+          "argument_ms": 171.480839,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.5544909999999996,
+          "unattributed_ms": 1.5175220000000138,
+          "stages_ms": {
+            "mosaic.batch": 2.474837,
+            "mosaic.bind_g": 0.638365,
+            "mosaic.dense": 0.441289,
+            "pcs.commit": 6.267353,
+            "pcs.ligerito_open": 13.673748,
+            "pcs.open": 0.001558,
+            "pcs.ringswitch": 3.692493,
+            "ram.claims": 0.646853,
+            "ram.pack": 1.305911,
+            "ram.statement": 8.572519,
+            "ram.witness": 1.885427,
+            "twist.cycle": 0.042276,
+            "twist.cycle.rounds": 17.445983000000002,
+            "twist.cycle.tables": 0.006063,
+            "twist.interface": 0.15668400000000002,
+            "twist.memory": 0.684004,
+            "twist.read": 149.59133799999998
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 206.3022560625,
+            "commit_ms": 3.5253860625,
+            "removed_padding_ms": 2.7419669375
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.17432099999999998,
+            "verify.memory": 0.735605,
+            "verify.mosaic": 0.201139,
+            "verify.pcs": 10.34268,
+            "verify.read": 0.293037,
+            "verify.statement": 9.463533
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 3,
+          "position": 1,
+          "prover_ms": 210.343371,
+          "verifier_ms": 20.49277,
+          "commit_ms": 6.878661,
+          "opening_ms": 16.240322,
+          "iop_and_prep_ms": 187.224388,
+          "preparation_ms": 12.447159000000001,
+          "argument_ms": 173.03696900000003,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.6441800000000004,
+          "unattributed_ms": 1.740259999999978,
+          "stages_ms": {
+            "mosaic.batch": 2.605874,
+            "mosaic.bind_g": 0.6320260000000001,
+            "mosaic.dense": 0.40628000000000003,
+            "pcs.commit": 6.878661,
+            "pcs.ligerito_open": 12.660032,
+            "pcs.open": 0.001112,
+            "pcs.ringswitch": 3.579178,
+            "ram.claims": 0.828249,
+            "ram.pack": 1.216572,
+            "ram.statement": 8.409362,
+            "ram.witness": 1.992976,
+            "twist.cycle": 0.031169,
+            "twist.cycle.rounds": 17.734053,
+            "twist.cycle.tables": 0.005283,
+            "twist.interface": 0.17039400000000002,
+            "twist.memory": 0.663346,
+            "twist.read": 150.788544
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 207.3339568125,
+            "commit_ms": 3.8692468125,
+            "removed_padding_ms": 3.0094141875
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.165318,
+            "verify.memory": 0.74059,
+            "verify.mosaic": 0.198236,
+            "verify.pcs": 10.472009,
+            "verify.read": 0.27659100000000003,
+            "verify.statement": 8.540147999999999
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 4,
+          "position": 0,
+          "prover_ms": 230.22283099999999,
+          "verifier_ms": 23.632925999999998,
+          "commit_ms": 6.9217640000000005,
+          "opening_ms": 18.525487,
+          "iop_and_prep_ms": 204.77558,
+          "preparation_ms": 12.630221,
+          "argument_ms": 190.520861,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.793461,
+          "unattributed_ms": 1.6244979999999885,
+          "stages_ms": {
+            "mosaic.batch": 2.669852,
+            "mosaic.bind_g": 0.673778,
+            "mosaic.dense": 0.449831,
+            "pcs.commit": 6.9217640000000005,
+            "pcs.ligerito_open": 14.768549,
+            "pcs.open": 0.001245,
+            "pcs.ringswitch": 3.755693,
+            "ram.claims": 0.752237,
+            "ram.pack": 1.279442,
+            "ram.statement": 8.669533,
+            "ram.witness": 1.929009,
+            "twist.cycle": 0.035914999999999996,
+            "twist.cycle.rounds": 19.797333000000002,
+            "twist.cycle.tables": 0.005677,
+            "twist.interface": 0.17532499999999998,
+            "twist.memory": 0.788683,
+            "twist.read": 165.924467
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 227.19455925,
+            "commit_ms": 3.8934922500000004,
+            "removed_padding_ms": 3.02827175
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.19521,
+            "verify.memory": 0.797117,
+            "verify.mosaic": 0.22688,
+            "verify.pcs": 11.777671,
+            "verify.read": 0.338202,
+            "verify.statement": 10.18835
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 5,
+          "position": 1,
+          "prover_ms": 231.715867,
+          "verifier_ms": 24.266781,
+          "commit_ms": 6.4652199999999995,
+          "opening_ms": 19.69997,
+          "iop_and_prep_ms": 205.550677,
+          "preparation_ms": 11.21505,
+          "argument_ms": 192.87407100000001,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.858408,
+          "unattributed_ms": 1.4615560000000016,
+          "stages_ms": {
+            "mosaic.batch": 2.5895279999999996,
+            "mosaic.bind_g": 0.780501,
+            "mosaic.dense": 0.48837900000000006,
+            "pcs.commit": 6.4652199999999995,
+            "pcs.ligerito_open": 15.666685,
+            "pcs.open": 0.001466,
+            "pcs.ringswitch": 4.031819,
+            "ram.claims": 0.783625,
+            "ram.pack": 1.073491,
+            "ram.statement": 7.592047,
+            "ram.witness": 1.765887,
+            "twist.cycle": 0.007906,
+            "twist.cycle.rounds": 20.083223,
+            "twist.cycle.tables": 0.014595,
+            "twist.interface": 0.175787,
+            "twist.memory": 1.053755,
+            "twist.read": 167.680397
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 228.88733325,
+            "commit_ms": 3.63668625,
+            "removed_padding_ms": 2.8285337499999996
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.197074,
+            "verify.memory": 1.021255,
+            "verify.mosaic": 0.238988,
+            "verify.pcs": 11.783939,
+            "verify.read": 0.341682,
+            "verify.statement": 10.568494
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 6,
+          "position": 0,
+          "prover_ms": 223.99569,
+          "verifier_ms": 22.525593999999998,
+          "commit_ms": 8.121547999999999,
+          "opening_ms": 17.591739,
+          "iop_and_prep_ms": 198.28240300000002,
+          "preparation_ms": 13.949641,
+          "argument_ms": 182.58907800000003,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.859629,
+          "unattributed_ms": 1.7436840000000018,
+          "stages_ms": {
+            "mosaic.batch": 2.453999,
+            "mosaic.bind_g": 0.921706,
+            "mosaic.dense": 0.483924,
+            "pcs.commit": 8.121547999999999,
+            "pcs.ligerito_open": 13.87585,
+            "pcs.open": 0.001102,
+            "pcs.ringswitch": 3.7147870000000003,
+            "ram.claims": 1.0201959999999999,
+            "ram.pack": 1.3323040000000002,
+            "ram.statement": 9.575709,
+            "ram.witness": 2.021432,
+            "twist.cycle": 0.005181,
+            "twist.cycle.rounds": 17.978676999999998,
+            "twist.cycle.tables": 0.011214,
+            "twist.interface": 0.223951,
+            "twist.memory": 0.803074,
+            "twist.read": 159.707352
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 220.44251275,
+            "commit_ms": 4.56837075,
+            "removed_padding_ms": 3.553177249999999
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.18648199999999998,
+            "verify.memory": 0.732584,
+            "verify.mosaic": 0.216695,
+            "verify.pcs": 11.452055,
+            "verify.read": 0.307498,
+            "verify.statement": 9.520705000000001
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 7,
+          "position": 1,
+          "prover_ms": 211.178953,
+          "verifier_ms": 24.741719999999997,
+          "commit_ms": 5.828031,
+          "opening_ms": 19.923647,
+          "iop_and_prep_ms": 185.427275,
+          "preparation_ms": 11.294375,
+          "argument_ms": 172.304361,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 4.645855,
+          "unattributed_ms": 1.8285390000000064,
+          "stages_ms": {
+            "mosaic.batch": 3.248981,
+            "mosaic.bind_g": 0.894142,
+            "mosaic.dense": 0.502732,
+            "pcs.commit": 5.828031,
+            "pcs.ligerito_open": 15.607052999999999,
+            "pcs.open": 0.001832,
+            "pcs.ringswitch": 4.314762,
+            "ram.claims": 0.765353,
+            "ram.pack": 1.1955259999999999,
+            "ram.statement": 7.522786,
+            "ram.witness": 1.81071,
+            "twist.cycle": 0.033642,
+            "twist.cycle.rounds": 20.669997,
+            "twist.cycle.tables": 0.004294,
+            "twist.interface": 0.163683,
+            "twist.memory": 0.752076,
+            "twist.read": 146.034814
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 208.6291894375,
+            "commit_ms": 3.2782674375000003,
+            "removed_padding_ms": 2.5497635625
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.196333,
+            "verify.memory": 1.218553,
+            "verify.mosaic": 0.239502,
+            "verify.pcs": 12.272061,
+            "verify.read": 0.327348,
+            "verify.statement": 10.370961
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 8,
+          "position": 0,
+          "prover_ms": 220.35697000000002,
+          "verifier_ms": 20.937247,
+          "commit_ms": 6.187715,
+          "opening_ms": 16.912452,
+          "iop_and_prep_ms": 197.25680300000002,
+          "preparation_ms": 12.585964,
+          "argument_ms": 183.161562,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.640494,
+          "unattributed_ms": 1.5092770000000257,
+          "stages_ms": {
+            "mosaic.batch": 2.506901,
+            "mosaic.bind_g": 0.716033,
+            "mosaic.dense": 0.41756,
+            "pcs.commit": 6.187715,
+            "pcs.ligerito_open": 13.507693,
+            "pcs.open": 0.001316,
+            "pcs.ringswitch": 3.4034429999999998,
+            "ram.claims": 0.8236330000000001,
+            "ram.pack": 1.780919,
+            "ram.statement": 8.079920000000001,
+            "ram.witness": 1.901492,
+            "twist.cycle": 0.033192,
+            "twist.cycle.rounds": 18.947981,
+            "twist.cycle.tables": 0.00485,
+            "twist.interface": 0.21383400000000002,
+            "twist.memory": 0.780922,
+            "twist.read": 159.540289
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 217.6498446875,
+            "commit_ms": 3.4805896874999998,
+            "removed_padding_ms": 2.7071253125
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.034686,
+            "verify.memory": 0.76908,
+            "verify.mosaic": 0.025112,
+            "verify.pcs": 10.652628,
+            "verify.read": 0.276433,
+            "verify.statement": 9.076001999999999
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 5.0693359375,
+              "five": 3.87548828125,
+              "fifteen": 2.08642578125
+            }
+          }
+        },
+        {
+          "iteration": 9,
+          "position": 1,
+          "prover_ms": 211.088597,
+          "verifier_ms": 19.320322,
+          "commit_ms": 6.601048,
+          "opening_ms": 17.401183,
+          "iop_and_prep_ms": 187.086366,
+          "preparation_ms": 11.512893000000002,
+          "argument_ms": 174.06692400000003,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 3.9081919999999997,
+          "unattributed_ms": 1.5065489999999784,
+          "stages_ms": {
+            "mosaic.batch": 2.740738,
+            "mosaic.bind_g": 0.72987,
+            "mosaic.dense": 0.437584,
+            "pcs.commit": 6.601048,
+            "pcs.ligerito_open": 13.107292,
+            "pcs.open": 0.001185,
+            "pcs.ringswitch": 4.292706,
+            "ram.claims": 0.9242830000000001,
+            "ram.pack": 1.304837,
+            "ram.statement": 7.5560920000000005,
+            "ram.witness": 1.727681,
+            "twist.cycle": 0.034527999999999996,
+            "twist.cycle.rounds": 16.125121,
+            "twist.cycle.tables": 0.0056430000000000004,
+            "twist.interface": 0.183699,
+            "twist.memory": 0.745066,
+            "twist.read": 153.06467500000002
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 208.2006385,
+            "commit_ms": 3.7130894999999997,
+            "removed_padding_ms": 2.8879585
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.149565,
+            "verify.memory": 0.716897,
+            "verify.mosaic": 0.179858,
+            "verify.pcs": 9.63307,
+            "verify.read": 0.251818,
+            "verify.statement": 8.296939
+          },
+          "proof_size": {
+            "pcs_bytes": 270148,
+            "mosaic_bytes": 848,
+            "iop_bytes": 3488,
+            "total_bytes": 274484,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 5.0693359375,
+              "five": 3.87548828125,
+              "fifteen": 2.08642578125
+            },
+            "end": {
+              "one": 5.0693359375,
+              "five": 3.87548828125,
+              "fifteen": 2.08642578125
+            }
+          }
+        }
+      ],
+      "median": {
+        "argument_ms": 173.8365105,
+        "commit_ms": 6.393395,
+        "exclusive_total_ms": 209.466231,
+        "iop_and_prep_ms": 187.155377,
+        "mask_ms": -0.0,
+        "mosaic_ms": 3.777696,
+        "opening_ms": 17.496461,
+        "ordering_ms": -0.0,
+        "preparation_ms": 12.3258245,
+        "prover_ms": 211.133775,
+        "unattributed_ms": 1.5710100000000011,
+        "verifier_ms": 22.060813500000002,
+        "stages_ms": {
+          "mosaic.batch": 2.6060885000000003,
+          "mosaic.bind_g": 0.6949055,
+          "mosaic.dense": 0.458932,
+          "pcs.commit": 6.393395,
+          "pcs.ligerito_open": 13.774799,
+          "pcs.open": 0.0012805,
+          "pcs.ringswitch": 3.73524,
+          "ram.claims": 0.774489,
+          "ram.pack": 1.2508195,
+          "ram.statement": 8.3383215,
+          "ram.witness": 1.8825064999999999,
+          "twist.cycle": 0.033417,
+          "twist.cycle.rounds": 19.114074000000002,
+          "twist.cycle.tables": 0.005623,
+          "twist.interface": 0.1728595,
+          "twist.memory": 0.748571,
+          "twist.read": 151.9266095
+        },
+        "verifier_stages_ms": {
+          "verify.cycle": 0.1804015,
+          "verify.memory": 0.756173,
+          "verify.mosaic": 0.213392,
+          "verify.pcs": 11.3067345,
+          "verify.read": 0.3002675,
+          "verify.statement": 9.492119
+        },
+        "padding_adjusted_estimate": {
+          "prover_ms": 208.41491396875,
+          "commit_ms": 3.5962846875,
+          "removed_padding_ms": 2.7971103125
+        }
+      }
+    },
+    {
+      "method": "twist-logup-star",
+      "implementation": "ram_argument::twist2::logup (address-first read check; direct pushforward)",
+      "final_memory": "public",
+      "ordering": null,
+      "pattern": "random/operations",
+      "trace_format": "operations",
+      "chunk_bits": null,
+      "trace_sha256": "888bcc60c6b69a5bc29fb559e51feb84f191fff3e1ede5966b6db51c0b511955",
+      "operation_trace_sha256": "3f48e161de26f936d0d31dfadc2b74c514358fc9f036317dc89ed91ac1bb80fd",
+      "metadata": {
+        "address_bits": 20,
+        "completed_source_rows": 0,
+        "dummy_read_operations": 0,
+        "full_pattern_repetitions": 1,
+        "guest": null,
+        "kind": "uniform-random-operations",
+        "memory_operations": 262144,
+        "narrow_store_read_operations": 0,
+        "narrow_store_write_operations": 0,
+        "operations": 262144,
+        "padding_operations": 0,
+        "partial_source_operation": null,
+        "pattern_operations": 262144,
+        "read_operations": 130771,
+        "replayed_operations": 0,
+        "reuse_distance": {
+          "buckets": [
+            0,
+            4,
+            0,
+            1,
+            1,
+            12,
+            7,
+            31,
+            64,
+            114,
+            263,
+            481,
+            934,
+            1956,
+            3609,
+            6409,
+            9340,
+            6890
+          ],
+          "first_accesses": 232028,
+          "median_bucket": 16
+        },
+        "seed": 1,
+        "selected_source_rows": 0,
+        "source_full_store_rows": 0,
+        "source_load_rows": 0,
+        "source_narrow_store_rows": 0,
+        "source_vm_cycles": 0,
+        "tail_pattern_operations": 0,
+        "trace_mode": "random-operations",
+        "write_operations": 131373
+      },
+      "load": {
+        "start": {
+          "one": 5.14599609375,
+          "five": 3.853515625,
+          "fifteen": 2.06005859375
+        },
+        "end": {
+          "one": 5.0693359375,
+          "five": 3.87548828125,
+          "fifteen": 2.08642578125
+        }
+      },
+      "area": {
+        "cycles": 262144,
+        "memory_cells": 1048576,
+        "populated_bits": 156237824,
+        "committed_bits": 167772160,
+        "padding_bits": 11534336,
+        "populated_fraction": 0.93125,
+        "packed_field_elements": 1310720,
+        "mosaic_claims": 24,
+        "components": [
+          {
+            "name": "ram/address/0",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/1",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/2",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/3",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/4",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/5",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/6",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/7",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/8",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/9",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/10",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/11",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/12",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/13",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/14",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/15",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/16",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/17",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/18",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/address/19",
+            "log_size": 18,
+            "bits": 262144
+          },
+          {
+            "name": "ram/inc",
+            "log_size": 24,
+            "bits": 16777216
+          },
+          {
+            "name": "ram/logup/pushforward",
+            "log_size": 27,
+            "bits": 134217728
+          }
+        ],
+        "commitments": [
+          {
+            "name": "main",
+            "ell": 25,
+            "populated_bits": 22020096,
+            "committed_bits": 33554432,
+            "populated_fraction": 0.65625,
+            "mosaic_claims": 22
+          },
+          {
+            "name": "pushforward",
+            "ell": 27,
+            "populated_bits": 134217728,
+            "committed_bits": 134217728,
+            "populated_fraction": 1.0,
+            "mosaic_claims": 2
+          }
+        ]
+      },
+      "proof_size": {
+        "pcs_bytes": 548008,
+        "mosaic_bytes": 1696,
+        "iop_bytes": 16592,
+        "total_bytes": 566296,
+        "source": "crate"
+      },
+      "soundness": {
+        "iop_source": "crate",
+        "pcs_probability": 7.729435125544295e-36,
+        "iop_probability": 3.0859782994397185e-33,
+        "total_probability": 3.093707734565263e-33,
+        "bits": 107.99429022079514,
+        "pcs_bits": 116.6390484314655,
+        "iop_bits": 107.99789921435188,
+        "terms": [
+          {
+            "name": "twist2.logup.read.batch",
+            "group": "iop",
+            "probability": 2.938735877055719e-39,
+            "bits": 128.0,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.read.sumcheck",
+            "group": "iop",
+            "probability": 2.7624117244323756e-37,
+            "bits": 121.44541114832236,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.final.point",
+            "group": "iop",
+            "probability": 5.877471754111438e-38,
+            "bits": 123.67807190511263,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.cycle.batch",
+            "group": "iop",
+            "probability": 2.938735877055719e-39,
+            "bits": 128.0,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.cycle.sumcheck",
+            "group": "iop",
+            "probability": 1.5869173736100881e-37,
+            "bits": 122.24511249783653,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.rational.tree.batch",
+            "group": "iop",
+            "probability": 2.2334392665623463e-37,
+            "bits": 121.75207248655641,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.rational.tree.sumcheck",
+            "group": "iop",
+            "probability": 3.0239592174903346e-36,
+            "bits": 117.99297273310603,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.rational.tree.selector",
+            "group": "iop",
+            "probability": 1.1167196332811731e-37,
+            "bits": 122.75207248655641,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.mosaic.main.batch",
+            "group": "iop",
+            "probability": 6.171345341817009e-38,
+            "bits": 123.60768257722124,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.mosaic.main.sumcheck",
+            "group": "iop",
+            "probability": 1.4693679385278594e-37,
+            "bits": 122.35614381022528,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.mosaic.aux.batch",
+            "group": "iop",
+            "probability": 2.938735877055719e-39,
+            "bits": 128.0,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.mosaic.aux.sumcheck",
+            "group": "iop",
+            "probability": 1.5869173736100881e-37,
+            "bits": 122.24511249783653,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "twist2.logup.pushforward.rational",
+            "group": "iop",
+            "probability": 3.0814849722837003e-33,
+            "bits": 108.00000137586186,
+            "location": "crates/ram-argument/src/twist2/logup.rs soundness_terms"
+          },
+          {
+            "name": "main.ringswitch.rho",
+            "group": "iop",
+            "probability": 2.0571151139390031e-38,
+            "bits": 125.1926450779424,
+            "location": "om-pcs/src/ring_switch.rs verify (rs/rho)"
+          },
+          {
+            "name": "main.ringswitch.sumcheck",
+            "group": "iop",
+            "probability": 1.0579449157400588e-37,
+            "bits": 122.83007499855769,
+            "location": "om-pcs/src/ring_switch.rs verify (sumcheck_verify)"
+          },
+          {
+            "name": "main.ligerito.level0.sumcheck",
+            "group": "pcs",
+            "probability": 2.350988701644575e-38,
+            "bits": 125.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level0.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level0.gap",
+            "group": "pcs",
+            "probability": 5.934729841099874e-67,
+            "bits": 220.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level0.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level1.sumcheck",
+            "group": "pcs",
+            "probability": 2.350988701644575e-38,
+            "bits": 125.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level1.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level1.gap",
+            "group": "pcs",
+            "probability": 9.273015376718553e-69,
+            "bits": 226.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level1.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level2.sumcheck",
+            "group": "pcs",
+            "probability": 2.350988701644575e-38,
+            "bits": 125.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level2.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level2.gap",
+            "group": "pcs",
+            "probability": 1.448908652612274e-70,
+            "bits": 232.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "main.ligerito.level2.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ringswitch.rho",
+            "group": "iop",
+            "probability": 2.0571151139390031e-38,
+            "bits": 125.1926450779424,
+            "location": "om-pcs/src/ring_switch.rs verify (rs/rho)"
+          },
+          {
+            "name": "aux.ringswitch.sumcheck",
+            "group": "iop",
+            "probability": 1.1754943508222875e-37,
+            "bits": 122.67807190511263,
+            "location": "om-pcs/src/ring_switch.rs verify (sumcheck_verify)"
+          },
+          {
+            "name": "aux.ligerito.level0.sumcheck",
+            "group": "pcs",
+            "probability": 2.938735877055732e-38,
+            "bits": 124.67807190511263,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level0.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level0.gap",
+            "group": "pcs",
+            "probability": 3.7092061506874546e-66,
+            "bits": 217.35614381022526,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level0.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level1.sumcheck",
+            "group": "pcs",
+            "probability": 2.938735877055732e-38,
+            "bits": 124.67807190511263,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level1.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level1.gap",
+            "group": "pcs",
+            "probability": 1.448908652612287e-68,
+            "bits": 225.35614381022526,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level1.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level2.sumcheck",
+            "group": "pcs",
+            "probability": 2.350988701644575e-38,
+            "bits": 125.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level2.batch",
+            "group": "pcs",
+            "probability": 5.201562502388607e-37,
+            "bits": 120.532394449917,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level2.gap",
+            "group": "pcs",
+            "probability": 1.448908652612274e-70,
+            "bits": 232.0,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          },
+          {
+            "name": "aux.ligerito.level2.query",
+            "group": "pcs",
+            "probability": 7.426138930840388e-37,
+            "bits": 120.01872720493688,
+            "location": "vendor/open-magnetar/crates/om-pcs/src/ligerito.rs soundness_bits"
+          }
+        ]
+      },
+      "grand_product_extra_bound": null,
+      "throughput": {
+        "operations": 262144,
+        "prover_ns_per_operation": 1194.3917236328125,
+        "source_memory_instructions": null,
+        "prover_ns_per_source_memory_instruction": null
+      },
+      "samples": [
+        {
+          "iteration": 0,
+          "position": 1,
+          "prover_ms": 299.88685999999996,
+          "verifier_ms": 33.832820999999996,
+          "commit_ms": 23.346776,
+          "opening_ms": 43.286747,
+          "iop_and_prep_ms": 233.253337,
+          "preparation_ms": 11.624826,
+          "argument_ms": 220.13942500000005,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 11.842825,
+          "unattributed_ms": 1.4890859999999293,
+          "stages_ms": {
+            "logup.address.claims": 0.732042,
+            "logup.aux.commit": 18.568738,
+            "logup.aux.open": 0.0023049999999999998,
+            "logup.aux.pack": 1.061585,
+            "logup.fraction.witness": 38.603058000000004,
+            "logup.pushforward": 2.680324,
+            "logup.pushforward.histogram": 1.535095,
+            "logup.pushforward.weights": 0.349875,
+            "logup.rational": 20.704594,
+            "mosaic.aux.batch": 6.506906,
+            "mosaic.batch": 2.723268,
+            "mosaic.bind_g": 1.5469920000000001,
+            "mosaic.dense": 1.0656590000000001,
+            "pcs.commit": 4.7780380000000005,
+            "pcs.ligerito_open": 33.910334,
+            "pcs.open": 0.001308,
+            "pcs.ringswitch": 9.3728,
+            "ram.claims": 0.6336109999999999,
+            "ram.pack": 0.938261,
+            "ram.statement": 8.060214,
+            "ram.witness": 1.9927399999999997,
+            "twist.cycle": 3.958245,
+            "twist.interface": 0.13980599999999999,
+            "twist.memory": 0.662431,
+            "twist.read": 137.86954500000002
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 298.24440943749994,
+            "commit_ms": 21.7043254375,
+            "removed_padding_ms": 1.6424505624999988
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.139929,
+            "verify.logup": 13.656819,
+            "verify.memory": 0.642338,
+            "verify.mosaic": 0.192669,
+            "verify.pcs": 9.870701,
+            "verify.read": 0.273703,
+            "verify.statement": 8.95081
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 1,
+          "position": 0,
+          "prover_ms": 327.011834,
+          "verifier_ms": 35.086031,
+          "commit_ms": 22.305493,
+          "opening_ms": 44.607118,
+          "iop_and_prep_ms": 260.099223,
+          "preparation_ms": 11.596191,
+          "argument_ms": 247.05930600000002,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 14.855208999999999,
+          "unattributed_ms": 1.4437259999999696,
+          "stages_ms": {
+            "logup.address.claims": 1.074649,
+            "logup.aux.commit": 18.569858,
+            "logup.aux.open": 0.002549,
+            "logup.aux.pack": 1.084851,
+            "logup.fraction.witness": 42.47744,
+            "logup.pushforward": 3.1994520000000004,
+            "logup.pushforward.histogram": 1.551356,
+            "logup.pushforward.weights": 0.386484,
+            "logup.rational": 22.328504,
+            "mosaic.aux.batch": 9.346886,
+            "mosaic.batch": 2.678315,
+            "mosaic.bind_g": 1.6959309999999999,
+            "mosaic.dense": 1.134077,
+            "pcs.commit": 3.7356350000000003,
+            "pcs.ligerito_open": 34.050252,
+            "pcs.open": 0.0013779999999999999,
+            "pcs.ringswitch": 10.552939,
+            "ram.claims": 0.645722,
+            "ram.pack": 0.975868,
+            "ram.statement": 8.257347,
+            "ram.witness": 1.717254,
+            "twist.cycle": 4.079337,
+            "twist.interface": 0.138909,
+            "twist.memory": 0.85943,
+            "twist.read": 155.023685
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 325.72770946875005,
+            "commit_ms": 21.02136846875,
+            "removed_padding_ms": 1.2841245312499971
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.151265,
+            "verify.logup": 14.320867,
+            "verify.memory": 0.728416,
+            "verify.mosaic": 0.18735400000000002,
+            "verify.pcs": 9.912258999999999,
+            "verify.read": 0.295618,
+            "verify.statement": 9.377682
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 2,
+          "position": 1,
+          "prover_ms": 305.825188,
+          "verifier_ms": 32.892452000000006,
+          "commit_ms": 20.793516,
+          "opening_ms": 41.437786,
+          "iop_and_prep_ms": 243.593886,
+          "preparation_ms": 11.988674,
+          "argument_ms": 229.746733,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 11.842444999999998,
+          "unattributed_ms": 1.8584789999999884,
+          "stages_ms": {
+            "logup.address.claims": 0.883535,
+            "logup.aux.commit": 16.179292,
+            "logup.aux.open": 0.001771,
+            "logup.aux.pack": 0.9748359999999999,
+            "logup.fraction.witness": 40.837939,
+            "logup.pushforward": 3.430258,
+            "logup.pushforward.histogram": 1.3329520000000001,
+            "logup.pushforward.weights": 0.396408,
+            "logup.rational": 22.589865,
+            "mosaic.aux.batch": 6.877711,
+            "mosaic.batch": 2.756564,
+            "mosaic.bind_g": 1.266841,
+            "mosaic.dense": 0.941329,
+            "pcs.commit": 4.614224,
+            "pcs.ligerito_open": 32.917961000000005,
+            "pcs.open": 0.0016380000000000001,
+            "pcs.ringswitch": 8.516416000000001,
+            "ram.claims": 0.763883,
+            "ram.pack": 0.932636,
+            "ram.statement": 8.183888,
+            "ram.witness": 2.108267,
+            "twist.cycle": 3.510329,
+            "twist.interface": 0.151047,
+            "twist.memory": 0.615876,
+            "twist.read": 143.18124300000002
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 304.2390485,
+            "commit_ms": 19.207376500000002,
+            "removed_padding_ms": 1.586139499999998
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.138212,
+            "verify.logup": 13.373089,
+            "verify.memory": 0.6792159999999999,
+            "verify.mosaic": 0.183012,
+            "verify.pcs": 9.305639,
+            "verify.read": 0.280051,
+            "verify.statement": 8.826374
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 3,
+          "position": 0,
+          "prover_ms": 320.990402,
+          "verifier_ms": 33.823895,
+          "commit_ms": 21.206323,
+          "opening_ms": 47.794551000000006,
+          "iop_and_prep_ms": 251.989528,
+          "preparation_ms": 11.688967,
+          "argument_ms": 238.75144900000004,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 13.726885,
+          "unattributed_ms": 1.5491119999999796,
+          "stages_ms": {
+            "logup.address.claims": 0.9576199999999999,
+            "logup.aux.commit": 16.633694000000002,
+            "logup.aux.open": 0.002304,
+            "logup.aux.pack": 1.020702,
+            "logup.fraction.witness": 41.749386,
+            "logup.pushforward": 3.9617380000000004,
+            "logup.pushforward.histogram": 1.374169,
+            "logup.pushforward.weights": 0.388,
+            "logup.rational": 24.594765000000002,
+            "mosaic.aux.batch": 7.970336,
+            "mosaic.batch": 3.1726110000000003,
+            "mosaic.bind_g": 1.566762,
+            "mosaic.dense": 1.017176,
+            "pcs.commit": 4.572629,
+            "pcs.ligerito_open": 37.351539,
+            "pcs.open": 0.001099,
+            "pcs.ringswitch": 10.439609,
+            "ram.claims": 0.72157,
+            "ram.pack": 0.871753,
+            "ram.statement": 8.262782,
+            "ram.witness": 1.832862,
+            "twist.cycle": 3.743458,
+            "twist.interface": 0.14307799999999998,
+            "twist.memory": 0.690207,
+            "twist.read": 146.401441
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 319.41856078125,
+            "commit_ms": 19.634481781250003,
+            "removed_padding_ms": 1.5718412187499986
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.146618,
+            "verify.logup": 13.546492,
+            "verify.memory": 0.819696,
+            "verify.mosaic": 0.174796,
+            "verify.pcs": 9.185448000000001,
+            "verify.read": 0.293852,
+            "verify.statement": 9.549703
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 4,
+          "position": 1,
+          "prover_ms": 309.65069,
+          "verifier_ms": 33.576088,
+          "commit_ms": 21.113637999999998,
+          "opening_ms": 46.034931,
+          "iop_and_prep_ms": 242.50212100000002,
+          "preparation_ms": 12.472261,
+          "argument_ms": 228.47889699999993,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 12.638931,
+          "unattributed_ms": 1.5509630000000811,
+          "stages_ms": {
+            "logup.address.claims": 0.8638,
+            "logup.aux.commit": 16.360684,
+            "logup.aux.open": 0.0020889999999999997,
+            "logup.aux.pack": 0.941594,
+            "logup.fraction.witness": 37.669295999999996,
+            "logup.pushforward": 3.2526740000000003,
+            "logup.pushforward.histogram": 1.190474,
+            "logup.pushforward.weights": 0.301999,
+            "logup.rational": 21.859008,
+            "mosaic.aux.batch": 6.940334,
+            "mosaic.batch": 3.09597,
+            "mosaic.bind_g": 1.6542009999999998,
+            "mosaic.dense": 0.948426,
+            "pcs.commit": 4.752954,
+            "pcs.ligerito_open": 37.058594,
+            "pcs.open": 0.001523,
+            "pcs.ringswitch": 8.972725,
+            "ram.claims": 0.6928639999999999,
+            "ram.pack": 0.9798870000000001,
+            "ram.statement": 8.927669,
+            "ram.witness": 1.8718409999999999,
+            "twist.cycle": 3.722952,
+            "twist.interface": 0.15584299999999998,
+            "twist.memory": 0.766153,
+            "twist.read": 145.11617299999997
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 308.0168620625,
+            "commit_ms": 19.4798100625,
+            "removed_padding_ms": 1.6338279374999978
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.151452,
+            "verify.logup": 13.571943,
+            "verify.memory": 0.724976,
+            "verify.mosaic": 0.187791,
+            "verify.pcs": 9.494465,
+            "verify.read": 0.269556,
+            "verify.statement": 9.072911
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 5,
+          "position": 0,
+          "prover_ms": 311.49438699999996,
+          "verifier_ms": 32.044787,
+          "commit_ms": 21.569817,
+          "opening_ms": 44.485327000000005,
+          "iop_and_prep_ms": 245.43924299999995,
+          "preparation_ms": 11.801102,
+          "argument_ms": 232.16818200000006,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 13.319396,
+          "unattributed_ms": 1.4699589999999034,
+          "stages_ms": {
+            "logup.address.claims": 0.800167,
+            "logup.aux.commit": 16.653176,
+            "logup.aux.open": 0.002075,
+            "logup.aux.pack": 0.955035,
+            "logup.fraction.witness": 38.789901,
+            "logup.pushforward": 3.397859,
+            "logup.pushforward.histogram": 1.234297,
+            "logup.pushforward.weights": 0.379946,
+            "logup.rational": 21.82788,
+            "mosaic.aux.batch": 7.68325,
+            "mosaic.batch": 3.103148,
+            "mosaic.bind_g": 1.5214429999999999,
+            "mosaic.dense": 1.011555,
+            "pcs.commit": 4.916641,
+            "pcs.ligerito_open": 34.943029,
+            "pcs.open": 0.001711,
+            "pcs.ringswitch": 9.538512,
+            "ram.claims": 0.810941,
+            "ram.pack": 0.9966560000000001,
+            "ram.statement": 8.236757,
+            "ram.witness": 1.756748,
+            "twist.cycle": 3.864214,
+            "twist.interface": 0.224153,
+            "twist.memory": 0.738778,
+            "twist.read": 146.636556
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 309.80429165625,
+            "commit_ms": 19.87972165625,
+            "removed_padding_ms": 1.6900953437500021
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.13769800000000001,
+            "verify.logup": 12.913831,
+            "verify.memory": 0.620667,
+            "verify.mosaic": 0.169466,
+            "verify.pcs": 9.075603,
+            "verify.read": 0.274324,
+            "verify.statement": 8.747059
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 6,
+          "position": 1,
+          "prover_ms": 326.94285099999996,
+          "verifier_ms": 30.469494,
+          "commit_ms": 21.554195,
+          "opening_ms": 42.602143,
+          "iop_and_prep_ms": 262.78651299999996,
+          "preparation_ms": 12.589324,
+          "argument_ms": 248.58109500000003,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 14.132503999999999,
+          "unattributed_ms": 1.6160939999999187,
+          "stages_ms": {
+            "logup.address.claims": 1.0618400000000001,
+            "logup.aux.commit": 16.52532,
+            "logup.aux.open": 0.003095,
+            "logup.aux.pack": 1.059572,
+            "logup.fraction.witness": 45.705771999999996,
+            "logup.pushforward": 4.134068999999999,
+            "logup.pushforward.histogram": 1.474337,
+            "logup.pushforward.weights": 0.396748,
+            "logup.rational": 25.316112,
+            "mosaic.aux.batch": 8.960313,
+            "mosaic.batch": 2.54237,
+            "mosaic.bind_g": 1.6525999999999998,
+            "mosaic.dense": 0.9772209999999999,
+            "pcs.commit": 5.028875,
+            "pcs.ligerito_open": 32.775779,
+            "pcs.open": 0.0009960000000000001,
+            "pcs.ringswitch": 9.822273,
+            "ram.claims": 0.728268,
+            "ram.pack": 1.014312,
+            "ram.statement": 8.777405,
+            "ram.witness": 2.069339,
+            "twist.cycle": 4.222761,
+            "twist.interface": 0.22388,
+            "twist.memory": 0.8896820000000001,
+            "twist.read": 149.963818
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 325.21417521875,
+            "commit_ms": 19.82551921875,
+            "removed_padding_ms": 1.7286757812500007
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.132851,
+            "verify.logup": 12.590257000000001,
+            "verify.memory": 0.630688,
+            "verify.mosaic": 0.171907,
+            "verify.pcs": 9.036947,
+            "verify.read": 0.243608,
+            "verify.statement": 7.568959
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 7,
+          "position": 0,
+          "prover_ms": 335.152356,
+          "verifier_ms": 31.157137000000002,
+          "commit_ms": 20.376835,
+          "opening_ms": 50.227397999999994,
+          "iop_and_prep_ms": 264.54812300000003,
+          "preparation_ms": 10.919981,
+          "argument_ms": 252.31696899999997,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 17.949389,
+          "unattributed_ms": 1.3111729999999966,
+          "stages_ms": {
+            "logup.address.claims": 0.952739,
+            "logup.aux.commit": 15.759057,
+            "logup.aux.open": 0.00251,
+            "logup.aux.pack": 1.449791,
+            "logup.fraction.witness": 45.792102,
+            "logup.pushforward": 3.059433,
+            "logup.pushforward.histogram": 1.3222150000000001,
+            "logup.pushforward.weights": 0.31026600000000004,
+            "logup.rational": 24.432268,
+            "mosaic.aux.batch": 11.707040000000001,
+            "mosaic.batch": 2.855715,
+            "mosaic.bind_g": 2.030649,
+            "mosaic.dense": 1.355985,
+            "pcs.commit": 4.617778,
+            "pcs.ligerito_open": 37.806332999999995,
+            "pcs.open": 0.001325,
+            "pcs.ringswitch": 12.41723,
+            "ram.claims": 0.775392,
+            "ram.pack": 1.0225659999999999,
+            "ram.statement": 7.521039,
+            "ram.witness": 1.600984,
+            "twist.cycle": 3.9263689999999998,
+            "twist.interface": 0.14014400000000002,
+            "twist.memory": 0.727772,
+            "twist.read": 152.254481
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 333.5649948125,
+            "commit_ms": 18.7894738125,
+            "removed_padding_ms": 1.5873611875000009
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.129987,
+            "verify.logup": 12.720317999999999,
+            "verify.memory": 0.6355,
+            "verify.mosaic": 0.184692,
+            "verify.pcs": 8.863786000000001,
+            "verify.read": 0.259356,
+            "verify.statement": 8.263826
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            },
+            "end": {
+              "one": 4.81396484375,
+              "five": 3.8056640625,
+              "fifteen": 2.05419921875
+            }
+          }
+        },
+        {
+          "iteration": 8,
+          "position": 1,
+          "prover_ms": 314.710861,
+          "verifier_ms": 31.879593999999997,
+          "commit_ms": 24.172971,
+          "opening_ms": 42.64832499999999,
+          "iop_and_prep_ms": 247.889565,
+          "preparation_ms": 12.874446,
+          "argument_ms": 233.42177999999998,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 13.470084,
+          "unattributed_ms": 1.5933390000000145,
+          "stages_ms": {
+            "logup.address.claims": 0.925896,
+            "logup.aux.commit": 19.251338,
+            "logup.aux.open": 0.002264,
+            "logup.aux.pack": 1.125818,
+            "logup.fraction.witness": 40.678016,
+            "logup.pushforward": 4.454208,
+            "logup.pushforward.histogram": 1.456835,
+            "logup.pushforward.weights": 0.346936,
+            "logup.rational": 20.977707000000002,
+            "mosaic.aux.batch": 8.056467,
+            "mosaic.batch": 2.755282,
+            "mosaic.bind_g": 1.596035,
+            "mosaic.dense": 1.0623,
+            "pcs.commit": 4.921633,
+            "pcs.ligerito_open": 33.400119,
+            "pcs.open": 0.001205,
+            "pcs.ringswitch": 9.244736999999999,
+            "ram.claims": 1.078795,
+            "ram.pack": 1.194556,
+            "ram.statement": 8.537482,
+            "ram.witness": 2.063613,
+            "twist.cycle": 4.380427,
+            "twist.interface": 0.16921,
+            "twist.memory": 0.8845590000000001,
+            "twist.read": 144.552084
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 313.01904965625005,
+            "commit_ms": 22.48115965625,
+            "removed_padding_ms": 1.6918113437500004
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.141743,
+            "verify.logup": 12.84805,
+            "verify.memory": 0.661201,
+            "verify.mosaic": 0.190768,
+            "verify.pcs": 9.549584999999999,
+            "verify.read": 0.25159200000000004,
+            "verify.statement": 8.139247000000001
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 5.0693359375,
+              "five": 3.87548828125,
+              "fifteen": 2.08642578125
+            },
+            "end": {
+              "one": 5.0693359375,
+              "five": 3.87548828125,
+              "fifteen": 2.08642578125
+            }
+          }
+        },
+        {
+          "iteration": 9,
+          "position": 0,
+          "prover_ms": 310.659303,
+          "verifier_ms": 31.799338000000002,
+          "commit_ms": 22.598498,
+          "opening_ms": 44.065225,
+          "iop_and_prep_ms": 243.99558000000002,
+          "preparation_ms": 10.698455,
+          "argument_ms": 231.94470100000004,
+          "ordering_ms": -0.0,
+          "mask_ms": -0.0,
+          "mosaic_ms": 13.705418000000002,
+          "unattributed_ms": 1.352423999999985,
+          "stages_ms": {
+            "logup.address.claims": 0.9157230000000001,
+            "logup.aux.commit": 17.850868,
+            "logup.aux.open": 0.002043,
+            "logup.aux.pack": 1.015879,
+            "logup.fraction.witness": 40.170668,
+            "logup.pushforward": 3.949145,
+            "logup.pushforward.histogram": 1.2922660000000001,
+            "logup.pushforward.weights": 0.35546599999999995,
+            "logup.rational": 21.077382,
+            "mosaic.aux.batch": 8.490124,
+            "mosaic.batch": 2.6512670000000003,
+            "mosaic.bind_g": 1.640817,
+            "mosaic.dense": 0.9232100000000001,
+            "pcs.commit": 4.74763,
+            "pcs.ligerito_open": 34.563896,
+            "pcs.open": 0.001563,
+            "pcs.ringswitch": 9.497722999999999,
+            "ram.claims": 0.6479539999999999,
+            "ram.pack": 0.852696,
+            "ram.statement": 7.596258,
+            "ram.witness": 1.601547,
+            "twist.cycle": 3.843308,
+            "twist.interface": 0.143251,
+            "twist.memory": 0.7102700000000001,
+            "twist.read": 144.76592499999998
+          },
+          "padding_adjusted_estimate": {
+            "prover_ms": 309.0273051875,
+            "commit_ms": 20.9665001875,
+            "removed_padding_ms": 1.6319978124999999
+          },
+          "verifier_stages_ms": {
+            "verify.cycle": 0.132182,
+            "verify.logup": 13.026311,
+            "verify.memory": 0.695896,
+            "verify.mosaic": 0.181927,
+            "verify.pcs": 8.828609,
+            "verify.read": 0.259019,
+            "verify.statement": 8.569399
+          },
+          "proof_size": {
+            "pcs_bytes": 548008,
+            "mosaic_bytes": 1696,
+            "iop_bytes": 16592,
+            "total_bytes": 566296,
+            "source": "crate"
+          },
+          "load": {
+            "start": {
+              "one": 5.0693359375,
+              "five": 3.87548828125,
+              "fifteen": 2.08642578125
+            },
+            "end": {
+              "one": 5.0693359375,
+              "five": 3.87548828125,
+              "fifteen": 2.08642578125
+            }
+          }
+        }
+      ],
+      "median": {
+        "argument_ms": 232.794981,
+        "commit_ms": 21.562006,
+        "exclusive_total_ms": 311.57097500000003,
+        "iop_and_prep_ms": 246.664404,
+        "mask_ms": -0.0,
+        "mosaic_ms": 13.587751,
+        "opening_ms": 44.275276000000005,
+        "ordering_ms": -0.0,
+        "preparation_ms": 11.7450345,
+        "prover_ms": 313.102624,
+        "unattributed_ms": 1.5190989999999545,
+        "verifier_ms": 32.4686195,
+        "stages_ms": {
+          "logup.address.claims": 0.9208095000000001,
+          "logup.aux.commit": 16.643435,
+          "logup.aux.open": 0.002284,
+          "logup.aux.pack": 1.040137,
+          "logup.fraction.witness": 40.757977499999996,
+          "logup.pushforward": 3.4140585,
+          "logup.pushforward.histogram": 1.3535605,
+          "logup.pushforward.weights": 0.367706,
+          "logup.rational": 22.093756,
+          "mosaic.aux.batch": 8.0134015,
+          "mosaic.batch": 2.755923,
+          "mosaic.bind_g": 1.618426,
+          "mosaic.dense": 1.0143655,
+          "pcs.commit": 4.750292,
+          "pcs.ligerito_open": 34.307074,
+          "pcs.open": 0.0013514999999999998,
+          "pcs.ringswitch": 9.518117499999999,
+          "ram.claims": 0.7249190000000001,
+          "ram.pack": 0.9778775,
+          "ram.statement": 8.247052,
+          "ram.witness": 1.8523515,
+          "twist.cycle": 3.8952915,
+          "twist.interface": 0.14714899999999997,
+          "twist.memory": 0.733275,
+          "twist.read": 145.758807
+        },
+        "verifier_stages_ms": {
+          "verify.cycle": 0.13907049999999999,
+          "verify.logup": 13.1997,
+          "verify.memory": 0.6702085,
+          "verify.mosaic": 0.18385200000000002,
+          "verify.pcs": 9.2455435,
+          "verify.read": 0.27162949999999997,
+          "verify.statement": 8.7867165
+        },
+        "padding_adjusted_estimate": {
+          "prover_ms": 311.41167065625,
+          "commit_ms": 19.8526204375,
+          "removed_padding_ms": 1.6329128749999988
+        }
+      }
+    }
+  ],
+  "comparisons": [],
+  "paired_ratios": [
+    {
+      "pattern": "random/operations",
+      "numerator_case": 0,
+      "denominator_case": 1,
+      "numerator": "twist(chunk=4)",
+      "denominator": "twist-logup-star",
+      "prover": {
+        "ratio": 0.6743277086045757,
+        "ci95_low": 0.6458519461482259,
+        "ci95_high": 0.7222318833017018,
+        "rounds": 10,
+        "resamples": 10000,
+        "seed": 6840254343172384229
+      },
+      "verifier": {
+        "ratio": 0.6794503073960382,
+        "ci95_low": 0.6299896763190526,
+        "ci95_high": 0.7457584130610698,
+        "rounds": 10,
+        "resamples": 10000,
+        "seed": 6840254343172384229
+      }
+    }
+  ],
+  "verified_proofs": 22
+}

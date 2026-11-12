@@ -22,6 +22,11 @@
 //! at a random point in `K^v` contributes `v/|K|`. `|K| = 2^128`. Fiat-Shamir
 //! and hash-collision terms are out of scope, as are Flock grinding bits
 //! (grinding is disabled in this build: the proofs carry no nonces).
+//!
+//! `twist-logup-star` uses `compose_twist_logup`: the main dense-address
+//! commitment and the post-challenge pushforward commitment each pay for
+//! their actual padded RingSwitch/Ligerito domain. Both Mosaic reductions
+//! are already included in the argument crate's IOP terms.
 
 use serde::Serialize;
 
@@ -416,6 +421,64 @@ pub fn compose(
     }
 }
 
+/// Twist with the direct LogUp* pushforward opening. The argument crate
+/// supplies all RAM, pushforward, and both Mosaic reductions. Each actual
+/// commitment domain adds its own RingSwitch and Ligerito checks here.
+/// `main.ell` and `aux.ell` are independent domains, not a combined bit area.
+pub fn compose_twist_logup(
+    main: &Dims,
+    aux: &Dims,
+    profile: &str,
+    log_rate: usize,
+    public_final: bool,
+) -> Soundness {
+    let statement = ram_argument::twist2::Statement {
+        config: ram_argument::twist2::Config {
+            address_bits: main.a,
+            chunk_bits: main.chunk_bits,
+            word_log_bits: main.word_log_bits,
+            profile: profile.to_owned(),
+            log_rate,
+            public_final,
+            ..Default::default()
+        },
+        log_cycles: main.n,
+        initial_memory: Vec::new(),
+        final_memory: None,
+    };
+    let mut terms: Vec<Term> = ram_argument::twist2::logup::soundness_terms(&statement)
+        .into_iter()
+        .map(|(name, probability)| Term {
+            name: format!("twist2.logup.{name}"),
+            group: "iop",
+            probability,
+            bits: -probability.log2(),
+            location: "crates/ram-argument/src/twist2/logup.rs soundness_terms",
+        })
+        .collect();
+    for (prefix, dims) in [("main", main), ("aux", aux)] {
+        let mut authentication = ring_switch(dims);
+        authentication.extend(pcs_terms(dims.ell, profile, log_rate));
+        for mut term in authentication {
+            term.name = format!("{prefix}.{}", term.name);
+            terms.push(term);
+        }
+    }
+    let pcs_probability = sum(&terms, "pcs");
+    let iop_probability = sum(&terms, "iop");
+    let total_probability = pcs_probability + iop_probability;
+    Soundness {
+        iop_source: "crate",
+        pcs_probability,
+        iop_probability,
+        total_probability,
+        bits: -total_probability.log2(),
+        pcs_bits: -pcs_probability.log2(),
+        iop_bits: -iop_probability.log2(),
+        terms,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -529,5 +592,107 @@ mod tests {
             .find(|t| t.name.ends_with("mosaic.batch"))
             .unwrap();
         assert_eq!((batch.probability * 2f64.powi(FIELD_BITS)).round(), 21.0);
+    }
+
+    #[test]
+    fn logup_rational_bound_depends_on_range_not_access_count() {
+        let main = twist_dims(20, 16, 27, 0);
+        let aux = twist_dims(20, 16, 23, 2);
+        let short = compose_twist_logup(&main, &aux, "provable-120", 2, true);
+        let long = compose_twist_logup(
+            &Dims {
+                n: 24,
+                ell: 31,
+                ..main
+            },
+            &Dims { n: 24, ..aux },
+            "provable-120",
+            2,
+            true,
+        );
+        let wider = compose_twist_logup(
+            &Dims { a: 20, ..main },
+            &Dims {
+                a: 20,
+                ell: 27,
+                ..aux
+            },
+            "provable-120",
+            2,
+            true,
+        );
+        let rational = |s: &Soundness| {
+            s.terms
+                .iter()
+                .find(|t| t.name.ends_with("pushforward.rational"))
+                .expect("the rangechecked rational identity has its own error term")
+                .probability
+        };
+        assert_eq!(rational(&short), over_field(65_535.0));
+        assert_eq!(rational(&short), rational(&long));
+        assert_eq!(rational(&wider), over_field(1_048_575.0));
+        assert!(long.iop_probability > short.iop_probability);
+    }
+
+    #[test]
+    fn logup_charges_both_authentication_domains_without_extra_mosaic() {
+        let main = twist_dims(20, 16, 27, 0);
+        let aux = twist_dims(20, 16, 23, 2);
+        let composed = compose_twist_logup(&main, &aux, "provable-120", 2, true);
+        assert_eq!(composed.iop_source, "crate");
+        for (prefix, d) in [("main", main), ("aux", aux)] {
+            let rho = composed
+                .terms
+                .iter()
+                .find(|t| t.name == format!("{prefix}.ringswitch.rho"))
+                .unwrap();
+            assert_eq!(rho.probability, over_field(7.0));
+            let sc = composed
+                .terms
+                .iter()
+                .find(|t| t.name == format!("{prefix}.ringswitch.sumcheck"))
+                .unwrap();
+            assert_eq!(sc.probability, over_field((2 * (d.ell - 7)) as f64));
+            let expected = pcs_terms(d.ell, "provable-120", 2);
+            let actual: Vec<_> = composed
+                .terms
+                .iter()
+                .filter(|t| t.group == "pcs" && t.name.starts_with(&format!("{prefix}.")))
+                .collect();
+            assert_eq!(actual.len(), expected.len());
+            for (actual, expected) in actual.into_iter().zip(expected) {
+                assert_eq!(actual.name, format!("{prefix}.{}", expected.name));
+                assert_eq!(actual.probability, expected.probability);
+            }
+        }
+        let mosaics: Vec<_> = composed
+            .terms
+            .iter()
+            .filter(|t| t.name.contains("mosaic"))
+            .collect();
+        assert_eq!(
+            mosaics.len(),
+            4,
+            "only the two crate-supplied Mosaic reductions"
+        );
+        assert!(mosaics.iter().all(|t| t.name.starts_with("twist2.logup.")));
+        assert_eq!(
+            composed.total_probability,
+            composed.pcs_probability + composed.iop_probability
+        );
+
+        // Changing only the auxiliary padded domain must leave every main
+        // authentication term unchanged, even when total committed area grows.
+        let wider_aux =
+            compose_twist_logup(&main, &Dims { ell: 24, ..aux }, "provable-120", 2, true);
+        let main_terms = |s: &Soundness| {
+            s.terms
+                .iter()
+                .filter(|t| t.name.starts_with("main."))
+                .cloned()
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(main_terms(&composed), main_terms(&wider_aux));
+        assert!(wider_aux.pcs_probability != composed.pcs_probability);
     }
 }

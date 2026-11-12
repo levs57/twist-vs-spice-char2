@@ -1,0 +1,8 @@
+Validated 180 proofs (164 measured), 6 pairs, both 208-test builds.
+8 14 random/operations 11.413 -> 13.387 ms; ratio 1.173 [1.077, 1.301]; cycle/address 1.336 -> 2.931
+16 20 random/operations 209.707 -> 231.883 ms; ratio 1.106 [1.047, 1.132]; cycle/address 51.283 -> 61.721
+16 20 guest/erc20-mixed-block/memory/operations 123.661 -> 134.765 ms; ratio 1.090 [1.012, 1.137]; cycle/address 46.121 -> 51.996
+16 20 guest/pointer-chase/memory/operations 116.205 -> 136.646 ms; ratio 1.176 [1.146, 1.229]; cycle/address 41.542 -> 56.596
+12 20 random/operations 173.122 -> 205.341 ms; ratio 1.186 [1.126, 1.258]; cycle/address 36.366 -> 59.772
+20 18 random/operations 211.134 -> 313.103 ms; ratio 1.483 [1.385, 1.548]; cycle/address 19.151 -> 74.151
+/home/user/Programming/memarg-exploration/results/twist-logup-summary.json

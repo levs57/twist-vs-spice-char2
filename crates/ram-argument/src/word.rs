@@ -26,7 +26,7 @@ pub fn enc(x: u64) -> K {
 pub fn encoding_point(log_bits: usize) -> (Vec<K>, K) {
     static ENCODINGS: OnceLock<Vec<(Vec<K>, K)>> = OnceLock::new();
     ENCODINGS.get_or_init(|| {
-        (0..=6)
+        (0..=7)
             .map(|log_bits| {
                 let mut power = K::X;
                 let mut factor = K::ONE;
@@ -126,6 +126,14 @@ mod tests {
                 .map(|i| full[i])
                 .fold(K::ZERO, |a, b| a + b);
             assert_eq!(table, value, "log_bits {log_bits}");
+        }
+    }
+
+    #[test]
+    fn field_word_encoding_point_covers_all_128_basis_bits() {
+        let (point, factor) = encoding_point(7);
+        for (bit, weight) in eq_table(&point).into_iter().enumerate() {
+            assert_eq!(factor * weight, K::from_u128(1u128 << bit));
         }
     }
 

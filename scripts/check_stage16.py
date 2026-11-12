@@ -32,6 +32,9 @@ def main():
     flock_root = ROOT / "vendor/flock-boolean"
     flock = json.loads((flock_root / "UPSTREAM.json").read_text())
     verify_hashes(flock_root, {**flock["source_sha256"], **flock["local_sha256"]})
+    bitz_root = ROOT / "vendor/bitz-logup"
+    bitz = json.loads((bitz_root / "UPSTREAM.json").read_text())
+    verify_hashes(bitz_root, bitz["local_sha256"])
     if problems:
         raise ValueError(
             "Stage 1.6 manifest does not match the tree; run scripts/write_manifest.py:\n  "

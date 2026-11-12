@@ -33,6 +33,7 @@ TREES = [
     "crates/spice-argument",
     "scripts",
     "payloads/open-magnetar",
+    "vendor/bitz-logup/src",
 ]
 # Single files listed when present.
 FILES = [
@@ -49,6 +50,9 @@ FILES = [
     "vendor/lean-grandproduct/LICENSE-MIT",
     "vendor/lean-grandproduct/src/lib.rs",
     "vendor/lean-grandproduct/src/tests.rs",
+    "vendor/bitz-logup/UPSTREAM.json",
+    "vendor/bitz-logup/Cargo.toml",
+    "vendor/bitz-logup/LICENSE",
 ]
 SKIP_SUFFIXES = (".pyc",)
 

@@ -1,0 +1,339 @@
+   Compiling ram-compare v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-compare)
+   Compiling ram-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-argument)
+warning: unused imports: `__m512i`, `_mm512_bslli_epi128`, `_mm512_clmulepi64_epi128`, `_mm512_extracti32x4_epi32`, `_mm512_loadu_si512`, `_mm512_set_epi64`, `_mm512_setzero_si512`, and `_mm512_xor_si512`
+ --> vendor/flock-boolean/crates/flock-field/src/gf2_128/x86_64.rs:2:14
+  |
+2 |     __m128i, __m512i, _mm_clmulepi64_si128, _mm_extract_epi64, _mm_set_epi64x, _mm_slli_si128,
+  |              ^^^^^^^
+3 |     _mm_xor_si128, _mm512_bslli_epi128, _mm512_clmulepi64_epi128, _mm512_extracti32x4_epi32,
+  |                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+4 |     _mm512_loadu_si512, _mm512_set_epi64, _mm512_setzero_si512, _mm512_xor_si512,
+  |     ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `flock-field` (lib) generated 1 warning (run `cargo fix --lib -p flock-field` to apply 1 suggestion)
+   Compiling spice-argument v0.1.0 (/home/user/Programming/memarg-exploration/crates/spice-argument)
+   Compiling ram-bench v0.1.0 (/home/user/Programming/memarg-exploration/crates/ram-bench)
+    Finished `release` profile [optimized] target(s) in 29.76s
+     Running unittests src/lib.rs (target/release/deps/lookup_argument-c378ed3caff04754)
+
+running 3 tests
+test tests::word_opening_conversion_matches_every_polynomial_basis_coefficient ... ok
+test tests::encoded_word_mle_is_an_opening_of_the_actual_committed_bits ... ok
+test tests::address_columns_preserve_bit_order_at_word_boundaries_and_on_workers ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/indexed_lookup.rs (target/release/deps/indexed_lookup-8ef7a87efd5eab4d)
+
+running 7 tests
+test invalid_trace_values_and_non_power_of_two_lengths_are_rejected ... ok
+test malformed_branches_shapes_and_zero_denominators_reject ... ok
+test all_public_parameters_and_input_claims_are_bound ... ok
+test all_rational_messages_and_auxiliary_openings_are_authenticated ... ok
+test main_and_auxiliary_pcs_openings_are_required_with_roots_and_iop_unchanged ... ok
+test shout_virtualization_choices_preserve_lookup_semantics ... ok
+test both_methods_prove_indexed_reads_with_full_width_duplicate_and_zero_values ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running unittests src/main.rs (target/release/deps/lookup_bench-af3181a21cff21fd)
+
+running 6 tests
+test tests::logup_is_not_duplicated_by_shout_sweeps ... ok
+test tests::security_bound_and_csv_escape ... ok
+test tests::phase_totals_include_flat_and_tree_children_once ... ok
+test tests::requested_method_and_chunk_order_are_preserved ... ok
+test tests::phase_medians_are_derived_from_each_complete_sample ... ok
+test tests::logup_argument_excludes_nested_commit_and_open_spans ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/ram_argument-8122c00dcce46564)
+
+running 46 tests
+test twist2::logup::tests::address_bit_width_is_an_enforced_range_check ... ok
+test twist2::logup::tests::rangechecked_rational_error_can_have_table_size_minus_one_roots ... ok
+test twist2::preparation_tests::borrowed_memory_bytes_preserve_exact_transcript ... ok
+test twist2::tests::mirror_identity_accepts_one_hot_and_rejects_others ... ok
+test twist2::tests::cycle_check_rejects_two_hot_component ... ok
+test twist2::preparation_tests::prepared_trace_borrows_inputs_and_direct_word_placement_matches_packed_bits ... ok
+test twist2::read::kernel_tests::paired_read_provers_match_dense_grid_oracle_for_both_orders_and_merging ... ok
+test twist2::tests::rejects_modified_proof_and_statement ... ok
+test twist2::read::kernel_tests::paired_dense_folds_match_scalar_at_boolean_points_and_parallel_threshold ... ok
+test twist2::logup::tests::histogram_pushforward_matches_scalar_rows_with_uneven_parallel_chunks ... ok
+test twist2::tests::schema_commits_only_ra_and_inc ... ok
+test twist2::tests::single_component_cycle_prover_matches_reference_on_load_and_mixed_pairs ... ok
+test twist2::read::kernel_tests::paired_cycle_rounds_match_scalar_proof_and_transcript_across_thresholds ... ok
+test twist2::tests::mosaic_claim_count ... ok
+test twist2::tests::soundness_terms_at_n20_a16 ... ok
+test word::tests::enc_mle_matches_bruteforce ... ok
+test word::tests::field_word_encoding_point_covers_all_128_basis_bits ... ok
+test word::tests::mle_matches_bruteforce ... ok
+test twist2::tests::rejects_wrong_write_claim ... ok
+test word::tests::word_point_encodes_words ... ok
+test twist2::tests::rejects_wrong_read_claim ... ok
+test twist2::logup::tests::optimized_cubic_messages_match_generic_multilinear_sumcheck ... ok
+test twist2::tests::rejects_tampered_public_final_memory ... ok
+test twist2::tests::rejects_wrong_committed_final_memory ... ok
+test twist2::tests::load_merging_does_not_change_the_proof ... ok
+test twist2::tests::rejects_wrong_inc_with_matching_final_memory ... ok
+test twist2::tests::rejects_wrong_address_claim ... ok
+test twist2::logup::tests::malformed_shapes_and_cross_proof_components_reject ... ok
+test twist2::tests::relabelled_load_address_fails_the_stand_in ... ok
+test twist2::tests::final_memory_matches_upstream_twist ... ok
+test twist2::tests::rejects_wrong_inc ... ok
+test twist2::tests::narrow_words_and_replayed_read_values ... ok
+test twist2::tests::tampered_inc_on_load_with_consistent_claims_fails_the_stand_in ... ok
+test twist2::tests::rejects_tampered_inc_on_load_with_honest_claims ... ok
+test twist2::logup::tests::load_merging_preserves_the_complete_pushforward_proof ... ok
+test twist2::tests::rejects_tampered_cycle_messages_from_the_split_prover ... ok
+test twist2::logup::tests::supplied_and_replayed_reads_make_the_same_complete_proof ... ok
+test twist2::tests::guest_traces_verify ... ok
+test twist2::logup::tests::every_proof_boundary_authenticates_its_claims ... ok
+test twist2::tests::cycle_prover_matches_the_reference_prover ... ok
+test twist2::logup::tests::parallel_cubic_and_fraction_reductions_match_scalar_cpu_oracle ... ok
+test twist2::tests::single_component_honest_load_and_mixed_traces_verify_in_both_orders ... ok
+test twist2::tests::every_narrow_word_width_verifies_and_rejects_a_wrong_final_memory ... ok
+test twist2::tests::cpu_claims_match_trace ... ok
+test twist2::logup::tests::direct_pushforward_twist_matches_independent_ram_and_cpu_oracles ... ok
+test twist2::tests::proves_and_verifies_across_shapes ... ok
+
+test result: ok. 46 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+     Running tests/committed_ram.rs (target/release/deps/committed_ram-5c54e9afc0c78c17)
+
+running 12 tests
+test inconsistent_supplied_reads_are_rejected_before_proving ... ok
+test shared_address_mode_rejects_independent_streams_and_multiple_ports ... ok
+test invalid_configuration_and_trace_shapes_return_errors ... ok
+test shared_address_mode_binds_aliases_values_and_internal_address_claims ... ok
+test public_memory_and_config_are_bound ... ok
+test every_kind_of_twist_input_claim_is_authenticated ... ok
+test commitment_and_challenge_replay_are_rejected ... ok
+test shared_address_commits_rv_inc_and_one_address_encoding ... ok
+test malformed_shapes_return_errors ... ok
+test single_component_and_full_word_path_work ... ok
+test mosaic_ringswitch_and_ligerito_tampering_is_rejected ... ok
+test complete_proof_verifies_without_witness ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/virtualization_flat.rs (target/release/deps/virtualization_flat-838dcc4db290334b)
+
+running 5 tests
+test malformed_flat_shapes_and_missing_proofs_reject_without_panics ... ok
+test new_legacy_and_tree_domains_and_branches_are_distinct ... ok
+test aggregate_flat_proves_all_real_guests_and_row_filters ... ok
+test every_reduction_product_and_leaf_message_is_authenticated ... ok
+test aggregate_flat_proofs_cover_chunk_counts_cycles_and_ports ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/virtualization_tree.rs (target/release/deps/virtualization_tree-41ad9e18927735e7)
+
+running 7 tests
+test tree_binds_internal_parent_mles_away_from_the_boolean_cube ... ok
+test tree_requires_power_of_two_component_count_while_flat_retains_other_counts ... ok
+test malformed_and_reordered_tree_nodes_return_errors ... ok
+test mode_and_proof_branch_are_bound_including_the_direct_shortcut ... ok
+test every_tree_layer_and_child_value_is_authenticated ... ok
+test tree_proves_traces_from_each_original_guest_and_memory_filter ... ok
+test complete_tree_proofs_cover_depths_small_cycle_counts_and_independent_ports ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running unittests src/main.rs (target/release/deps/ram_bench-80e9fbd67a4cff0f)
+
+running 4 tests
+test tests::no_useful_rows_have_no_normalized_cost_or_comparison ... ok
+test tests::dummy_comparisons_use_exact_work_counts_and_match_programs ... ok
+test tests::mode_and_dummy_comparisons_keep_the_other_dimension_fixed ... ok
+test tests::virtualization_total_includes_exclusive_claim_and_product_children ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/release/deps/ram_compare-ed1f94675c3a227e)
+
+running 34 tests
+test tests::no_padding_preserves_actual_commitment_and_total ... ok
+test platform::tests::load_average_is_finite_and_nonnegative_on_unix ... ok
+test tests::operation_hash_keeps_unchanged_write_distinct_from_read ... ok
+test tests::ripple_baseline_has_one_canonical_case_and_an_explicit_ordering_id ... ok
+test stats::tests::rng_below_is_in_range ... ok
+test tests::total_ordering_is_medianed_per_sample_including_children ... ok
+test tests::typed_method_requires_explicit_operation_format ... ok
+test soundness::tests::iop_totals_match_the_hand_derivation ... ok
+test tests::verifier_spans_are_isolated_from_prover_spans ... ok
+test soundness::tests::logup_charges_both_authentication_domains_without_extra_mosaic ... ok
+test tests::throughput_counts_a_narrow_store_once_and_skips_synthetic_traces ... ok
+test tests::auxiliary_commitment_is_charged_with_its_own_padding_fraction ... ok
+test tests::harness_fingerprint_covers_every_source_module ... ok
+test soundness::tests::grand_product_round_schedule_matches_the_verifier ... ok
+test tests::guest_order_and_csv_quoting ... ok
+test tests::method_order_preserved_spice_not_repeated_by_chunks ... ok
+test soundness::tests::logup_rational_bound_depends_on_range_not_access_count ... ok
+test tests::logup_variant_is_not_repeated_by_onehot_chunk_sweep ... ok
+test tests::padding_estimate_only_discounts_commitment_and_preserves_all_other_work ... ok
+test soundness::tests::composed_bits_at_the_shipped_parameters ... ok
+test stats::tests::constant_ratio_has_a_degenerate_interval ... ok
+test tests::adjusted_totals_are_medianed_per_sample ... ok
+test tests::nested_pcs_spans_form_disjoint_inclusive_accounting ... ok
+test stats::tests::interval_brackets_the_ratio_and_is_reproducible ... ok
+test proof_size::tests::ligerito_count_matches_reference_byte_layout_and_parts_add_up ... ok
+test proof_size::tests::typed_spice_size_counts_every_part ... ok
+test platform::tests::environment_records_aarch64_and_x86_features_and_host_identity ... ok
+test interface::tests::twist_claims_pass_and_perturbed_claims_fail ... ok
+test interface::tests::spice_claims_pass_and_perturbed_claims_fail ... ok
+test tests::full_one_row_flock_and_ripple_cases_share_trace_and_commitment_area ... ok
+test tests::typed_and_baseline_cases_use_the_same_operation_rows_and_final_memory ... ok
+test tests::locality_pattern_runs_in_both_formats_and_records_reuse_distance ... ok
+test tests::rounds_alternate_order_and_pair_samples_by_round ... ok
+test tests::guest_cases_report_time_per_source_memory_instruction ... ok
+
+test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running unittests src/lib.rs (target/release/deps/ram_payload-8433ca3a6aa88c04)
+
+running 8 tests
+test operations::tests::narrow_stores_preserve_other_lanes_and_read_current_memory_on_repetition ... ok
+test operations::tests::partial_source_store_stops_before_its_write_and_halt_reads_preserve_word_zero ... ok
+test locality::tests::reuse_distance_buckets_by_log2_gap ... ok
+test operations::tests::one_replay_returns_validated_old_values_and_final_memory ... ok
+test operations::tests::unchanged_full_store_keeps_its_write_kind ... ok
+test tests::replay_preserves_reads_and_unwritten_byte_lanes ... ok
+test locality::tests::locality_trace_is_deterministic_valid_and_mostly_reads ... ok
+test locality::tests::locality_trace_has_short_and_long_reuse_and_does_not_repeat ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/operations.rs (target/release/deps/operations-9da3d49529d81a6d)
+
+running 3 tests
+test random_operations_are_deterministic_independent_and_translate_without_expansion ... ok
+test repeat_prefixes_and_halt_are_valid_and_invalid_inputs_reject ... ok
+test all_guests_normalize_exact_original_memory_records_and_keep_stable_mapping ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/payloads.rs (target/release/deps/payloads-982881a376243f13)
+
+running 9 tests
+test embedded_elf_and_original_source_match_provenance_manifest ... ok
+test guest_program_options_reject_invalid_limits_and_padding_modes ... ok
+test random_is_reproducible_and_reads_precede_writes ... ok
+test random_ram_reads_and_replaces_the_same_word ... ok
+test pointer_chase_is_one_permutation_cycle_with_checked_outputs ... ok
+test actual_guest_outputs_and_ram_values_are_checked ... ok
+test erc20_balances_change_and_memory_filter_retains_real_word_zero ... ok
+test repeated_guest_pattern_keeps_current_memory_across_periods_and_tail ... ok
+test guest_limits_do_not_silently_truncate_or_repeat_execution ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running unittests src/lib.rs (target/release/deps/spice_argument-3a081bd068f80444)
+
+running 37 tests
+test masked_reduction::tests::cofactor_handles_both_boolean_folds_and_all_endpoint_modes ... ok
+test masked_reduction::tests::masked_claims_are_not_products_of_off_cube_mles ... ok
+test masked_reduction::native_tests::exhausted_native_sources_stay_scalar_without_allocating_common_cube_tables ... ok
+test masked_reduction::tests::malformed_mutated_and_false_claims_are_rejected ... ok
+test masked_reduction::native_tests::all_masked_and_public_zero_sources_still_return_their_correct_terminal_values ... ok
+test masked_reduction::tests::dense_cubic_proofs_and_transcripts_match_for_different_source_domains ... ok
+test masked_reduction::native_tests::native_domains_match_old_dense_driver_for_unequal_equal_and_zero_dimensions ... ok
+test masked_reduction::native_tests::forced_boolean_challenges_and_zero_equality_prefixes_match_dense_scalar_messages ... ok
+test operations::tests::per_set_products_come_from_the_first_layer ... ok
+test masked_reduction::tests::zero_batch_weights_and_boolean_equality_points_match_dense_driver ... ok
+test operations::tests::private_final_memory_adds_one_word_component_and_one_claim ... ok
+test operations::tests::chunks_are_aligned_and_keep_the_primary_commitment_size ... ok
+test order::tests::timestamp_bits_are_analytic_low_first_mles ... ok
+test order::tests::invalid_order_carries_shapes_and_tampering_reject_or_expose_false_leaf ... ok
+test pack_tests::transposed_packing_matches_per_bit_extraction ... ok
+test order::tests::quadratic_cofactor_handles_zero_weights_and_boolean_equality_points ... ok
+test order_flock::tests::all_friendly_cycle_eq_weights_have_full_binary_rank ... ok
+test operations::tests::soundness_terms_match_the_issue_estimate ... ok
+test order_flock::tests::fixed_inner_equality_weights_form_an_f2_basis ... ok
+test order::tests::native_carry_words_match_ripple_majority_and_strict_unsigned_order ... ok
+test order::tests::ordering_proof_matches_dense_rounds_claims_and_transcript ... ok
+test order_flock::tests::source_recombination_handles_phi_nodes_boolean_cycles_and_padding ... ok
+test planes::tests::masked_word_evals_match_word_eval_of_masked_values ... ok
+test operations::tests::private_final_value_is_a_mosaic_claim_on_the_committed_words ... ok
+test masked_reduction::tests::parallel_replicated_source_matches_dense_oracle ... ok
+test order_flock::compact_tests::compact_source_functional_is_not_eq_at_the_six_placeholder_coordinates ... ok
+test operations::tests::claim_count_matches_the_proof ... ok
+test planes::tests::arbitrary_prefix_functionals_match_full_weighted_bit_sums ... ok
+test planes::tests::matches_direct_evaluation_for_all_sizes_and_points ... ok
+test order_flock::compact_tests::compact_terminal_binding_rejects_each_modified_source_and_unused_gate_contribution ... ok
+test operations::tests::mosaic_rejects_wrong_cpu_evaluations_sent_before_absorption ... ok
+test order_flock::compact_tests::compact_terminal_bitplanes_bind_through_mixed_functional_and_ordinary_mosaic ... ok
+test order_flock::compact_tests::compact_public_time_moments_handle_phi_nodes_boolean_points_and_gate_padding ... ok
+test order_flock::tests::malformed_words_proof_shapes_and_every_payload_mutation_are_detected ... ok
+test order_flock::tests::word_packing_and_flock_proof_match_dense_boolean_oracle ... ok
+test masked_reduction::native_tests::native_domains_match_old_dense_driver_in_sequential_and_parallel_pools ... ok
+test order_flock::compact_tests::compact_dynamic_widths_match_independent_boolean_donor_proofs_and_transcripts ... ok
+
+test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests/committed_ram.rs (target/release/deps/committed_ram-772add5a5406b636)
+
+running 9 tests
+test permutation_and_all_terminal_columns_are_authenticated ... ok
+test malformed_inputs_and_proofs_return_errors ... ok
+test public_memory_configuration_and_commitment_are_bound ... ok
+test order_previous_and_carry_claims_are_authenticated ... ok
+test mosaic_ringswitch_and_ligerito_are_required ... ok
+test ripple_baseline_and_flock_prove_same_ram_and_bind_protocol_choice ... ok
+test full_width_zero_unchanged_and_untouched_words_match_twist ... ok
+test end_to_end_matches_twist_public_memory_and_prices_every_private_column ... ok
+test rectangular_domains_padding_and_all_value_word_widths_verify ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running tests/operation_ram.rs (target/release/deps/operation_ram-50a01c71c08c439c)
+
+running 18 tests
+test two_fingerprint_tampering_rejects ... ok
+test rejects_tampered_cpu_evaluations ... ok
+test inconsistent_typed_reads_and_malformed_proofs_reject ... ok
+test private_final_memory_tampering_rejects ... ok
+test two_fingerprints_verify_with_matching_options_only ... ok
+test typed_read_write_semantics_write_first_and_precise_pricing ... ok
+test verifier_stages_are_profiled_under_the_verify_prefix ... ok
+test proof_size_counts_every_proof_field ... ok
+test both_ram_contracts_agree_on_public_state_for_same_typed_events ... ok
+test ordering_boundaries_pointers_and_pcs_are_required ... ok
+test every_mask_and_flag_claim_is_authenticated ... ok
+test every_plane_of_a_chunk_is_bound_by_the_combined_claim ... ok
+test deferred_terminal_checks_bind_the_fused_evaluation_message ... ok
+test two_fingerprints_cover_binary_and_radix_four_first_layers ... ok
+test private_final_memory_verifies_without_the_public_final_memory ... ok
+test cpu_claims_match_trace ... ok
+test read_only_write_only_mixed_full_width_and_rectangular_domains ... ok
+test compact_ordering_authenticates_native_planes_through_pcs_in_both_ram_contracts ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+   Doc-tests lookup_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ram_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ram_payload
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests spice_argument
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
